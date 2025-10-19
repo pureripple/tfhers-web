@@ -60,6 +60,7 @@ public class articles {
         return coverUrl;
     }
     
+    @JsonProperty("coverUrl")
     public void setCoverUrl(String coverUrl) {
         this.coverUrl = coverUrl;
     }
@@ -85,6 +86,7 @@ public class articles {
         return viewCount;
     }
     
+    @JsonProperty("viewCount")
     public void setViewCount(int viewCount) {
         this.viewCount = viewCount;
     }
@@ -94,6 +96,7 @@ public class articles {
         return createdAt;
     }
     
+    @JsonProperty("createdAt")
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
@@ -103,6 +106,7 @@ public class articles {
         return updatedAt;
     }
     
+    @JsonProperty("updatedAt")
     public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
     }

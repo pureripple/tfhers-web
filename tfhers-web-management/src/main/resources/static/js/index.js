@@ -200,6 +200,9 @@ function setupEventListeners() {
         elements.confirmAddBtn.addEventListener('click', confirmAddArticle);
     }
     
+    // 图片上传功能
+    setupImageUpload();
+    
     // 用户菜单
     setupUserMenu();
     
@@ -352,8 +355,16 @@ function renderArticles() {
             <tr>
                 <td>${article.id}</td>
                 <td>
-                    <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${article.title}">
-                        ${article.title}
+                    <div class="article-title-cell">
+                        <div class="article-cover" style="width: 40px; height: 40px; margin-right: 8px; border-radius: 4px; overflow: hidden; float: left;">
+                            ${article.cover_url ? 
+                                `<img src="${article.cover_url}" alt="封面" style="width: 100%; height: 100%; object-fit: cover;">` : 
+                                `<div style="width: 100%; height: 100%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px;">无封面</div>`
+                            }
+                        </div>
+                        <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${article.title}">
+                            ${article.title}
+                        </div>
                     </div>
                 </td>
                 <td>${article.author || '未知'}</td>
@@ -474,6 +485,12 @@ function showAddArticleModal() {
 function closeAddArticleModal() {
     if (elements.addArticleModal) {
         elements.addArticleModal.style.display = 'none';
+        // 清空表单和图片上传状态
+        if (elements.addArticleForm) {
+            elements.addArticleForm.reset();
+        }
+        // 重置图片上传组件
+        resetImageUpload('coverImageUploadArea', 'coverImagePreview', 'articleCoverImage', 'articleCoverUrl');
     }
 }
 
@@ -663,6 +680,160 @@ function setupAIAssistantButton() {
             aiButton.classList.remove('active');
             aiButton.title = 'AI游戏助手';
         }
+    }
+}
+
+// 设置图片上传功能
+function setupImageUpload() {
+    // 新增文章图片上传
+    setupSingleImageUpload('articleCoverImage', 'coverImageUploadArea', 'coverImagePreview', 'coverImagePreviewImg', 'removeCoverImage', 'articleCoverUrl');
+    
+    // 编辑文章图片上传
+    setupSingleImageUpload('editArticleCoverImage', 'editCoverImageUploadArea', 'editCoverImagePreview', 'editCoverImagePreviewImg', 'removeEditCoverImage', 'editArticleCoverUrl');
+}
+
+// 设置单个图片上传组件
+function setupSingleImageUpload(fileInputId, uploadAreaId, previewId, previewImgId, removeBtnId, hiddenInputId) {
+    const fileInput = document.getElementById(fileInputId);
+    const uploadArea = document.getElementById(uploadAreaId);
+    const preview = document.getElementById(previewId);
+    const previewImg = document.getElementById(previewImgId);
+    const removeBtn = document.getElementById(removeBtnId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    
+    if (!fileInput || !uploadArea || !preview || !previewImg || !removeBtn || !hiddenInput) {
+        return;
+    }
+    
+    // 点击上传区域触发文件选择
+    uploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    // 文件选择变化
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleImageUpload(file, uploadArea, preview, previewImg, hiddenInput);
+        }
+    });
+    
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type.startsWith('image/')) {
+                handleImageUpload(file, uploadArea, preview, previewImg, hiddenInput);
+            } else {
+                showMessage('请选择图片文件', 'error');
+            }
+        }
+    });
+    
+    // 移除图片
+    removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeImage(uploadArea, preview, fileInput, hiddenInput);
+    });
+}
+
+// 处理图片上传
+async function handleImageUpload(file, uploadArea, preview, previewImg, hiddenInput) {
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+        showMessage('请选择图片文件', 'error');
+        return;
+    }
+    
+    // 验证文件大小（5MB）
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+        showMessage('图片大小不能超过5MB', 'error');
+        return;
+    }
+    
+    // 显示上传状态
+    uploadArea.classList.add('uploading');
+    
+    try {
+        // 创建FormData
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // 上传图片
+        const response = await fetch('/api/file/upload/article-cover', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + AppState.token
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.code === 200) {
+            // 上传成功，显示预览
+            const imageUrl = data.data.url;
+            previewImg.src = imageUrl;
+            hiddenInput.value = imageUrl;
+            
+            uploadArea.style.display = 'none';
+            preview.style.display = 'block';
+            
+            showMessage('图片上传成功', 'success');
+        } else {
+            throw new Error(data.msg || '上传失败');
+        }
+    } catch (error) {
+        console.error('图片上传失败:', error);
+        showMessage('图片上传失败：' + error.message, 'error');
+        uploadArea.classList.add('error');
+        
+        // 3秒后移除错误状态
+        setTimeout(() => {
+            uploadArea.classList.remove('error');
+        }, 3000);
+    } finally {
+        uploadArea.classList.remove('uploading');
+    }
+}
+
+// 移除图片
+function removeImage(uploadArea, preview, fileInput, hiddenInput) {
+    uploadArea.style.display = 'block';
+    preview.style.display = 'none';
+    fileInput.value = '';
+    hiddenInput.value = '';
+    uploadArea.classList.remove('error');
+}
+
+// 重置图片上传组件
+function resetImageUpload(uploadAreaId, previewId, fileInputId, hiddenInputId) {
+    const uploadArea = document.getElementById(uploadAreaId);
+    const preview = document.getElementById(previewId);
+    const fileInput = document.getElementById(fileInputId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    
+    if (uploadArea && preview && fileInput && hiddenInput) {
+        uploadArea.style.display = 'block';
+        preview.style.display = 'none';
+        fileInput.value = '';
+        hiddenInput.value = '';
+        uploadArea.classList.remove('error', 'uploading', 'dragover');
     }
 }
 

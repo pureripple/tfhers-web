@@ -960,3 +960,223 @@ body {
     }
 }
 
+/* 图片上传组件样式 */
+.image-upload-container {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.image-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--bg-tertiary);
+    position: relative;
+    overflow: hidden;
+}
+
+.image-upload-area:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-quaternary);
+    transform: translateY(-2px);
+}
+
+.image-upload-area.dragover {
+    border-color: var(--accent-primary);
+    background: var(--bg-quaternary);
+    transform: scale(1.02);
+}
+
+.image-upload-area i {
+    font-size: 48px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    display: block;
+    transition: color 0.3s ease;
+}
+
+.image-upload-area:hover i {
+    color: var(--accent-primary);
+}
+
+.image-upload-area p {
+    font-size: 16px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.image-upload-area small {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.image-preview {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+}
+
+.image-preview img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.remove-image-btn:hover {
+    background: var(--danger-color);
+    transform: scale(1.1);
+}
+
+/* 图片上传加载状态 */
+.image-upload-area.uploading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.image-upload-area.uploading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--border-color);
+    border-top: 2px solid var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 图片上传错误状态 */
+.image-upload-area.error {
+    border-color: var(--danger-color);
+    background: rgba(244, 67, 54, 0.1);
+}
+
+.image-upload-area.error i {
+    color: var(--danger-color);
+}
+
+.image-upload-area.error p {
+    color: var(--danger-color);
+}
+
+/* 响应式设计 - 图片上传 */
+@media (max-width: 768px) {
+    .image-upload-area {
+        padding: 30px 15px;
+    }
+    
+    .image-upload-area i {
+        font-size: 36px;
+    }
+    
+    .image-preview img {
+        height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .image-upload-area {
+        padding: 20px 10px;
+    }
+    
+    .image-upload-area i {
+        font-size: 32px;
+    }
+    
+    .image-upload-area p {
+        font-size: 14px;
+    }
+    
+    .image-upload-area small {
+        font-size: 11px;
+    }
+    
+    .image-preview img {
+        height: 120px;
+    }
+}
+
+/* 文章列表封面图片样式 */
+.article-title-cell {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+}
+
+.article-cover {
+    flex-shrink: 0;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+}
+
+.article-cover img {
+    transition: transform 0.2s ease;
+}
+
+.article-cover:hover img {
+    transform: scale(1.05);
+}
+
+/* 表格中的封面图片悬停效果 */
+.data-table tr:hover .article-cover {
+    border-color: var(--accent-primary);
+}
+
+/* 响应式设计 - 文章列表封面 */
+@media (max-width: 768px) {
+    .article-cover {
+        width: 32px !important;
+        height: 32px !important;
+        margin-right: 6px !important;
+    }
+    
+    .article-title-cell > div:last-child {
+        max-width: 150px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .article-cover {
+        width: 28px !important;
+        height: 28px !important;
+        margin-right: 4px !important;
+    }
+    
+    .article-title-cell > div:last-child {
+        max-width: 120px !important;
+        font-size: 14px;
+    }
+}
+

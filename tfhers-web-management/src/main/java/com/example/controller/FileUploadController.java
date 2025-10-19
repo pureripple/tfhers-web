@@ -104,6 +104,49 @@ public class FileUploadController {
     }
     
     /**
+     * 上传文章封面图片
+     * @param file 封面图片文件
+     * @return 上传结果
+     */
+    @PostMapping("/upload/article-cover")
+    public results uploadArticleCover(@RequestParam("file") MultipartFile file) {
+        try {
+            // 验证文件
+            if (file == null || file.isEmpty()) {
+                return results.error("请选择要上传的图片");
+            }
+            
+            // 验证文件类型
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return results.error("只能上传图片文件");
+            }
+            
+            // 验证文件大小（限制为5MB）
+            long maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.getSize() > maxSize) {
+                return results.error("图片大小不能超过5MB");
+            }
+            
+            // 上传文件到articles文件夹
+            String fileUrl = ossUtil.uploadFile(file, "articles");
+            
+            // 准备返回数据
+            Map<String, Object> data = new HashMap<>();
+            data.put("url", fileUrl);
+            data.put("originalName", file.getOriginalFilename());
+            data.put("size", file.getSize());
+            data.put("contentType", contentType);
+            
+            return results.success("封面图片上传成功", data);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("封面图片上传失败：" + e.getMessage());
+        }
+    }
+    
+    /**
      * 删除文件
      * @param url 文件URL
      * @return 删除结果

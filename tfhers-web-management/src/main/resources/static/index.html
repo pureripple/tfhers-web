@@ -208,8 +208,22 @@
                         <textarea id="articleSummary" name="summary" rows="3" placeholder="请输入文章摘要（可选）"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="articleCoverUrl">封面图片URL</label>
-                        <input type="url" id="articleCoverUrl" name="coverUrl" placeholder="请输入封面图片URL（可选）">
+                        <label for="articleCoverImage">封面图片</label>
+                        <div class="image-upload-container">
+                            <input type="file" id="articleCoverImage" name="coverImage" accept="image/*" style="display: none;">
+                            <div class="image-upload-area" id="coverImageUploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>点击选择封面图片</p>
+                                <small>支持 JPG、PNG、GIF 格式，最大 5MB</small>
+                            </div>
+                            <div class="image-preview" id="coverImagePreview" style="display: none;">
+                                <img id="coverImagePreviewImg" src="" alt="封面预览">
+                                <button type="button" class="remove-image-btn" id="removeCoverImage">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="articleCoverUrl" name="coverUrl">
                     </div>
                     <div class="form-group">
                         <label for="articleContent">文章内容 *</label>
@@ -249,8 +263,22 @@
                         <textarea id="editArticleSummary" name="summary" rows="3" placeholder="请输入文章摘要（可选）"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="editArticleCoverUrl">封面图片URL</label>
-                        <input type="url" id="editArticleCoverUrl" name="coverUrl" placeholder="请输入封面图片URL（可选）">
+                        <label for="editArticleCoverImage">封面图片</label>
+                        <div class="image-upload-container">
+                            <input type="file" id="editArticleCoverImage" name="coverImage" accept="image/*" style="display: none;">
+                            <div class="image-upload-area" id="editCoverImageUploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>点击选择封面图片</p>
+                                <small>支持 JPG、PNG、GIF 格式，最大 5MB</small>
+                            </div>
+                            <div class="image-preview" id="editCoverImagePreview" style="display: none;">
+                                <img id="editCoverImagePreviewImg" src="" alt="封面预览">
+                                <button type="button" class="remove-image-btn" id="removeEditCoverImage">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="editArticleCoverUrl" name="coverUrl">
                     </div>
                     <div class="form-group">
                         <label for="editArticleContent">文章内容 *</label>

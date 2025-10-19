@@ -192,12 +192,12 @@ const elements = {
 async function initApp() {
     setupEventListeners();
     loadCharacters();
+    checkLoginStatus();
     await loadArticles();
     // 渲染内容
     renderArticles(AppState.articles);
     renderCharacters(CHARACTERS_DATA);
     showPage('news');
-    checkLoginStatus();
 }
 
 // 设置事件监听器
@@ -298,10 +298,12 @@ function showPage(pageId) {
 
 // 加载资讯内容
 async function loadNewsContent() {
-    if (elements.articlesGrid && elements.articlesGrid.children.length === 0) {
+    // 如果文章数据为空，重新加载
+    if (AppState.articles.length === 0) {
         await loadArticles();
-        renderArticles(AppState.articles);
     }
+    // 重新渲染文章列表
+    renderArticles(AppState.articles);
 }
 
 // 加载角色内容
@@ -323,21 +325,21 @@ function loadCharacters() {
 
 // 加载文章数据
 async function loadArticles() {
-    // 检查是否已登录
-    if (!AppState.isLoggedIn || !AppState.user || !AppState.user.token) {
-        console.log('用户未登录，不显示文章数据');
-        AppState.articles = [];
-        return;
-    }
-    
     try {
         console.log('开始加载文章数据，API地址:', `${AppState.apiBaseUrl}/api/articles/all`);
         showLoading();
         
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // 如果已登录，添加认证头
+        if (AppState.isLoggedIn && AppState.user && AppState.user.token) {
+            headers['Authorization'] = `Bearer ${AppState.user.token}`;
+        }
+        
         const response = await fetch(`${AppState.apiBaseUrl}/api/articles/all`, {
-            headers: {
-                'Authorization': `Bearer ${AppState.user.token}`
-            }
+            headers: headers
         });
         console.log('API响应状态:', response.status);
         
@@ -350,17 +352,9 @@ async function loadArticles() {
         
         if (result.code === 200 && result.data) {
             console.log('成功获取文章数据，数量:', result.data.length);
-            // 转换数据格式以匹配前端显示需求
-            AppState.articles = result.data.map(article => ({
-                id: article.id,
-                title: article.title,
-                author: article.author || '未知作者',
-                date: article.createdAt ? new Date(article.createdAt).toLocaleDateString('zh-CN') : '未知日期',
-                cover: article.coverUrl || '/images/default-article.jpg',
-                excerpt: article.summary || (article.content ? article.content.substring(0, 100) + '...' : '暂无摘要'),
-                content: article.content || '<p>暂无内容</p>'
-            }));
-            console.log('转换后的文章数据:', AppState.articles);
+            // 直接使用后端返回的数据，不需要转换
+            AppState.articles = result.data;
+            console.log('文章数据:', AppState.articles);
         } else {
             console.warn('获取文章数据失败，API返回:', result);
             AppState.articles = [];
@@ -385,8 +379,8 @@ function renderArticles(articles) {
                 <div class="empty-icon">
                     <i class="fas fa-newspaper"></i>
                 </div>
-                <h3 class="empty-title">${AppState.isLoggedIn ? '暂无文章' : '请先登录'}</h3>
-                <p class="empty-desc">${AppState.isLoggedIn ? '还没有发布任何文章' : '登录后即可查看最新资讯'}</p>
+                <h3 class="empty-title">暂无文章</h3>
+                <p class="empty-desc">还没有发布任何文章</p>
             </div>
         `;
         return;
@@ -395,7 +389,7 @@ function renderArticles(articles) {
     elements.articlesGrid.innerHTML = articles.map(article => `
         <div class="article-card" onclick="showArticle(${article.id})">
             <div class="article-cover-container">
-                <img src="${article.cover}" alt="${article.title}" class="article-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <img src="${article.cover_url || '/images/default-article.jpg'}" alt="${article.title}" class="article-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="article-cover-placeholder" style="display: none;">
                     <i class="fas fa-image"></i>
                     <span>暂无图片</span>
@@ -403,8 +397,8 @@ function renderArticles(articles) {
             </div>
             <div class="article-content">
                 <h3 class="article-title">${article.title}</h3>
-                <p class="article-meta">${article.author} · ${article.date}</p>
-                <p class="article-excerpt">${article.excerpt}</p>
+                <p class="article-meta">${article.author} · ${formatDate(article.created_at)}</p>
+                <p class="article-excerpt">${article.summary || '暂无摘要'}</p>
             </div>
         </div>
     `).join('');
@@ -495,15 +489,7 @@ async function showArticle(articleId) {
             const result = await response.json();
             
             if (result.code === 200 && result.data) {
-                article = {
-                    id: result.data.id,
-                    title: result.data.title,
-                    author: result.data.author || '未知作者',
-                    date: result.data.createdAt ? new Date(result.data.createdAt).toLocaleDateString('zh-CN') : '未知日期',
-                    cover: result.data.coverUrl || '/images/default-article.jpg',
-                    excerpt: result.data.summary || '暂无摘要',
-                    content: result.data.content || '<p>暂无内容</p>'
-                };
+                article = result.data;
             }
         } catch (error) {
             console.error('获取文章详情时发生错误:', error);
@@ -526,12 +512,12 @@ async function showArticle(articleId) {
             <div class="article-detail">
                 <div class="article-header">
                     <h2 class="article-detail-title">${article.title}</h2>
-                    <p class="article-meta">${article.author} · ${article.date}</p>
-                    ${article.cover ? `<img src="${article.cover}" alt="${article.title}" class="article-cover-image" style="width: 100%; max-width: 500px; height: 250px; object-fit: cover; border-radius: 12px; margin: 20px 0;">` : ''}
+                    <p class="article-meta">${article.author} · ${formatDate(article.created_at)}</p>
+                    ${article.cover_url ? `<img src="${article.cover_url}" alt="${article.title}" class="article-cover-image" style="width: 100%; max-width: 500px; height: 250px; object-fit: cover; border-radius: 12px; margin: 20px 0;">` : ''}
                 </div>
                 
                 <div class="article-body">
-                    ${article.content}
+                    ${article.content || '<p>暂无内容</p>'}
                 </div>
             </div>
         `;
@@ -701,10 +687,16 @@ async function handleRegister(e) {
 }
 
 // 登出
-function logout() {
+async function logout() {
     AppState.isLoggedIn = false;
     AppState.user = null;
+    localStorage.removeItem('user');
     updateUserInterface();
+    
+    // 重新加载文章数据（因为现在未登录用户也能查看文章）
+    await loadArticles();
+    renderArticles(AppState.articles);
+    
     alert('已退出登录');
 }
 
@@ -715,6 +707,10 @@ function checkLoginStatus() {
     if (savedUser) {
         AppState.user = JSON.parse(savedUser);
         AppState.isLoggedIn = true;
+        updateUserInterface();
+    } else {
+        AppState.isLoggedIn = false;
+        AppState.user = null;
         updateUserInterface();
     }
 }
@@ -776,6 +772,23 @@ function hideLoading() {
     }
 }
 
+// 格式化日期
+function formatDate(dateString) {
+    if (!dateString) return '未知';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        return dateString;
+    }
+}
 
 // 页面加载完成后初始化应用
 document.addEventListener('DOMContentLoaded', initApp);
