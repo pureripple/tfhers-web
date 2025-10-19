@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.articlesMapper">
+
+    <!-- 获取所有资讯 -->
+    <select id="selectAllArticles" resultType="com.example.pojo.articles">
+        SELECT id, title, content, cover_url, summary, author, view_count, created_at, updated_at
+        FROM articles
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据ID查询单篇文章 -->
+    <select id="selectArticleById" parameterType="long" resultType="com.example.pojo.articles">
+        SELECT id, title, content, cover_url, summary, author, view_count, created_at, updated_at
+        FROM articles
+        WHERE id = #{id}
+    </select>
+
+    <!-- 搜索文章 -->
+    <select id="searchArticles" parameterType="string" resultType="com.example.pojo.articles">
+        SELECT id, title, content, cover_url, summary, author, view_count, created_at, updated_at
+        FROM articles
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+           OR content LIKE CONCAT('%', #{keyword}, '%')
+           OR author LIKE CONCAT('%', #{keyword}, '%')
+           OR summary LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY created_at DESC
+    </select>
+
+    <delete id="deleteArticleById" parameterType="long">
+        DELETE FROM articles WHERE id = #{id}
+    </delete>
+
+    <!-- 新增文章 -->
+    <insert id="insertArticle" parameterType="com.example.pojo.articles" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO articles (title, content, cover_url, summary, author, view_count, created_at, updated_at)
+        VALUES (#{title}, #{content}, #{coverUrl}, #{summary}, #{author}, #{viewCount}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <!-- 更新文章 -->
+    <update id="updateArticle" parameterType="com.example.pojo.articles">
+        UPDATE articles 
+        SET title = #{title}, 
+            content = #{content}, 
+            cover_url = #{coverUrl}, 
+            summary = #{summary}, 
+            author = #{author}, 
+            view_count = #{viewCount}, 
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

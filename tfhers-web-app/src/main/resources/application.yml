@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: tfhers-web-app
+  datasource:
+    url: jdbc:mysql://localhost:3306/tfhers
+    username: root
+    password: 974629
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+server:
+  port: 8080
+
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

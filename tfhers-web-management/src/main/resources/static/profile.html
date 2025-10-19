@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人设置 - TFhers管理后台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/index.css">
+    <style>
+        /* CSS变量定义 - 与主页保持一致 */
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --bg-quaternary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-muted: #666666;
+            --accent-primary: #ff6b6b;
+            --accent-secondary: #4ecdc4;
+            --accent-tertiary: #45b7d1;
+            --border-color: #333333;
+            --border-light: #444444;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --shadow-hover: rgba(0, 0, 0, 0.5);
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --info-color: #2196f3;
+        }
+
+        /* 基础样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 个人设置页面特有样式 */
+        .profile-content {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .profile-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+        
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn:hover {
+            color: var(--accent-primary);
+            background-color: var(--bg-tertiary);
+        }
+        
+        .tab-btn.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .profile-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 1px 3px var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        
+        .profile-card h3 {
+            margin: 0 0 25px 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+        
+        .form-group input[readonly] {
+            background-color: var(--bg-quaternary);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+        
+        .form-text {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: var(--text-primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #e55a5a;
+        }
+        
+        .btn-secondary {
+            background-color: var(--bg-quaternary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--bg-tertiary);
+        }
+        
+        /* 头像设置样式 */
+        .avatar-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+        
+        .current-avatar h4,
+        .avatar-upload h4 {
+            margin: 0 0 20px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .avatar-preview {
+            text-align: center;
+        }
+        
+        .avatar-preview img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--border-color);
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+        
+        /* 上传区域样式 */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: var(--bg-tertiary);
+        }
+        
+        .upload-area:hover {
+            border-color: var(--accent-primary);
+            background-color: var(--bg-quaternary);
+        }
+        
+        .upload-area.dragover {
+            border-color: var(--accent-primary);
+            background-color: var(--bg-quaternary);
+        }
+        
+        .upload-area i {
+            font-size: 48px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: block;
+        }
+        
+        .upload-area p {
+            margin: 8px 0;
+            color: var(--text-secondary);
+        }
+        
+        .upload-tip {
+            font-size: 12px !important;
+            color: var(--text-muted) !important;
+        }
+        
+        /* 上传进度条 */
+        .upload-progress {
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--bg-quaternary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent-primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            display: block;
+        }
+        
+        /* 消息提示样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px var(--shadow);
+            padding: 16px 20px;
+            z-index: 9999;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .toast-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
+        
+        .toast.success .toast-icon {
+            background-color: var(--success-color);
+        }
+        
+        .toast.success .toast-icon::before {
+            content: "✓";
+        }
+        
+        .toast.error .toast-icon {
+            background-color: var(--danger-color);
+        }
+        
+        .toast.error .toast-icon::before {
+            content: "✕";
+        }
+        
+        .toast-message {
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .profile-content {
+                padding: 15px;
+            }
+            
+            .avatar-section {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-fist-raised"></i>
+                    <span>蹄斗助手</span>
+                </div>
+                <div class="admin-title">后台管理</div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <i class="fas fa-newspaper"></i>
+                            <span>资讯管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#characters" class="nav-link">
+                            <i class="fas fa-users"></i>
+                            <span>角色管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#users" class="nav-link">
+                            <i class="fas fa-user-cog"></i>
+                            <span>用户管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#settings" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>系统设置</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="profile.html" class="nav-link">
+                            <i class="fas fa-user-cog"></i>
+                            <span>个人设置</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 顶部导航栏 -->
+            <header class="top-header">
+                <div class="header-left">
+                    <h1>个人设置</h1>
+                </div>
+                <div class="header-right">
+                    <div class="user-menu" id="userMenu">
+                        <div class="user-info" id="userInfo">
+                            <img src="images/CSel3_LargePortTianhuo.png" alt="头像" class="user-avatar" id="userAvatar">
+                            <span class="user-name" id="userName">管理员</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="#" class="dropdown-item" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>退出登录</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 个人设置内容 -->
+            <div class="profile-content">
+                <div class="profile-tabs">
+                    <button class="tab-btn active" data-tab="basic">基本信息</button>
+                    <button class="tab-btn" data-tab="avatar">头像设置</button>
+                    <button class="tab-btn" data-tab="password">修改密码</button>
+                </div>
+
+                <!-- 基本信息标签页 -->
+                <div class="tab-content active" id="basicTab">
+                    <div class="profile-card">
+                        <h3>基本信息</h3>
+                        <form id="basicInfoForm" class="profile-form">
+                            <div class="form-group">
+                                <label for="username">用户名</label>
+                                <input type="text" id="username" name="username" readonly>
+                                <small class="form-text">用户名不可修改</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="realName">真实姓名</label>
+                                <input type="text" id="realName" name="realName" placeholder="请输入真实姓名">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">邮箱地址</label>
+                                <input type="email" id="email" name="email" placeholder="请输入邮箱地址">
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">手机号码</label>
+                                <input type="tel" id="phone" name="phone" placeholder="请输入手机号码">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">保存修改</button>
+                                <button type="button" class="btn btn-secondary" onclick="resetBasicForm()">重置</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 头像设置标签页 -->
+                <div class="tab-content" id="avatarTab">
+                    <div class="profile-card">
+                        <h3>头像设置</h3>
+                        <div class="avatar-section">
+                            <div class="current-avatar">
+                                <h4>当前头像</h4>
+                                <div class="avatar-preview">
+                                    <img src="images/CSel3_LargePortTianhuo.png" alt="当前头像" id="currentAvatar">
+                                </div>
+                            </div>
+                            <div class="avatar-upload">
+                                <h4>上传新头像</h4>
+                                <div class="upload-area" id="uploadArea">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>点击或拖拽文件到此处上传</p>
+                                    <p class="upload-tip">支持 JPG、PNG、GIF 格式，文件大小不超过 5MB</p>
+                                    <input type="file" id="avatarFile" accept="image/*" style="display: none;">
+                                </div>
+                                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" id="progressFill"></div>
+                                    </div>
+                                    <span class="progress-text" id="progressText">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 修改密码标签页 -->
+                <div class="tab-content" id="passwordTab">
+                    <div class="profile-card">
+                        <h3>修改密码</h3>
+                        <form id="changePasswordForm" class="profile-form">
+                            <div class="form-group">
+                                <label for="oldPassword">当前密码</label>
+                                <input type="password" id="oldPassword" name="oldPassword" placeholder="请输入当前密码">
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">新密码</label>
+                                <input type="password" id="newPassword" name="newPassword" placeholder="请输入新密码">
+                                <small class="form-text">密码长度至少6位</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">确认新密码</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入新密码">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">修改密码</button>
+                                <button type="button" class="btn btn-secondary" onclick="resetPasswordForm()">重置</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 消息提示 -->
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <i class="toast-icon"></i>
+            <span class="toast-message"></span>
+        </div>
+    </div>
+
+    <!-- AI助手固定按钮 -->
+    <a href="ai-chat.html" class="ai-assistant-fab" title="AI游戏助手">
+        <i class="fas fa-robot"></i>
+    </a>
+
+    <script src="js/profile.js"></script>
+</body>
+</html>

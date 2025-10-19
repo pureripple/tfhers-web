@@ -1,0 +1,187 @@
+/* 角色详情页面样式 */
+
+.character-detail {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.character-hero {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 40px;
+    padding: 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    color: white;
+}
+
+.character-detail-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 20px;
+    object-fit: cover;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.character-info {
+    flex: 1;
+}
+
+.character-detail-name {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.character-alias {
+    font-size: 20px;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+.character-section {
+    margin-bottom: 40px;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.character-section .section-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #e74c3c;
+}
+
+.character-section .section-content {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #555;
+}
+
+.moves-list {
+    display: grid;
+    gap: 20px;
+}
+
+.move-item {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #e74c3c;
+    transition: all 0.3s ease;
+}
+
+.move-item:hover {
+    background: #e8f4f8;
+    transform: translateX(5px);
+}
+
+.move-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.move-desc {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+}
+
+.combos-list {
+    display: grid;
+    gap: 20px;
+}
+
+.combo-item {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.combo-item:hover {
+    background: #e8f4f8;
+    border-color: #e74c3c;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.combo-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.combo-author {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.combo-steps {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.6;
+    font-family: 'Courier New', monospace;
+    background: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #e0e0e0;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 768px) {
+    .character-hero {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+        padding: 20px;
+    }
+    
+    .character-detail-avatar {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .character-detail-name {
+        font-size: 28px;
+    }
+    
+    .character-alias {
+        font-size: 18px;
+    }
+    
+    .character-section {
+        padding: 20px;
+    }
+    
+    .character-section .section-title {
+        font-size: 20px;
+    }
+    
+    .move-item,
+    .combo-item {
+        padding: 15px;
+    }
+    
+    .move-name,
+    .combo-title {
+        font-size: 16px;
+    }
+    
+    .move-desc,
+    .combo-steps {
+        font-size: 13px;
+    }
+}

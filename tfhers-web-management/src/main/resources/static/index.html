@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蹄斗族群助手 - 后台管理系统</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+    </style>
+</head>
+<body>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-fist-raised"></i>
+                <span>蹄斗助手</span>
+            </div>
+            <div class="admin-title">后台管理</div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item active">
+                    <a href="#articles" class="nav-link" data-page="articles">
+                        <i class="fas fa-newspaper"></i>
+                        <span>资讯管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#characters" class="nav-link" data-page="characters">
+                        <i class="fas fa-users"></i>
+                        <span>角色管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="user-management.html" class="nav-link">
+                        <i class="fas fa-user-cog"></i>
+                        <span>用户管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#settings" class="nav-link" data-page="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>系统设置</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="profile.html" class="nav-link">
+                        <i class="fas fa-user-cog"></i>
+                        <span>个人设置</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- 主内容区域 -->
+    <main class="main-content">
+        <!-- 顶部导航栏 -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">资讯管理</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-menu" id="userMenu" style="display: none;">
+                    <div class="user-info" id="userInfo">
+                        <img src="/images/CSel3_LargePortTianhuo.png" alt="管理员头像" class="user-avatar" id="userAvatar">
+                        <span class="user-name" id="userName">管理员</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>退出登录</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 页面内容 -->
+        <div class="page-content">
+            <!-- 资讯管理页面 -->
+            <section id="articles" class="page active">
+                <!-- 操作栏 -->
+                <div class="action-bar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="搜索文章标题、内容、作者...">
+                        <button class="search-btn" id="searchBtn">搜索</button>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="addArticleBtn">
+                            <i class="fas fa-plus"></i>
+                            新增文章
+                        </button>
+                        <button class="btn btn-secondary" id="refreshBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 文章列表 -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">文章列表</h3>
+                        <div class="card-actions">
+                            <span class="article-count">共 <span id="articleCount">0</span> 篇文章</span>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table" id="articlesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>标题</th>
+                                    <th>作者</th>
+                                    <th>摘要</th>
+                                    <th>浏览量</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="articlesTableBody">
+                                <!-- 文章数据将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 分页 -->
+                    <div class="pagination" id="pagination">
+                        <!-- 分页控件将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 其他页面占位 -->
+            <section id="characters" class="page">
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>角色管理</h3>
+                    <p>功能开发中...</p>
+                </div>
+            </section>
+
+
+            <section id="settings" class="page">
+                <div class="empty-state">
+                    <i class="fas fa-cog"></i>
+                    <h3>系统设置</h3>
+                    <p>功能开发中...</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- 删除确认模态框 -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>确认删除</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除这篇文章吗？此操作不可撤销。</p>
+                <div class="article-preview" id="deleteArticlePreview">
+                    <!-- 文章预览信息 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增文章模态框 -->
+    <div id="addArticleModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>新增文章</h3>
+                <button class="modal-close" onclick="closeAddArticleModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addArticleForm">
+                    <div class="form-group">
+                        <label for="articleTitle">文章标题 *</label>
+                        <input type="text" id="articleTitle" name="title" required placeholder="请输入文章标题">
+                    </div>
+                    <div class="form-group">
+                        <label for="articleAuthor">作者 *</label>
+                        <input type="text" id="articleAuthor" name="author" required placeholder="请输入作者姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="articleSummary">文章摘要</label>
+                        <textarea id="articleSummary" name="summary" rows="3" placeholder="请输入文章摘要（可选）"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="articleCoverUrl">封面图片URL</label>
+                        <input type="url" id="articleCoverUrl" name="coverUrl" placeholder="请输入封面图片URL（可选）">
+                    </div>
+                    <div class="form-group">
+                        <label for="articleContent">文章内容 *</label>
+                        <textarea id="articleContent" name="content" rows="8" required placeholder="请输入文章内容"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddArticleModal()">取消</button>
+                <button class="btn btn-primary" id="confirmAddBtn">确认新增</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑文章模态框 -->
+    <div id="editArticleModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>编辑文章</h3>
+                <button class="modal-close" onclick="closeEditArticleModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editArticleForm">
+                    <input type="hidden" id="editArticleId" name="id">
+                    <div class="form-group">
+                        <label for="editArticleTitle">文章标题 *</label>
+                        <input type="text" id="editArticleTitle" name="title" required placeholder="请输入文章标题">
+                    </div>
+                    <div class="form-group">
+                        <label for="editArticleAuthor">作者 *</label>
+                        <input type="text" id="editArticleAuthor" name="author" required placeholder="请输入作者姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="editArticleSummary">文章摘要</label>
+                        <textarea id="editArticleSummary" name="summary" rows="3" placeholder="请输入文章摘要（可选）"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editArticleCoverUrl">封面图片URL</label>
+                        <input type="url" id="editArticleCoverUrl" name="coverUrl" placeholder="请输入封面图片URL（可选）">
+                    </div>
+                    <div class="form-group">
+                        <label for="editArticleContent">文章内容 *</label>
+                        <textarea id="editArticleContent" name="content" rows="8" required placeholder="请输入文章内容"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditArticleModal()">取消</button>
+                <button class="btn btn-primary" id="confirmEditBtn">确认更新</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div id="loadingIndicator" class="loading-indicator">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+    </div>
+
+    <!-- 消息提示 -->
+    <div id="messageToast" class="message-toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="messageText">操作成功</span>
+    </div>
+
+    <!-- AI助手固定按钮 -->
+    <a href="ai-chat.html" class="ai-assistant-fab" title="AI游戏助手">
+        <i class="fas fa-robot"></i>
+    </a>
+
+    <script src="js/index.js"></script>
+</body>
+</html>

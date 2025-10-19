@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员登录 - 蹄斗助手后台管理系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* 暗色主题色彩 - 与主页保持一致 */
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --bg-quaternary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-muted: #666666;
+            --accent-primary: #ff6b6b;
+            --accent-secondary: #4ecdc4;
+            --accent-tertiary: #45b7d1;
+            --border-color: #333333;
+            --border-light: #444444;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --shadow-hover: rgba(0, 0, 0, 0.5);
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --info-color: #2196f3;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 背景装饰 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(78, 205, 196, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(69, 183, 209, 0.1) 0%, transparent 50%);
+            z-index: 1;
+        }
+        
+        .login-container {
+            background: var(--bg-secondary);
+            padding: 50px 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px var(--shadow-hover);
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(10px);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: 12px;
+        }
+        
+        .logo i {
+            font-size: 36px;
+        }
+        
+        .login-header h1 {
+            color: var(--text-primary);
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+        
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #ff5252 100%);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .login-btn:hover::before {
+            left: 100%;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+        
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .message {
+            margin-top: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid;
+        }
+        
+        .message.success {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+            border-color: rgba(76, 175, 80, 0.3);
+        }
+        
+        .message.error {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+            border-color: rgba(244, 67, 54, 0.3);
+        }
+        
+        .user-info {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+        
+        .user-info h3 {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .user-info p {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .logout-btn {
+            margin-top: 16px;
+            padding: 10px 20px;
+            background: var(--danger-color);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-1px);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 20px;
+                padding: 30px 24px;
+            }
+            
+            .logo {
+                font-size: 28px;
+            }
+            
+            .logo i {
+                font-size: 32px;
+            }
+            
+            .login-header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo">
+                <i class="fas fa-fist-raised"></i>
+                <span>蹄斗助手</span>
+            </div>
+            <h1>管理员登录</h1>
+            <p>后台管理系统</p>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" required value="qinglin">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" required value="974629">
+            </div>
+            
+            <button type="submit" class="login-btn" id="loginBtn">登录</button>
+        </form>
+        
+        <div id="message" class="message" style="display: none;"></div>
+        
+        <div id="userInfo" class="user-info">
+            <h3>用户信息</h3>
+            <p id="userDetails"></p>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('admin_token');
+        
+        // 检查是否已登录
+        if (token) {
+            checkUserInfo();
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const message = document.getElementById('message');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = '登录中...';
+            
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    token = result.data.token;
+                    localStorage.setItem('admin_token', token);
+                    
+                    showMessage('登录成功！正在跳转...', 'success');
+                    
+                    // 延迟1秒后跳转到系统主页
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 1000);
+                } else {
+                    showMessage(result.msg || '登录失败', 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误：' + error.message, 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录';
+            }
+        });
+        
+        async function checkUserInfo() {
+            try {
+                const response = await fetch('/api/admin/userinfo', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    showUserInfo(result.data);
+                } else {
+                    localStorage.removeItem('admin_token');
+                    token = null;
+                }
+            } catch (error) {
+                console.error('获取用户信息失败：', error);
+                localStorage.removeItem('admin_token');
+                token = null;
+            }
+        }
+        
+        function showUserInfo(userInfo) {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('userInfo').style.display = 'block';
+            document.getElementById('userDetails').innerHTML = `
+                <strong>用户名：</strong>${userInfo.username}<br>
+                <strong>真实姓名：</strong>${userInfo.realName}<br>
+                <strong>邮箱：</strong>${userInfo.email}<br>
+                <strong>最后登录时间：</strong>${userInfo.lastLoginTime || '未知'}<br>
+                <strong>最后登录IP：</strong>${userInfo.lastLoginIp || '未知'}
+            `;
+        }
+        
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = 'message ' + type;
+            message.style.display = 'block';
+            
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 5000);
+        }
+        
+        function logout() {
+            localStorage.removeItem('admin_token');
+            token = null;
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'none';
+            showMessage('已退出登录', 'success');
+        }
+    </script>
+
+    <!-- AI助手固定按钮 -->
+    <a href="ai-chat.html" class="ai-assistant-fab" title="AI游戏助手">
+        <i class="fas fa-robot"></i>
+    </a>
+</body>
+</html>

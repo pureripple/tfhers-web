@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.AdminUserMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="AdminUserResultMap" type="com.example.pojo.AdminUser">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="real_name" property="realName"/>
+        <result column="email" property="email"/>
+        <result column="phone" property="phone"/>
+        <result column="avatar_url" property="avatarUrl"/>
+        <result column="status" property="status"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="last_login_ip" property="lastLoginIp"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 根据用户名查找管理员用户 -->
+    <select id="findByUsername" resultMap="AdminUserResultMap">
+        SELECT id, username, password, real_name, email, phone, avatar_url, 
+               status, last_login_time, last_login_ip, created_at, updated_at
+        FROM admin_users 
+        WHERE username = #{username}
+    </select>
+
+    <!-- 根据ID查找管理员用户 -->
+    <select id="findById" resultMap="AdminUserResultMap">
+        SELECT id, username, password, real_name, email, phone, avatar_url, 
+               status, last_login_time, last_login_ip, created_at, updated_at
+        FROM admin_users 
+        WHERE id = #{id}
+    </select>
+
+    <!-- 更新最后登录信息 -->
+    <update id="updateLastLoginInfo">
+        UPDATE admin_users 
+        SET last_login_time = #{lastLoginTime}, 
+            last_login_ip = #{lastLoginIp},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新用户信息 -->
+    <update id="updateAdminUser">
+        UPDATE admin_users 
+        <set>
+            <if test="password != null">password = #{password},</if>
+            <if test="realName != null">real_name = #{realName},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="avatarUrl != null">avatar_url = #{avatarUrl},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 插入新管理员用户 -->
+    <insert id="insertAdminUser" parameterType="com.example.pojo.AdminUser" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO admin_users (username, password, real_name, email, phone, avatar_url, status)
+        VALUES (#{username}, #{password}, #{realName}, #{email}, #{phone}, #{avatarUrl}, #{status})
+    </insert>
+
+</mapper>

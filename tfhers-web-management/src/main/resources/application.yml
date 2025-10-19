@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: tfhers-web-management
+  datasource:
+    url: jdbc:mysql://localhost:3306/tfhers
+    username: root
+    password: 974629
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  web:
+    resources:
+      static-locations: classpath:/static/
+      add-mappings: true
+
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.pojo
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 服务器配置
+server:
+  port: 8081
+
+# JWT配置
+jwt:
+  secret: tfhers-web-management-jwt-secret-key-2025
+  expiration: 3600000  # 1小时，单位：毫秒
+
+# 阿里云OSS配置
+aliyun:
+  oss:
+    endpoint: https://oss-cn-beijing.aliyuncs.com  # OSS区域端点
+    access-key-id: LTAI5tDfHnxDEYYUumu1cqLA  # AccessKeyId
+    access-key-secret: 6h44TXBT6gnKj7v69Xoy29VqSCJpgD  # AccessKeySecret
+    bucket-name: tfhers  # Bucket名称
+    domain: https://tfhers.oss-cn-beijing.aliyuncs.com  # OSS域名
+
+# langchain4j配置
+langchain4j:
+    openai:
+      chat-model:
+        base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+        api-key: sk-ff6bf74bf51947fa900222ef4218d1a3
+        model-name: qwen-plus
+
+      streaming-chat-model:
+        base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+        api-key: sk-ff6bf74bf51947fa900222ef4218d1a3
+        model-name: qwen-plus

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蹄斗族群助手 - 网页版</title>
+    <!-- CSS样式文件 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/main.css" rel="stylesheet">
+    <link href="/css/character-detail.css" rel="stylesheet">
+    <link href="/css/combo-detail.css" rel="stylesheet">
+    <link href="/css/responsive.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-fist-raised"></i>
+                <span>蹄斗助手</span>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="#news" class="nav-link active" data-page="news">
+                    <i class="fas fa-newspaper"></i>
+                    <span>资讯</span>
+                </a>
+                <a href="#characters" class="nav-link" data-page="characters">
+                    <i class="fas fa-users"></i>
+                    <span>角色教程</span>
+                </a>
+                <a href="#my" class="nav-link" data-page="my">
+                    <i class="fas fa-user"></i>
+                    <span>我的</span>
+                </a>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main class="main-content">
+        <!-- 资讯页面 -->
+        <section id="news" class="page active">
+            <div class="page-header">
+                <h1 class="page-title">最新资讯</h1>
+                <p class="page-subtitle">掌握游戏动态，提升战斗技巧</p>
+            </div>
+            <div class="articles-grid" id="articlesGrid">
+                <!-- 文章卡片将通过JavaScript动态加载 -->
+            </div>
+        </section>
+
+        <!-- 角色教程页面 -->
+        <section id="characters" class="page">
+            <div class="page-header">
+                <h1 class="page-title">角色教程</h1>
+                <p class="page-subtitle">选择角色开始学习，掌握每个角色的独特技能</p>
+            </div>
+            <div class="characters-grid" id="charactersGrid">
+                <!-- 角色卡片将通过JavaScript动态加载 -->
+            </div>
+            
+            <!-- 官方教程区域 -->
+            <div class="tutorial-section">
+                <h2 class="section-title">官方教程</h2>
+                <div class="tutorial-grid">
+                    <div class="tutorial-card">
+                        <div class="tutorial-icon">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <h3 class="tutorial-title">新手入门指南</h3>
+                        <p class="tutorial-desc">从基础操作到高级技巧，快速上手游戏</p>
+                    </div>
+                    <div class="tutorial-card">
+                        <div class="tutorial-icon">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <h3 class="tutorial-title">连招系统详解</h3>
+                        <p class="tutorial-desc">学习连招的构成原理和实用技巧</p>
+                    </div>
+                    <div class="tutorial-card">
+                        <div class="tutorial-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h3 class="tutorial-title">竞技策略</h3>
+                        <p class="tutorial-desc">掌握对战策略，提升竞技水平</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 我的页面 -->
+        <section id="my" class="page">
+            <div class="page-header">
+                <h1 class="page-title">我的</h1>
+            </div>
+            
+            <!-- 未登录状态 -->
+            <div id="loginSection" class="login-section">
+                <div class="login-card">
+                    <div class="login-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h3 class="login-title">欢迎使用蹄斗助手</h3>
+                    <p class="login-subtitle">登录以同步个人数据和发布内容</p>
+                    <div class="login-buttons">
+                        <button class="btn btn-primary" onclick="showLoginModal()">
+                            <i class="fas fa-sign-in-alt"></i>
+                            立即登录
+                        </button>
+                        <button class="btn btn-outline" onclick="showRegisterModal()">
+                            <i class="fas fa-user-plus"></i>
+                            注册账号
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 已登录状态 -->
+            <div id="userSection" class="user-section" style="display: none;">
+                <div class="profile-card">
+                    <div class="profile-avatar">
+                        <img id="userAvatar" src="/images/default-avatar.png" alt="用户头像">
+                    </div>
+                    <div class="profile-info">
+                        <h3 id="userName" class="profile-name">用户名</h3>
+                        <p class="profile-subtitle">欢迎回来</p>
+                    </div>
+                    <button class="btn btn-outline" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        退出
+                    </button>
+                </div>
+
+                <div class="action-section">
+                    <h3 class="section-title">我的创作</h3>
+                    <div class="action-grid">
+                        <div class="action-card" onclick="showCreateArticle()">
+                            <div class="action-icon">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <h4 class="action-title">发布资讯</h4>
+                            <p class="action-desc">分享游戏心得和攻略</p>
+                        </div>
+                        <div class="action-card" onclick="showCreateCombo()">
+                            <div class="action-icon">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <h4 class="action-title">投稿连段</h4>
+                            <p class="action-desc">分享你的连招技巧</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="section-title">设置</h3>
+                    <div class="settings-list">
+                        <div class="setting-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>账号与安全</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <div class="setting-item">
+                            <i class="fas fa-info-circle"></i>
+                            <span>关于</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 登录模态框 -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>登录</h3>
+                <button class="modal-close" onclick="closeLoginModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUsername">用户名</label>
+                        <input type="text" id="loginUsername" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">密码</label>
+                        <input type="password" id="loginPassword" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <i class="fas fa-sign-in-alt"></i>
+                        登录
+                    </button>
+                </form>
+                <div class="modal-footer">
+                    <p>还没有账号？ <a href="#" onclick="switchToRegister()">立即注册</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>注册账号</h3>
+                <button class="modal-close" onclick="closeRegisterModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="regUsername">用户名</label>
+                        <input type="text" id="regUsername" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regNickname">昵称</label>
+                        <input type="text" id="regNickname" name="nickname" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">密码</label>
+                        <input type="password" id="regPassword" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">邮箱</label>
+                        <input type="email" id="regEmail" name="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPhone">电话</label>
+                        <input type="tel" id="regPhone" name="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="regAvatar">头像</label>
+                        <input type="file" id="regAvatar" name="avatar" accept="image/*">
+                        <div class="avatar-preview" id="avatarPreview" style="display: none;">
+                            <img id="previewImg" src="" alt="头像预览">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <i class="fas fa-user-plus"></i>
+                        注册
+                    </button>
+                </form>
+                <div class="modal-footer">
+                    <p>已有账号？ <a href="#" onclick="switchToLogin()">立即登录</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色详情模态框 -->
+    <div id="characterModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="characterName">角色详情</h3>
+                <button class="modal-close" onclick="closeCharacterModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="characterContent">
+                <!-- 角色详情内容将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 连段详情模态框 -->
+    <div id="comboModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="comboTitle">连段详情</h3>
+                <button class="modal-close" onclick="closeComboModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="comboContent">
+                <!-- 连段详情内容将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 文章详情模态框 -->
+    <div id="articleModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="articleTitle">文章详情</h3>
+                <button class="modal-close" onclick="closeArticleModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="articleContent">
+                <!-- 文章详情内容将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div id="loadingIndicator" class="loading-indicator">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

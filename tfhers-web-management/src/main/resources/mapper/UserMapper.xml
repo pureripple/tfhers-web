@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.UserMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="UserResultMap" type="com.example.pojo.User">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="password" property="password"/>
+        <result column="email" property="email"/>
+        <result column="phone" property="phone"/>
+        <result column="avatar_url" property="avatarUrl"/>
+        <result column="role" property="role"/>
+        <result column="status" property="status"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="last_login_ip" property="lastLoginIp"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 根据ID查找用户 -->
+    <select id="findById" resultMap="UserResultMap">
+        SELECT id, username, nickname, password, email, phone, avatar_url, 
+               role, status, last_login_time, last_login_ip, created_at, updated_at
+        FROM users 
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户名查找用户 -->
+    <select id="findByUsername" resultMap="UserResultMap">
+        SELECT id, username, nickname, password, email, phone, avatar_url, 
+               role, status, last_login_time, last_login_ip, created_at, updated_at
+        FROM users 
+        WHERE username = #{username}
+    </select>
+
+    <!-- 根据ID查找用户（别名方法） -->
+    <select id="selectById" resultMap="UserResultMap">
+        SELECT id, username, nickname, password, email, phone, avatar_url, 
+               role, status, last_login_time, last_login_ip, created_at, updated_at
+        FROM users 
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户名查找用户（别名方法） -->
+    <select id="selectByUsername" resultMap="UserResultMap">
+        SELECT id, username, nickname, password, email, phone, avatar_url, 
+               role, status, last_login_time, last_login_ip, created_at, updated_at
+        FROM users 
+        WHERE username = #{username}
+    </select>
+
+    <!-- 根据邮箱查找用户 -->
+    <select id="selectByEmail" resultMap="UserResultMap">
+        SELECT id, username, nickname, password, email, phone, avatar_url, 
+               role, status, last_login_time, last_login_ip, created_at, updated_at
+        FROM users 
+        WHERE email = #{email}
+    </select>
+
+    <!-- 分页查询用户列表 -->
+    <select id="findUsersWithPagination" resultMap="UserResultMap">
+        SELECT id, username, nickname, email, phone, avatar_url, 
+               role, status, last_login_time, last_login_ip, created_at, updated_at
+        FROM users 
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%') 
+                     OR nickname LIKE CONCAT('%', #{keyword}, '%')
+                     OR email LIKE CONCAT('%', #{keyword}, '%')
+                     OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="role != null and role != ''">
+                AND role = #{role}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 统计用户总数 -->
+    <select id="countUsers" resultType="int">
+        SELECT COUNT(*)
+        FROM users 
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%') 
+                     OR nickname LIKE CONCAT('%', #{keyword}, '%')
+                     OR email LIKE CONCAT('%', #{keyword}, '%')
+                     OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="role != null and role != ''">
+                AND role = #{role}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <!-- 插入新用户 -->
+    <insert id="insertUser" parameterType="com.example.pojo.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, nickname, password, email, phone, avatar_url, role, status)
+        VALUES (#{username}, #{nickname}, #{password}, #{email}, #{phone}, #{avatarUrl}, #{role}, #{status})
+    </insert>
+
+    <!-- 更新用户信息 -->
+    <update id="updateUser">
+        UPDATE users 
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="avatarUrl != null">avatar_url = #{avatarUrl},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新用户状态 -->
+    <update id="updateUserStatus">
+        UPDATE users 
+        SET status = #{status}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新用户角色 -->
+    <update id="updateUserRole">
+        UPDATE users 
+        SET role = #{role}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 重置用户密码 -->
+    <update id="resetUserPassword">
+        UPDATE users 
+        SET password = #{password}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除用户 -->
+    <delete id="deleteUser">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+    <!-- 更新最后登录信息 -->
+    <update id="updateLastLoginInfo">
+        UPDATE users 
+        SET last_login_time = #{lastLoginTime}, 
+            last_login_ip = #{lastLoginIp},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>
