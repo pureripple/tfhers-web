@@ -106,4 +106,19 @@ public interface UserService {
      * @return 是否成功
      */
     boolean deleteUser(Long id);
+
+    /**
+     * 绑定 Steam 账号（只保存 SteamID，昵称/头像可后续再同步）
+     * @param userId 站内用户ID
+     * @param steamId Steam 64 位 ID 字符串
+     * @return 结果
+     */
+    results bindSteam(Long userId, String steamId);
+
+    /**
+     * 解除 Steam 绑定
+     * @param userId 站内用户ID
+     * @return 结果
+     */
+    results unbindSteam(Long userId);
 }

@@ -35,15 +35,12 @@ public class ProfileController {
     public results getProfileInfo(HttpServletRequest request) {
         try {
             Long userId = (Long) request.getAttribute("userId");
-            String username = (String) request.getAttribute("username");
-            System.out.println("ProfileController - userId: " + userId + ", username: " + username);
-            
+
             if (userId == null) {
                 return results.error("用户未登录");
             }
             
             AdminUser adminUser = adminUserService.findById(userId);
-            System.out.println("ProfileController - 查询到的用户: " + adminUser);
             if (adminUser == null) {
                 return results.error("用户不存在");
             }
@@ -217,9 +214,7 @@ public class ProfileController {
             
             // 设置新密码
             adminUser.setPassword(changePasswordRequest.getNewPassword());
-            System.out.println("ProfileController - 准备更新密码，用户ID: " + userId + ", 新密码: " + changePasswordRequest.getNewPassword());
             boolean success = adminUserService.updateProfile(adminUser);
-            System.out.println("ProfileController - 密码更新结果: " + success);
             
             if (success) {
                 return results.success("密码修改成功", null);

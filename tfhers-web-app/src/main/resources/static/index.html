@@ -4,20 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>蹄斗族群助手 - 网页版</title>
-    <!-- CSS样式文件 -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- 本地字体与图标，避免外网 CDN 拖慢首屏 -->
+    <link href="/css/fonts-local.css" rel="stylesheet">
+    <link href="/vendor/font-awesome/css/all.min.css" rel="stylesheet">
     <link href="/css/main.css" rel="stylesheet">
     <link href="/css/character-detail.css" rel="stylesheet">
     <link href="/css/combo-detail.css" rel="stylesheet">
     <link href="/css/responsive.css" rel="stylesheet">
+    <link href="/css/ai-chat.css" rel="stylesheet">
 </head>
 <body>
     <!-- 导航栏 -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
-                <i class="fas fa-fist-raised"></i>
-                <span>蹄斗助手</span>
+                <img src="/images/logo.png" alt="蹄斗助手" class="nav-brand-logo" width="40" height="40">
+                <span class="nav-brand-text">蹄斗助手</span>
             </div>
             <div class="nav-menu" id="navMenu">
                 <a href="#news" class="nav-link active" data-page="news">
@@ -25,12 +27,16 @@
                     <span>资讯</span>
                 </a>
                 <a href="#characters" class="nav-link" data-page="characters">
-                    <i class="fas fa-users"></i>
-                    <span>角色教程</span>
+                    <i class="fas fa-book-open"></i>
+                    <span>教程</span>
                 </a>
                 <a href="#my" class="nav-link" data-page="my">
                     <i class="fas fa-user"></i>
                     <span>我的</span>
+                </a>
+                <a href="#ai-chat" class="nav-link nav-link-ai" data-page="ai-chat">
+                    <i class="fas fa-robot"></i>
+                    <span>AI 助手</span>
                 </a>
             </div>
             <div class="nav-toggle" id="navToggle">
@@ -44,77 +50,83 @@
     <!-- 主内容区域 -->
     <main class="main-content">
         <!-- 资讯页面 -->
-        <section id="news" class="page active">
-            <div class="page-header">
-                <h1 class="page-title">最新资讯</h1>
-                <p class="page-subtitle">掌握游戏动态，提升战斗技巧</p>
+        <section id="news" class="page page-news active">
+            <div class="hot-news-hero" id="hotNewsHero">
+                <div class="news-page-wrap hot-news-hero-inner">
+                    <div class="hot-news-split">
+                        <div class="hot-news-split-main">
+                            <h2 class="hot-news-block-title">热门资讯</h2>
+                            <div class="hot-news-hero-body">
+                                <div class="hot-news-wrap" id="hotNewsWrap" style="display:none;">
+                                    <div class="hot-news-carousel">
+                                        <button type="button" class="hot-news-nav hot-news-nav-prev" id="hotNewsPrev" aria-label="上一条" onclick="stepHotNews(-1)">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </button>
+                                        <div class="hot-news-slider-outer">
+                                            <div class="hot-news-slider" id="hotNewsSlider"></div>
+                                        </div>
+                                        <button type="button" class="hot-news-nav hot-news-nav-next" id="hotNewsNext" aria-label="下一条" onclick="stepHotNews(1)">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    <div class="hot-news-dots" id="hotNewsDots"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hot-news-split-divider" role="separator" aria-hidden="true"></div>
+                        <aside class="hot-news-split-pinned" aria-label="置顶资讯">
+                            <h2 class="hot-news-block-title hot-news-block-title--pinned">
+                                <i class="fas fa-thumbtack" aria-hidden="true"></i> 置顶资讯
+                            </h2>
+                            <div class="pinned-news-list" id="pinnedNewsList"></div>
+                        </aside>
+                    </div>
+                </div>
             </div>
-            <div class="articles-grid" id="articlesGrid">
-                <!-- 文章卡片将通过JavaScript动态加载 -->
+            <div class="news-page-wrap news-latest-wrap">
+                <div class="news-latest-bar">
+                    <h2 class="news-latest-title">最新资讯</h2>
+                    <div class="news-latest-search">
+                        <label class="hot-news-sr-only" for="articleSearchInput">搜索资讯</label>
+                        <div class="hot-news-search-wrap">
+                            <i class="fas fa-search hot-news-search-icon" aria-hidden="true"></i>
+                            <input type="search" id="articleSearchInput" class="hot-news-search-input" placeholder="搜索标题、摘要、作者" autocomplete="off" enterkeyhint="search">
+                            <button type="button" class="hot-news-search-clear" id="articleSearchClear" aria-label="清除搜索" style="display:none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="articles-grid" id="articlesGrid">
+                    <!-- 文章卡片将通过JavaScript动态加载 -->
+                </div>
             </div>
         </section>
 
-        <!-- 角色教程页面 -->
+        <!-- 教程（角色）页面 -->
         <section id="characters" class="page">
-            <div class="page-header">
-                <h1 class="page-title">角色教程</h1>
-                <p class="page-subtitle">选择角色开始学习，掌握每个角色的独特技能</p>
-            </div>
             <div class="characters-grid" id="charactersGrid">
                 <!-- 角色卡片将通过JavaScript动态加载 -->
-            </div>
-            
-            <!-- 官方教程区域 -->
-            <div class="tutorial-section">
-                <h2 class="section-title">官方教程</h2>
-                <div class="tutorial-grid">
-                    <div class="tutorial-card">
-                        <div class="tutorial-icon">
-                            <i class="fas fa-play-circle"></i>
-                        </div>
-                        <h3 class="tutorial-title">新手入门指南</h3>
-                        <p class="tutorial-desc">从基础操作到高级技巧，快速上手游戏</p>
-                    </div>
-                    <div class="tutorial-card">
-                        <div class="tutorial-icon">
-                            <i class="fas fa-link"></i>
-                        </div>
-                        <h3 class="tutorial-title">连招系统详解</h3>
-                        <p class="tutorial-desc">学习连招的构成原理和实用技巧</p>
-                    </div>
-                    <div class="tutorial-card">
-                        <div class="tutorial-icon">
-                            <i class="fas fa-trophy"></i>
-                        </div>
-                        <h3 class="tutorial-title">竞技策略</h3>
-                        <p class="tutorial-desc">掌握对战策略，提升竞技水平</p>
-                    </div>
-                </div>
             </div>
         </section>
 
         <!-- 我的页面 -->
         <section id="my" class="page">
-            <div class="page-header">
-                <h1 class="page-title">我的</h1>
-            </div>
-            
             <!-- 未登录状态 -->
             <div id="loginSection" class="login-section">
-                <div class="login-card">
-                    <div class="login-icon">
-                        <i class="fas fa-user-circle"></i>
+                <div class="login-card login-card--quote">
+                    <div class="login-quote">
+                        <div class="login-quote-text">Do not let the defeat be the end.</div>
+                        <div class="login-quote-meta">—— Tianhuo</div>
                     </div>
-                    <h3 class="login-title">欢迎使用蹄斗助手</h3>
-                    <p class="login-subtitle">登录以同步个人数据和发布内容</p>
-                    <div class="login-buttons">
-                        <button class="btn btn-primary" onclick="showLoginModal()">
+                    <div class="login-buttons login-buttons--glass">
+                        <button class="btn btn-glass" onclick="showLoginModal()">
                             <i class="fas fa-sign-in-alt"></i>
-                            立即登录
+                            登录
                         </button>
-                        <button class="btn btn-outline" onclick="showRegisterModal()">
+                        <button class="btn btn-glass" onclick="showRegisterModal()">
                             <i class="fas fa-user-plus"></i>
-                            注册账号
+                            注册
                         </button>
                     </div>
                 </div>
@@ -122,58 +134,217 @@
 
             <!-- 已登录状态 -->
             <div id="userSection" class="user-section" style="display: none;">
-                <div class="profile-card">
-                    <div class="profile-avatar">
-                        <img id="userAvatar" src="/images/default-avatar.png" alt="用户头像">
-                    </div>
-                    <div class="profile-info">
-                        <h3 id="userName" class="profile-name">用户名</h3>
-                        <p class="profile-subtitle">欢迎回来</p>
-                    </div>
-                    <button class="btn btn-outline" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i>
-                        退出
-                    </button>
-                </div>
-
-                <div class="action-section">
-                    <h3 class="section-title">我的创作</h3>
-                    <div class="action-grid">
-                        <div class="action-card" onclick="showCreateArticle()">
-                            <div class="action-icon">
-                                <i class="fas fa-edit"></i>
+                <div class="my-layout">
+                    <div class="my-left-column">
+                        <div class="profile-card profile-card-main">
+                            <div class="profile-top-actions">
+                                <button class="profile-settings-btn" type="button" title="设置" onclick="showProfileSettings()">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <button class="profile-logout-btn" type="button" title="退出登录" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </button>
                             </div>
-                            <h4 class="action-title">发布资讯</h4>
-                            <p class="action-desc">分享游戏心得和攻略</p>
-                        </div>
-                        <div class="action-card" onclick="showCreateCombo()">
-                            <div class="action-icon">
-                                <i class="fas fa-link"></i>
+                            <div class="profile-avatar">
+                                <img id="userAvatar" src="/images/default-avatar.png" alt="用户头像">
                             </div>
-                            <h4 class="action-title">投稿连段</h4>
-                            <p class="action-desc">分享你的连招技巧</p>
+                            <div class="profile-info">
+                                <h3 id="userName" class="profile-name">用户名</h3>
+                                <p id="userSignature" class="profile-signature">这个人很懒，还没有个性签名</p>
+                            </div>
+                        </div>
+
+                        <div class="steam-box" id="steamBox">
+                            <div class="steam-box-header">
+                                <div class="steam-box-title">
+                                    <i class="fab fa-steam-symbol"></i>
+                                    <span>Steam 档案</span>
+                                </div>
+                                <div class="steam-box-actions">
+                                    <button class="steam-refresh-btn" id="refreshSteamPlaytimeButton" type="button" title="刷新">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                    <button class="steam-icon-btn" type="button" onclick="unbindSteam()" id="unbindSteamButton" title="解除绑定" style="display:none;">
+                                        <i class="fas fa-unlink"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="steam-box-body">
+                                <div id="steamInfo" class="profile-steam-info" style="margin-top:8px;"></div>
+                                <div id="steamAchievements" class="steam-achievements" style="margin-top:12px;"></div>
+                                <button class="btn btn-primary" type="button" onclick="bindSteam()" id="bindSteamButton" style="margin-top:10px;">
+                                    <i class="fab fa-steam-symbol"></i>
+                                    绑定 Steam
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="action-section">
+                            <h3 class="section-title">我的创作</h3>
+                            <div class="action-grid">
+                                <div class="action-card" onclick="showCreateArticle()">
+                                    <div class="action-icon">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <h4 class="action-title">发布资讯</h4>
+                                    <p class="action-desc">分享游戏心得和攻略</p>
+                                </div>
+                                <div class="action-card" onclick="showCreateCombo()">
+                                    <div class="action-icon">
+                                        <i class="fas fa-link"></i>
+                                    </div>
+                                    <h4 class="action-title">投稿连段</h4>
+                                    <p class="action-desc">分享你的连招技巧</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="settings-section">
-                    <h3 class="section-title">设置</h3>
-                    <div class="settings-list">
-                        <div class="setting-item">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>账号与安全</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </div>
-                        <div class="setting-item">
-                            <i class="fas fa-info-circle"></i>
-                            <span>关于</span>
-                            <i class="fas fa-chevron-right"></i>
+                    <div class="my-right-column">
+                        <div class="my-stats-card">
+                            <h3 class="section-title">个人统计</h3>
+                            <div class="my-stats-grid">
+                                <div class="my-stat-item">
+                                    <span class="my-stat-label">发布资讯</span>
+                                    <strong class="my-stat-value" id="myArticleCount">0</strong>
+                                </div>
+                                <div class="my-stat-item">
+                                    <span class="my-stat-label">投稿连段</span>
+                                    <strong class="my-stat-value" id="myComboCount">0</strong>
+                                </div>
+                                <div class="my-stat-item">
+                                    <span class="my-stat-label">Steam 成就</span>
+                                    <strong class="my-stat-value" id="myAchievementCount">0/0</strong>
+                                </div>
+                                <div class="my-stat-item">
+                                    <span class="my-stat-label">总游戏时长</span>
+                                    <strong class="my-stat-value" id="myPlaytimeHours">0h</strong>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- AI 助手（单页 #ai-chat，与资讯/教程/我的同级） -->
+        <section id="ai-chat" class="page page-ai-chat">
+            <div class="ai-chat-layout grok-layout">
+                <div class="grok-chat-panel">
+                    <header class="grok-head">
+                        <div class="grok-head-left">
+                            <span class="grok-model-badge">蹄斗 AI</span>
+                            <span class="status-indicator grok-status-dot" id="aiStatus">
+                                <i class="fas fa-circle"></i>
+                                <span class="grok-status-text">检测中…</span>
+                            </span>
+                        </div>
+                        <div class="grok-head-actions">
+                            <div class="chat-history-nav grok-history-wrap">
+                                <button type="button" class="grok-icon-btn history-toggle" id="historyToggle" title="历史记录">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                <div class="history-dropdown grok-history-dropdown" id="historyDropdown">
+                                    <div class="history-header">
+                                        <h4>最近对话</h4>
+                                        <button type="button" class="clear-history-btn" id="clearHistoryBtn" title="清空">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="history-list" id="historyList"></div>
+                                </div>
+                            </div>
+                            <button type="button" class="grok-icon-btn" id="clearChatBtn" title="清空当前对话">
+                                <i class="fas fa-broom"></i>
+                            </button>
+                            <button type="button" class="grok-icon-btn" id="exportChatBtn" title="导出记录">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </header>
+
+                    <div class="grok-thread">
+                        <div class="messages-container grok-messages" id="messagesContainer">
+                            <div class="message ai-message grok-msg grok-msg--assistant">
+                                <div class="message-avatar grok-msg-avatar grok-msg-avatar--img">
+                                    <img src="/images/CSel3_LargePortOleander.png" alt="" onerror="this.onerror=null;this.src='/images/default-avatar.png'">
+                                </div>
+                                <div class="message-content grok-msg-body">
+                                    <div class="message-text">
+                                        你好，我是蹄斗族群 AI 助手。可以问我角色、技能、攻略等问题。
+                                    </div>
+                                    <div class="message-time grok-msg-time">刚刚</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grok-composer">
+                        <div class="grok-composer-field">
+                            <textarea
+                                id="messageInput"
+                                class="grok-textarea"
+                                placeholder="询问任何问题…"
+                                rows="1"
+                                maxlength="1000"
+                            ></textarea>
+                            <button type="button" class="grok-send-btn" id="sendBtn" disabled title="发送">
+                                <i class="fas fa-arrow-up"></i>
+                            </button>
+                        </div>
+                        <div class="grok-composer-meta">
+                            <span class="char-count grok-char-count" id="charCount">0 / 1000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="aiChatLoadingIndicator" class="loading-indicator">
+                <div class="spinner"></div>
+                <p>AI 正在思考中…</p>
+            </div>
+
+            <div id="messageToast" class="message-toast">
+                <i class="fas fa-check-circle"></i>
+                <span id="messageText">操作成功</span>
+            </div>
+        </section>
+
+        <!-- 在 main.js 执行前按 URL 同步当前板块，减轻首屏闪动 -->
+        <script>
+        (function () {
+            function tabFromUrl() {
+                try {
+                    var q = new URLSearchParams(location.search || '').get('tab');
+                    if (q === 'news' || q === 'characters' || q === 'my' || q === 'ai-chat') return q;
+                } catch (e) {}
+                var h = (location.hash || '').replace(/^#/, '');
+                if (h === 'news' || h === 'characters' || h === 'my' || h === 'ai-chat') return h;
+                return null;
+            }
+            var t = tabFromUrl();
+            if (!t) return;
+            document.querySelectorAll('main.main-content .page').forEach(function (p) { p.classList.remove('active'); });
+            var el = document.getElementById(t);
+            if (el) el.classList.add('active');
+            document.querySelectorAll('#navMenu .nav-link[data-page]').forEach(function (a) {
+                a.classList.remove('active');
+                if (a.getAttribute('data-page') === t) a.classList.add('active');
+            });
+            if (t === 'ai-chat') document.body.classList.add('ai-chat-page');
+        })();
+        </script>
     </main>
+
+    <!-- AI 登录门：放在 main 外，避免 body.ai-chat-page--gated 对 .main-content 的 blur 把弹层一起糊掉 -->
+    <div id="aiChatLoginGate" class="ai-chat-login-gate" hidden aria-hidden="true">
+        <div class="ai-chat-login-gate__panel" role="dialog" aria-modal="true" aria-labelledby="aiChatLoginGateTitle">
+            <div class="ai-chat-login-gate__icon"><i class="fas fa-lock"></i></div>
+            <h2 id="aiChatLoginGateTitle" class="ai-chat-login-gate__title">请先登录</h2>
+            <p class="ai-chat-login-gate__desc">登录后即可使用 AI 助手</p>
+            <a href="#my" class="ai-chat-login-gate__btn">去登录</a>
+        </div>
+    </div>
 
     <!-- 登录模态框 -->
     <div id="loginModal" class="modal">
@@ -256,11 +427,11 @@
         </div>
     </div>
 
-    <!-- 角色详情模态框 -->
-    <div id="characterModal" class="modal">
-        <div class="modal-content modal-large">
+    <!-- 角色教程模态框：左栏（信息+背景+出招表）、右栏（玩家连段），各自滚动 -->
+    <div id="characterModal" class="modal character-tutorial-modal" role="dialog" aria-modal="true" aria-label="角色教程">
+        <div class="modal-content modal-large character-tutorial-modal-content">
             <div class="modal-header">
-                <h3 id="characterName">角色详情</h3>
+                <h3 id="characterName" hidden>角色教程</h3>
                 <button class="modal-close" onclick="closeCharacterModal()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -288,15 +459,133 @@
 
     <!-- 文章详情模态框 -->
     <div id="articleModal" class="modal">
-        <div class="modal-content modal-large">
+        <div class="modal-content modal-large article-modal-content">
             <div class="modal-header">
                 <h3 id="articleTitle">文章详情</h3>
                 <button class="modal-close" onclick="closeArticleModal()">
                     <i class="fas fa-times"></i>
                 </button>
+                <div class="article-header-actions">
+                    <button type="button" class="article-header-action-btn" id="articleHeaderLikeBtn" title="点赞">
+                        <i class="far fa-heart"></i>
+                        <span class="article-header-like-count" id="articleHeaderLikeCount">0</span>
+                    </button>
+                    <button type="button" class="article-header-action-btn" id="articleHeaderReportBtn" title="举报">
+                        <i class="fas fa-exclamation"></i>
+                    </button>
+                </div>
             </div>
-            <div class="modal-body" id="articleContent">
-                <!-- 文章详情内容将通过JavaScript动态加载 -->
+            <div class="modal-body article-modal-body" id="articleContent">
+                <!-- 文章详情：左侧评论 + 右侧正文，由 JavaScript 填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户发布连段模态框 -->
+    <div id="createComboModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>发布连段</h3>
+                <button class="modal-close" onclick="closeCreateComboModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createComboForm">
+                    <input type="hidden" id="createComboCharacterId" value="">
+                    <div class="form-group">
+                        <label for="createComboCharacterSelect">角色 *</label>
+                        <select id="createComboCharacterSelect" style="width:100%;padding:12px 16px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary);">
+                            <option value="">请选择角色</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="createComboTitle">连段名称 *</label>
+                        <input type="text" id="createComboTitle" required placeholder="例如：基础连段 A">
+                    </div>
+                    <div class="form-group">
+                        <label for="createComboDamage">伤害（可选）</label>
+                        <input type="number" id="createComboDamage" min="0" placeholder="总伤害数值">
+                    </div>
+                    <div class="form-group">
+                        <label for="createComboDescription">连段说明（可选）</label>
+                        <textarea id="createComboDescription" rows="3" placeholder="简要说明连段用法或要点" style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary);"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>连段文件（可选，仅 .tfhc）</label>
+                        <input type="file" id="createComboFileInput" accept=".tfhc" style="display:none;">
+                        <button type="button" class="btn btn-outline btn-sm" id="createComboFileBtn">选择 .tfhc 连段文件</button>
+                        <span id="createComboFileName" class="text-muted" style="margin-left:8px;"></span>
+                        <input type="hidden" id="createComboFileUrl" value="">
+                    </div>
+                    <div class="form-group">
+                        <label>连段视频 *</label>
+                        <input type="file" id="createComboVideoInput" accept="video/*" style="display:none;">
+                        <button type="button" class="btn btn-outline btn-sm" id="createComboVideoBtn">选择连段视频</button>
+                        <span id="createComboVideoName" class="text-muted" style="margin-left:8px;"></span>
+                        <input type="hidden" id="createComboVideoUrl" value="">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeCreateComboModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitCreateCombo()">
+                    <i class="fas fa-paper-plane"></i> 提交连段
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户发布资讯模态框 -->
+    <div id="createArticleModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>发布资讯</h3>
+                <button class="modal-close" onclick="closeCreateArticleModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createArticleForm">
+                    <div class="form-group">
+                        <label for="createArticleTitle">标题 *</label>
+                        <input type="text" id="createArticleTitle" name="title" required placeholder="请输入资讯标题">
+                    </div>
+                    <div class="form-group">
+                        <label for="createArticleSummary">摘要</label>
+                        <input type="text" id="createArticleSummary" name="summary" placeholder="一句话概括资讯内容（可选）">
+                    </div>
+                    <div class="form-group">
+                        <label>封面（可选）</label>
+                        <div id="userArticleCoverArea" style="margin-bottom:8px;">
+                            <input type="file" id="userArticleCoverImage" accept="image/*" style="display:none;">
+                            <button type="button" class="btn btn-outline btn-sm" id="userArticleCoverBtn">
+                                <i class="fas fa-image"></i> 选择封面
+                            </button>
+                        </div>
+                        <div id="userArticleCoverPreview" style="display:none; margin-top:8px;">
+                            <img id="userArticleCoverPreviewImg" src="" alt="封面预览" style="max-width:200px; max-height:120px; border-radius:8px; border:1px solid var(--border-color);">
+                            <button type="button" class="btn btn-outline btn-sm" id="userArticleCoverRemove" style="margin-left:8px; vertical-align:top;">移除封面</button>
+                        </div>
+                        <input type="hidden" id="userArticleCoverUrl" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="createArticleContent">内容 *</label>
+                        <textarea id="createArticleContent" name="content" rows="8" style="width:100%;padding:12px 16px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary);" placeholder="请输入资讯正文内容"></textarea>
+                        <button type="button" class="btn btn-outline btn-sm" id="insertUserArticleImageBtn" style="margin-top: 8px;">
+                            <i class="fas fa-image"></i>
+                            在正文插入图片
+                        </button>
+                        <input type="file" id="userArticleContentImageInput" accept="image/*" style="display:none;">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeCreateArticleModal()">取消</button>
+                <button class="btn btn-primary" onclick="submitCreateArticle()">
+                    <i class="fas fa-paper-plane"></i>
+                    发布
+                </button>
             </div>
         </div>
     </div>
@@ -307,6 +596,7 @@
         <p>加载中...</p>
     </div>
 
+    <script src="/js/ai-chat.js"></script>
     <script src="/js/main.js"></script>
 </body>
 </html>

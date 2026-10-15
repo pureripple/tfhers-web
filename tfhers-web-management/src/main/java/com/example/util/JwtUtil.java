@@ -23,7 +23,7 @@ public class JwtUtil {
     private String secret;
     
     // JWT过期时间（从配置文件读取）
-    @Value("${jwt.expiration}")
+    @Value("3600000")
     private long expirationTime;
 
     //getter方法
@@ -75,12 +75,22 @@ public class JwtUtil {
     }
     
     /**
-     * 从Token中获取用户名
+     * 从Token中获取用户名（优先 subject，其次 claim username）
      * @param token JWT Token
      * @return 用户名
      */
     public String getUsernameFromToken(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
+        try {
+            Claims claims = getAllClaimsFromToken(token);
+            String sub = claims.getSubject();
+            if (sub != null && !sub.isBlank()) {
+                return sub.trim();
+            }
+            Object un = claims.get("username");
+            return un != null ? un.toString().trim() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     /**
@@ -90,7 +100,37 @@ public class JwtUtil {
      */
     public Long getUserIdFromToken(String token) {
         Claims claims = getAllClaimsFromToken(token);
-        return claims.get("userId", Long.class);
+        return parseUserIdClaim(claims.get("userId"));
+    }
+
+    /**
+     * JWT 里数字 claim 可能被解析成 Integer/Long/Double/String，直接 get(..., Long.class) 常为 null。
+     */
+    public static Long parseUserIdClaim(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (raw instanceof Long) {
+            return (Long) raw;
+        }
+        if (raw instanceof Integer) {
+            return ((Integer) raw).longValue();
+        }
+        if (raw instanceof Number) {
+            return ((Number) raw).longValue();
+        }
+        if (raw instanceof String) {
+            String s = ((String) raw).trim();
+            if (s.isEmpty()) {
+                return null;
+            }
+            try {
+                return Long.parseLong(s);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
     
     /**
@@ -134,6 +174,9 @@ public class JwtUtil {
      */
     public Boolean isTokenExpired(String token) {
         final Date expiration = getExpirationDateFromToken(token);
+        if (expiration == null) {
+            return true;
+        }
         return expiration.before(new Date());
     }
     

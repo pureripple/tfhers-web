@@ -10,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,17 @@ public class UserServiceImpl implements UserService {
             // 检查用户状态
             if (user.getStatus() != 1) {
                 return new results(400, "账户已被禁用", null);
+            }
+
+            // 更新最后登录时间（和可选的登录IP，这里先不处理IP）
+            LocalDateTime now = LocalDateTime.now();
+            try {
+                userMapper.updateLastLoginInfo(user.getId(), now, null);
+                // 同步更新返回给前端的对象，避免本次会话看到还是null
+                user.setLastLoginTime(now);
+            } catch (Exception e) {
+                // 这里不影响登录主流程，只打印日志即可（如果后续加日志系统可以记录下来）
+                e.printStackTrace();
             }
 
             // 清除密码后返回
@@ -291,6 +303,47 @@ public class UserServiceImpl implements UserService {
             return result > 0;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    @Override
+    public results bindSteam(Long userId, String steamId) {
+        try {
+            if (userId == null || steamId == null || steamId.isEmpty()) {
+                return new results(400, "参数无效", null);
+            }
+            User user = new User();
+            user.setId(userId);
+            try {
+                user.setSteamId(Long.parseLong(steamId));
+            } catch (NumberFormatException e) {
+                return new results(400, "无效的 Steam ID", null);
+            }
+            int updated = userMapper.updateUser(user);
+            if (updated > 0) {
+                return new results(200, "绑定 Steam 成功", null);
+            } else {
+                return new results(500, "绑定 Steam 失败", null);
+            }
+        } catch (Exception e) {
+            return new results(500, "绑定 Steam 失败: " + e.getMessage(), null);
+        }
+    }
+
+    @Override
+    public results unbindSteam(Long userId) {
+        try {
+            if (userId == null) {
+                return new results(400, "参数无效", null);
+            }
+            int updated = userMapper.clearSteamBinding(userId);
+            if (updated > 0) {
+                return new results(200, "已解除 Steam 绑定", null);
+            } else {
+                return new results(500, "解除 Steam 绑定失败", null);
+            }
+        } catch (Exception e) {
+            return new results(500, "解除 Steam 绑定失败: " + e.getMessage(), null);
         }
     }
 }

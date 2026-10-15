@@ -23,11 +23,14 @@ public class LoginInterceptor implements HandlerInterceptor {
     
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // CORS 预检请求（OPTIONS）必须放行，否则浏览器会报 CORS 错误
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
         // 获取请求路径
         String requestPath = request.getRequestURI();
-        
         // 排除不需要登录验证的路径
-        if (isExcludedPath(requestPath)) {
+        if (isExcludedPath(requestPath, request.getMethod())) {
             return true;
         }
         
@@ -54,6 +57,11 @@ public class LoginInterceptor implements HandlerInterceptor {
             String username = jwtUtil.getUsernameFromToken(token);
             
             System.out.println("LoginInterceptor - userId: " + userId + ", username: " + username);
+
+            if (userId == null) {
+                sendUnauthorizedResponse(response, "令牌中缺少用户ID，请重新登录");
+                return false;
+            }
             
             request.setAttribute("userId", userId);
             request.setAttribute("username", username);
@@ -68,10 +76,15 @@ public class LoginInterceptor implements HandlerInterceptor {
     
     /**
      * 检查是否为排除路径
-     * @param path 请求路径
-     * @return 是否排除
+     * @param path   请求路径
+     * @param method HTTP 方法
+     * @return 是否排除（true = 不校验 Token）
      */
-    private boolean isExcludedPath(String path) {
+    private boolean isExcludedPath(String path, String method) {
+        String m = method != null ? method.toUpperCase() : "";
+        // 预检请求直接放行
+        // 实际上这里拿不到方法类型（需要在 preHandle 里判断），
+        // 但我们在 WebConfig 里已经允许 OPTIONS，这里只按路径控制。
         // 管理员登录接口
         if (path.equals("/api/admin/login")) {
             return true;
@@ -81,9 +94,51 @@ public class LoginInterceptor implements HandlerInterceptor {
         if (path.equals("/api/user/register") || path.equals("/api/user/login")) {
             return true;
         }
+        // Steam 绑定回调不走登录拦截（通过回调里的 token 参数验证）
+        if (path.equals("/api/user/steam/callback")) {
+            return true;
+        }
         
         // AI对话接口（不需要登录验证）
         if (path.startsWith("/api/ai/")) {
+            return true;
+        }
+
+        // 前台角色教程接口（不需要登录验证）
+        if (path.startsWith("/api/characters")) {
+            return true;
+        }
+
+        // 资讯接口：仅 GET 公开列表/详情/评论列表；发布/修改/删除及点赞评论举报需登录
+        if (path.startsWith("/api/articles")) {
+            if ("POST".equals(m) && "/api/articles".equals(path)) {
+                return false;
+            }
+            if ("PUT".equals(m) && "/api/articles".equals(path)) {
+                return false;
+            }
+            if ("PATCH".equals(m) && path.matches("^/api/articles/\\d+/pinned$")) {
+                return false;
+            }
+            if ("DELETE".equals(m) && path.matches("^/api/articles/\\d+$")) {
+                return false;
+            }
+            if ("POST".equals(m) && path.matches("^/api/articles/\\d+/(like|comments|report)$")) {
+                return false;
+            }
+            return true;
+        }
+
+        // 前台/后台正文图片上传接口（允许跨域调用）
+        if (path.startsWith("/api/file/upload/article-content")) {
+            return true;
+        }
+        // 用户端发布资讯封面上传（允许跨域调用）
+        if (path.startsWith("/api/file/upload/article-cover")) {
+            return true;
+        }
+        // 用户端发布连段：连段文件、连段视频上传（允许跨域调用）
+        if (path.startsWith("/api/file/upload/combo-file") || path.startsWith("/api/file/upload/combo-video")) {
             return true;
         }
         
@@ -115,6 +170,8 @@ public class LoginInterceptor implements HandlerInterceptor {
         result.put("success", false);
         result.put("code", 401);
         result.put("message", message);
+        // 前台统一读 msg；避免 message 有值而 msg 为空
+        result.put("msg", message != null && !message.isBlank() ? message : "未授权，请先登录");
         result.put("data", null);
         
         ObjectMapper objectMapper = new ObjectMapper();

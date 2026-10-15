@@ -2,29 +2,38 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.mapper.articlesMapper">
 
-    <!-- 获取所有资讯 -->
+    <!-- 获取所有资讯（关联前台用户或管理员头像） -->
     <select id="selectAllArticles" resultType="com.example.pojo.articles">
-        SELECT id, title, content, cover_url, summary, author, view_count, created_at, updated_at
-        FROM articles
-        ORDER BY created_at DESC
+        SELECT a.id, a.title, a.content, a.cover_url, a.summary, a.author, a.author_id, a.author_admin_id, a.view_count, a.is_pinned, a.created_at, a.updated_at,
+               COALESCE(NULLIF(TRIM(u.avatar_url), ''), NULLIF(TRIM(au.avatar_url), '')) AS author_avatar_url
+        FROM articles a
+        LEFT JOIN users u ON a.author_id = u.id
+        LEFT JOIN admin_users au ON a.author_admin_id = au.id
+        ORDER BY a.is_pinned DESC, a.created_at DESC
     </select>
 
     <!-- 根据ID查询单篇文章 -->
     <select id="selectArticleById" parameterType="long" resultType="com.example.pojo.articles">
-        SELECT id, title, content, cover_url, summary, author, view_count, created_at, updated_at
-        FROM articles
-        WHERE id = #{id}
+        SELECT a.id, a.title, a.content, a.cover_url, a.summary, a.author, a.author_id, a.author_admin_id, a.view_count, a.is_pinned, a.created_at, a.updated_at,
+               COALESCE(NULLIF(TRIM(u.avatar_url), ''), NULLIF(TRIM(au.avatar_url), '')) AS author_avatar_url
+        FROM articles a
+        LEFT JOIN users u ON a.author_id = u.id
+        LEFT JOIN admin_users au ON a.author_admin_id = au.id
+        WHERE a.id = #{id}
     </select>
 
     <!-- 搜索文章 -->
     <select id="searchArticles" parameterType="string" resultType="com.example.pojo.articles">
-        SELECT id, title, content, cover_url, summary, author, view_count, created_at, updated_at
-        FROM articles
-        WHERE title LIKE CONCAT('%', #{keyword}, '%')
-           OR content LIKE CONCAT('%', #{keyword}, '%')
-           OR author LIKE CONCAT('%', #{keyword}, '%')
-           OR summary LIKE CONCAT('%', #{keyword}, '%')
-        ORDER BY created_at DESC
+        SELECT a.id, a.title, a.content, a.cover_url, a.summary, a.author, a.author_id, a.author_admin_id, a.view_count, a.is_pinned, a.created_at, a.updated_at,
+               COALESCE(NULLIF(TRIM(u.avatar_url), ''), NULLIF(TRIM(au.avatar_url), '')) AS author_avatar_url
+        FROM articles a
+        LEFT JOIN users u ON a.author_id = u.id
+        LEFT JOIN admin_users au ON a.author_admin_id = au.id
+        WHERE a.title LIKE CONCAT('%', #{keyword}, '%')
+           OR a.content LIKE CONCAT('%', #{keyword}, '%')
+           OR a.author LIKE CONCAT('%', #{keyword}, '%')
+           OR a.summary LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY a.created_at DESC
     </select>
 
     <delete id="deleteArticleById" parameterType="long">
@@ -33,8 +42,8 @@
 
     <!-- 新增文章 -->
     <insert id="insertArticle" parameterType="com.example.pojo.articles" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO articles (title, content, cover_url, summary, author, view_count, created_at, updated_at)
-        VALUES (#{title}, #{content}, #{coverUrl}, #{summary}, #{author}, #{viewCount}, #{createdAt}, #{updatedAt})
+        INSERT INTO articles (title, content, cover_url, summary, author, author_id, author_admin_id, view_count, is_pinned, created_at, updated_at)
+        VALUES (#{title}, #{content}, #{coverUrl}, #{summary}, #{author}, #{authorId}, #{authorAdminId}, #{viewCount}, #{isPinned}, #{createdAt}, #{updatedAt})
     </insert>
 
     <!-- 更新文章 -->
@@ -45,9 +54,19 @@
             cover_url = #{coverUrl}, 
             summary = #{summary}, 
             author = #{author}, 
-            view_count = #{viewCount}, 
+            view_count = #{viewCount},
+            is_pinned = #{isPinned},
             updated_at = #{updatedAt}
         WHERE id = #{id}
+    </update>
+
+    <!-- 浏览量 +1（查看详情时调用） -->
+    <update id="increaseViewCount" parameterType="long">
+        UPDATE articles SET view_count = IFNULL(view_count, 0) + 1 WHERE id = #{id}
+    </update>
+
+    <update id="updateArticlePinned">
+        UPDATE articles SET is_pinned = #{pinned} WHERE id = #{id}
     </update>
 
 </mapper>

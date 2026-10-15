@@ -2,6 +2,7 @@ package com.example.util;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.PutObjectRequest;
+import com.aliyun.oss.model.ObjectMetadata;
 import com.example.config.OssConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -68,6 +69,55 @@ public class OssUtil {
         } catch (Exception e) {
             throw new IOException("文件上传失败：" + e.getMessage(), e);
         }
+    }
+
+    /**
+     * 上传输入流到 OSS（用于后端抓取外部资源转存）
+     * @param inputStream 输入流（调用方负责可读）
+     * @param objectKey OSS 对象键（包含目录与文件名）
+     * @param contentType 可选，例如 image/jpeg
+     * @return 文件访问URL
+     * @throws IOException IO异常
+     */
+    public String uploadStream(InputStream inputStream, String objectKey, String contentType) throws IOException {
+        if (inputStream == null) {
+            throw new IllegalArgumentException("inputStream 不能为空");
+        }
+        if (objectKey == null || objectKey.isBlank()) {
+            throw new IllegalArgumentException("objectKey 不能为空");
+        }
+        try {
+            ObjectMetadata meta = new ObjectMetadata();
+            if (contentType != null && !contentType.isBlank()) {
+                meta.setContentType(contentType);
+            }
+            PutObjectRequest req = new PutObjectRequest(
+                    ossConfig.getBucketName(),
+                    objectKey,
+                    inputStream,
+                    meta
+            );
+            ossClient.putObject(req);
+            return ossConfig.getDomain() + "/" + objectKey;
+        } catch (Exception e) {
+            throw new IOException("上传输入流失败：" + e.getMessage(), e);
+        }
+    }
+
+    /** 判断 OSS 对象是否存在 */
+    public boolean exists(String objectKey) {
+        try {
+            if (objectKey == null || objectKey.isBlank()) return false;
+            return ossClient.doesObjectExist(ossConfig.getBucketName(), objectKey);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** 将 objectKey 拼接为可访问 URL（不校验是否存在） */
+    public String buildUrl(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) return null;
+        return ossConfig.getDomain() + "/" + objectKey;
     }
     
     /**

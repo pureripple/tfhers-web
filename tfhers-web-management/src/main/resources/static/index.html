@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>蹄斗族群助手 - 后台管理系统</title>
+    <link rel="stylesheet" href="css/fonts-local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-    </style>
 </head>
 <body>
 
@@ -15,7 +14,7 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="logo">
-                <i class="fas fa-fist-raised"></i>
+                <img src="images/logo.png" alt="蹄斗助手" style="height: 34px; width: auto; display: block;">
                 <span>蹄斗助手</span>
             </div>
             <div class="admin-title">后台管理</div>
@@ -36,20 +35,50 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="user-management.html" class="nav-link">
+                    <a href="#user-combos" class="nav-link" data-page="user-combos">
+                        <i class="fas fa-user-check"></i>
+                        <span>用户连段审核</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#reports" class="nav-link" data-page="reports">
+                        <i class="fas fa-flag"></i>
+                        <span>举报审核</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#comment-review" class="nav-link" data-page="comment-review">
+                        <i class="fas fa-comments"></i>
+                        <span>评论审核</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#statistics" class="nav-link" data-page="statistics">
+                        <i class="fas fa-chart-line"></i>
+                        <span>数据统计</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#games" class="nav-link" data-page="games">
+                        <i class="fas fa-gamepad"></i>
+                        <span>游戏管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="ai-chat.html" class="nav-link">
+                        <i class="fas fa-robot"></i>
+                        <span>AI 助手</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="user-management.html?v=1" class="nav-link">
                         <i class="fas fa-user-cog"></i>
                         <span>用户管理</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#settings" class="nav-link" data-page="settings">
-                        <i class="fas fa-cog"></i>
-                        <span>系统设置</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="profile.html" class="nav-link">
-                        <i class="fas fa-user-cog"></i>
+                    <a href="profile.html?v=1" class="nav-link">
+                        <i class="fas fa-user-circle"></i>
                         <span>个人设置</span>
                     </a>
                 </li>
@@ -125,6 +154,7 @@
                                     <th>作者</th>
                                     <th>摘要</th>
                                     <th>浏览量</th>
+                                    <th>置顶</th>
                                     <th>创建时间</th>
                                     <th>操作</th>
                                 </tr>
@@ -142,23 +172,312 @@
                 </div>
             </section>
 
-            <!-- 其他页面占位 -->
+            <!-- 角色管理页面 -->
             <section id="characters" class="page">
-                <div class="empty-state">
-                    <i class="fas fa-users"></i>
-                    <h3>角色管理</h3>
-                    <p>功能开发中...</p>
+                <!-- 操作栏（角色无需搜索，只保留按钮） -->
+                <div class="action-bar">
+                    <div></div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="addCharacterBtn">
+                            <i class="fas fa-plus"></i>
+                            新增角色
+                        </button>
+                        <button class="btn btn-secondary" id="refreshCharactersBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 角色列表 -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">角色列表</h3>
+                        <div class="card-actions">
+                            <span class="article-count">共 <span id="characterCount">0</span> 个角色</span>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table" id="charactersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>角色</th>
+                                    <th>难度</th>
+                                    <th>简介</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="charactersTableBody">
+                                <!-- 角色数据将通过JavaScript动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
 
-            <section id="settings" class="page">
-                <div class="empty-state">
-                    <i class="fas fa-cog"></i>
-                    <h3>系统设置</h3>
-                    <p>功能开发中...</p>
+            <!-- 用户连段审核页面 -->
+            <section id="user-combos" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">用户连段审核</h3>
+                        <div class="card-actions">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <select id="userComboStatusFilter" class="select-input">
+                                    <option value="">全部</option>
+                                    <option value="pending" selected>待审核</option>
+                                    <option value="approved">已通过</option>
+                                    <option value="rejected">已拒绝</option>
+                                </select>
+                                <button class="btn btn-secondary" id="refreshUserCombosBtn">
+                                    <i class="fas fa-sync-alt"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="userCombosTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>角色</th>
+                                    <th>标题</th>
+                                    <th>伤害</th>
+                                    <th>说明</th>
+                                    <th>视频</th>
+                                    <th>连段文件</th>
+                                    <th>状态</th>
+                                    <th>提交时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userCombosTableBody">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
+
+            <!-- 举报审核页面 -->
+            <section id="reports" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">举报审核</h3>
+                        <div class="card-actions">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <select id="reportStatusFilter" class="select-input">
+                                    <option value="">全部状态</option>
+                                    <option value="0">待处理</option>
+                                    <option value="1">处理中</option>
+                                    <option value="2">已处理</option>
+                                    <option value="3">已驳回</option>
+                                </select>
+                                <select id="reportTargetTypeFilter" class="select-input">
+                                    <option value="">全部类型</option>
+                                    <option value="article">资讯</option>
+                                    <option value="comment">评论</option>
+                                    <option value="user">用户</option>
+                                    <option value="combo">连段</option>
+                                    <option value="other">其他</option>
+                                </select>
+                                <button class="btn btn-secondary" id="refreshReportsBtn">
+                                    <i class="fas fa-sync-alt"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="reportsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>举报人ID</th>
+                                    <th>类型</th>
+                                    <th>对象ID</th>
+                                    <th>原因</th>
+                                    <th>详细描述</th>
+                                    <th>状态</th>
+                                    <th>举报时间</th>
+                                    <th>管理员备注</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="reportsPagination"></div>
+                </div>
+            </section>
+
+            <!-- 评论审核（先审后发：用户评论默认待审核） -->
+            <section id="comment-review" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">评论审核</h3>
+                        <div class="card-actions">
+                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <select id="commentReviewStatusFilter" class="select-input">
+                                    <option value="0">待审核</option>
+                                    <option value="1">已通过</option>
+                                    <option value="2">已拒绝</option>
+                                    <option value="">全部</option>
+                                </select>
+                                <input type="number" id="commentReviewArticleId" class="select-input" placeholder="资讯 ID（可选）" style="width: 140px;" min="1" step="1">
+                                <button class="btn btn-secondary" id="refreshCommentReviewBtn">
+                                    <i class="fas fa-sync-alt"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="padding: 0 16px 8px; color: rgba(255,255,255,0.65); font-size: 13px; margin: 0;">
+                        说明：用户发表评论后默认进入待审核；阿里云未拦截的内容也会在此由管理员处理。
+                    </p>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>资讯ID</th>
+                                    <th>用户</th>
+                                    <th>内容</th>
+                                    <th>状态</th>
+                                    <th>提交时间</th>
+                                    <th>备注</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="commentReviewTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="commentReviewPagination"></div>
+                </div>
+            </section>
+
+            <!-- 数据统计（预留图表与接口对接） -->
+            <section id="statistics" class="page">
+                <div class="action-bar">
+                    <div>
+                        <p class="stats-page-desc">汇总平台运营数据：内容量与待办对比、Steam 时长分布等；可按业务继续扩展趋势与占比图。</p>
+                        <p class="stats-page-meta">上次刷新：<span id="statisticsLastUpdated">—</span></p>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-secondary" id="refreshStatisticsBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-kpi-grid">
+                    <div class="stat-kpi-card">
+                        <div class="stat-kpi-label">资讯总数</div>
+                        <div class="stat-kpi-value" id="statKpiArticles">—</div>
+                    </div>
+                    <div class="stat-kpi-card">
+                        <div class="stat-kpi-label">用户连段（待审）</div>
+                        <div class="stat-kpi-value" id="statKpiCombosPending">—</div>
+                    </div>
+                    <div class="stat-kpi-card">
+                        <div class="stat-kpi-label">待处理举报</div>
+                        <div class="stat-kpi-value" id="statKpiReportsOpen">—</div>
+                    </div>
+                    <div class="stat-kpi-card">
+                        <div class="stat-kpi-label">待审核评论</div>
+                        <div class="stat-kpi-value" id="statKpiCommentsPending">—</div>
+                    </div>
+                </div>
+
+                <div class="stats-charts-row stats-charts-row--full">
+                    <div class="content-card stat-chart-card">
+                        <div class="card-header">
+                            <h3 class="card-title">内容量与待办对比</h3>
+                            <span class="card-hint">与上方 KPI 同源，便于一眼对比量级</span>
+                        </div>
+                        <div id="overviewKpiBarChart" class="stat-chart-echarts stat-chart-echarts--compact"></div>
+                    </div>
+                </div>
+
+                <div class="stats-charts-row">
+                    <div class="content-card stat-chart-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Steam 游戏时长 Top 10</h3>
+                            <span class="card-hint">已绑定 Steam 且有缓存时长的用户</span>
+                        </div>
+                        <div id="steamPlaytimeTop10Chart" class="stat-chart-echarts"></div>
+                    </div>
+                    <div class="content-card stat-chart-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Steam 时长人数分布</h3>
+                            <span class="card-hint">0–2000 小时（每 200h 一档）+ ≥2000h</span>
+                        </div>
+                        <div id="steamPlaytimeHistogramChart" class="stat-chart-echarts"></div>
+                    </div>
+                </div>
+
+                <div class="content-card stat-chart-card" style="margin-top: 16px;">
+                    <div class="card-header">
+                        <h3 class="card-title">本站 Steam 成就解锁率分布</h3>
+                        <span class="card-hint">直方图：按本站解锁率 10% 一档统计成就个数（当前 steam.app-id）</span>
+                    </div>
+                    <p id="siteAchievementStatsMeta" style="padding: 0 16px 8px; color: rgba(255,255,255,0.65); font-size: 13px; margin: 0;">—</p>
+                    <div id="siteAchievementUnlockHistogramChart" class="stat-chart-echarts"></div>
+                    <p style="padding: 8px 16px 4px; color: rgba(255,255,255,0.55); font-size: 12px; margin: 0;">成就明细（按解锁率从低到高）</p>
+                    <div class="table-container" style="max-height: 420px; overflow: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>成就名称</th>
+                                    <th>ApiName</th>
+                                    <th>解锁人数</th>
+                                    <th>本站解锁率</th>
+                                </tr>
+                            </thead>
+                            <tbody id="siteAchievementStatsBody">
+                                <tr><td colspan="4" style="color: rgba(255,255,255,0.5);">加载中…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 游戏管理 -->
+            <section id="games" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">游戏管理</h3>
+                        <div class="card-actions">
+                            <button class="btn btn-primary" id="syncSteamAchievementSchemaBtn">
+                                <i class="fas fa-cloud-download-alt"></i>
+                                同步 Steam 全量成就（转存 OSS）
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding: 16px;">
+                        <p style="color: rgba(255,255,255,0.75); margin-bottom: 10px;">
+                            说明：该操作会从 Steam 拉取该游戏的全量成就 schema（名称/描述/图标），并将图标转存到阿里云 OSS 后写入数据库。
+                        </p>
+                        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                            <div>
+                                <div style="color: rgba(255,255,255,0.6); font-size: 12px;">上次同步</div>
+                                <div id="steamAchievementSchemaLastSync" style="font-weight: 700;">—</div>
+                            </div>
+                            <div>
+                                <div style="color: rgba(255,255,255,0.6); font-size: 12px;">本次写入条数</div>
+                                <div id="steamAchievementSchemaUpserted" style="font-weight: 700;">—</div>
+                            </div>
+                            <div>
+                                <div style="color: rgba(255,255,255,0.6); font-size: 12px;">成就总数</div>
+                                <div id="steamAchievementSchemaTotal" style="font-weight: 700;">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </main>
 
@@ -178,8 +497,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
-                <button class="btn btn-danger" id="confirmDeleteBtn">确认删除</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">确认删除</button>
             </div>
         </div>
     </div>
@@ -201,7 +520,7 @@
                     </div>
                     <div class="form-group">
                         <label for="articleAuthor">作者 *</label>
-                        <input type="text" id="articleAuthor" name="author" required placeholder="请输入作者姓名">
+                        <input type="text" id="articleAuthor" name="author" required placeholder="默认当前登录管理员，可修改">
                     </div>
                     <div class="form-group">
                         <label for="articleSummary">文章摘要</label>
@@ -226,8 +545,19 @@
                         <input type="hidden" id="articleCoverUrl" name="coverUrl">
                     </div>
                     <div class="form-group">
+                        <label class="checkbox-inline-label">
+                            <input type="checkbox" id="articlePinned" name="articlePinned">
+                            置顶展示（App 首页右侧「置顶资讯」，最多显示 3 条）
+                        </label>
+                    </div>
+                    <div class="form-group">
                         <label for="articleContent">文章内容 *</label>
                         <textarea id="articleContent" name="content" rows="8" required placeholder="请输入文章内容"></textarea>
+                        <button type="button" class="btn btn-secondary btn-sm" id="insertAddArticleImageBtn" style="margin-top: 8px;">
+                            <i class="fas fa-image"></i>
+                            在正文插入图片
+                        </button>
+                        <input type="file" id="addArticleContentImageInput" accept="image/*" style="display:none;">
                     </div>
                 </form>
             </div>
@@ -281,14 +611,175 @@
                         <input type="hidden" id="editArticleCoverUrl" name="coverUrl">
                     </div>
                     <div class="form-group">
+                        <label class="checkbox-inline-label">
+                            <input type="checkbox" id="editArticlePinned" name="editArticlePinned">
+                            置顶展示（App 首页右侧「置顶资讯」，最多显示 3 条）
+                        </label>
+                    </div>
+                    <div class="form-group">
                         <label for="editArticleContent">文章内容 *</label>
                         <textarea id="editArticleContent" name="content" rows="8" required placeholder="请输入文章内容"></textarea>
+                        <button type="button" class="btn btn-secondary btn-sm" id="insertEditArticleImageBtn" style="margin-top: 8px;">
+                            <i class="fas fa-image"></i>
+                            在正文插入图片
+                        </button>
+                        <input type="file" id="editArticleContentImageInput" accept="image/*" style="display:none;">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeEditArticleModal()">取消</button>
                 <button class="btn btn-primary" id="confirmEditBtn">确认更新</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色新增/编辑模态框 -->
+    <div id="characterModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="characterModalTitle">新增角色</h3>
+                <button class="modal-close" onclick="closeCharacterModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="characterForm">
+                    <input type="hidden" id="characterId">
+
+                    <div class="form-group">
+                        <label for="characterNameZh">角色中文名 *</label>
+                        <input type="text" id="characterNameZh" required placeholder="例如：丝绒">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="characterNameEn">角色英文名 *</label>
+                        <input type="text" id="characterNameEn" required placeholder="例如：Velvet">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="characterDifficulty">难度等级（1-5）</label>
+                        <input type="number" id="characterDifficulty" min="1" max="5" placeholder="1-5，数字越大难度越高">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="characterIntro">角色简介</label>
+                        <textarea id="characterIntro" rows="3" placeholder="用于列表展示的简短介绍"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="characterBackground">背景故事</label>
+                        <textarea id="characterBackground" rows="5" placeholder="详细的角色背景故事"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="characterVideoUrl">官方教学视频链接</label>
+                        <input type="url" id="characterVideoUrl" placeholder="例如：https://.../tutorial.mp4">
+                    </div>
+
+                    <div class="form-group">
+                        <label>角色头像</label>
+                        <div class="image-upload-container">
+                            <input type="file" id="characterAvatarImage" accept="image/*" style="display: none;">
+                            <div class="image-upload-area" id="characterAvatarUploadArea">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>点击选择角色头像</p>
+                                <small>支持 JPG、PNG、GIF 格式，最大 5MB</small>
+                            </div>
+                            <div class="image-preview" id="characterAvatarPreview" style="display: none;">
+                                <img id="characterAvatarPreviewImg" src="" alt="头像预览">
+                                <button type="button" class="remove-image-btn" id="removeCharacterAvatar">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="characterAvatarUrl">
+                    </div>
+
+                    <div class="form-group">
+                        <label>官方出招表图</label>
+                        <div class="image-upload-container">
+                            <input type="file" id="characterMoveListImage" accept="image/*" style="display: none;">
+                            <div class="image-upload-area" id="characterMoveListUploadArea">
+                                <i class="fas fa-list-alt"></i>
+                                <p>点击上传出招表图</p>
+                                <small>支持 JPG、PNG 等图片，最大 10MB</small>
+                            </div>
+                            <div class="image-preview" id="characterMoveListPreview" style="display: none;">
+                                <img id="characterMoveListPreviewImg" src="" alt="出招表图预览">
+                                <button type="button" class="remove-image-btn" id="removeCharacterMoveList">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="characterMoveListUrl">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCharacterModal()">取消</button>
+                <button class="btn btn-primary" id="confirmCharacterSaveBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 评论审核：通过/拒绝 -->
+    <div id="commentReviewModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>审核评论</h3>
+                <button type="button" class="modal-close" onclick="closeCommentReviewModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="commentReviewModalId">
+                <div class="form-group">
+                    <label>处理结果</label>
+                    <select id="commentReviewStatusSelect" class="select-input" style="width:100%;">
+                        <option value="1">通过（公开显示）</option>
+                        <option value="2">拒绝（不展示）</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>管理员备注（可选）</label>
+                    <textarea id="commentReviewAdminRemark" rows="3" placeholder="填写说明..." style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary);"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeCommentReviewModal()">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmCommentReviewBtn">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 举报审核：更新状态/备注 模态框 -->
+    <div id="reportStatusModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>处理举报</h3>
+                <button class="modal-close" onclick="closeReportStatusModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reportStatusModalId">
+                <div class="form-group">
+                    <label>处理结果</label>
+                    <select id="reportStatusSelect" class="select-input" style="width:100%;">
+                        <option value="1">处理中</option>
+                        <option value="2">已处理</option>
+                        <option value="3">已驳回</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>管理员备注（可选）</label>
+                    <textarea id="reportAdminRemark" rows="3" placeholder="填写处理说明..." style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary);"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeReportStatusModal()">取消</button>
+                <button class="btn btn-primary" id="confirmReportStatusBtn">确认</button>
             </div>
         </div>
     </div>
@@ -305,11 +796,7 @@
         <span id="messageText">操作成功</span>
     </div>
 
-    <!-- AI助手固定按钮 -->
-    <a href="ai-chat.html" class="ai-assistant-fab" title="AI游戏助手">
-        <i class="fas fa-robot"></i>
-    </a>
-
-    <script src="js/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js" crossorigin="anonymous"></script>
+    <script src="js/index.js?v=20260320-steam-charts"></script>
 </body>
 </html>

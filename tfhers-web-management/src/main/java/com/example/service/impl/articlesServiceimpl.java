@@ -1,20 +1,39 @@
 package com.example.service.impl;
 
+import com.example.mapper.AdminUserMapper;
+import com.example.mapper.ArticleCommentMapper;
+import com.example.mapper.ArticleLikeMapper;
+import com.example.mapper.ContentReportMapper;
 import com.example.mapper.articlesMapper;
+import com.example.pojo.AdminUser;
 import com.example.pojo.articles;
 import com.example.pojo.results;
+import com.example.service.ArticleLikeService;
 import com.example.service.articlesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class articlesServiceimpl implements articlesService {
     
     @Autowired
     private articlesMapper articlesMapper;
-    
+    @Autowired
+    private AdminUserMapper adminUserMapper;
+    @Autowired
+    private ArticleLikeService articleLikeService;
+    @Autowired
+    private ArticleLikeMapper articleLikeMapper;
+    @Autowired
+    private ArticleCommentMapper articleCommentMapper;
+    @Autowired
+    private ContentReportMapper contentReportMapper;
+
     @Override
     public results getAllArticles() {
         try {
@@ -26,8 +45,12 @@ public class articlesServiceimpl implements articlesService {
     }
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public results deleteArticleById(long id) {
         try {
+            articleLikeMapper.deleteByArticleId(id);
+            articleCommentMapper.deleteByArticleId(id);
+            contentReportMapper.deleteByTarget("article", id);
             int affectedRows = articlesMapper.deleteArticleById(id);
             if (affectedRows > 0) {
                 return results.success("删除文章成功", null);
@@ -46,7 +69,10 @@ public class articlesServiceimpl implements articlesService {
             if (article.getViewCount() == 0) {
                 article.setViewCount(0);
             }
-            
+            if (article.getIsPinned() == null) {
+                article.setIsPinned(0);
+            }
+
             // 设置创建时间和更新时间
             String currentTime = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             article.setCreatedAt(currentTime);
@@ -59,6 +85,19 @@ public class articlesServiceimpl implements articlesService {
             if (article.getContent() == null || article.getContent().trim().isEmpty()) {
                 return results.error("文章内容不能为空");
             }
+
+            // 管理员发文且未填作者：默认用管理员真实姓名/用户名；已填写则保留（自主署名）
+            if (article.getAuthorAdminId() != null
+                    && (article.getAuthor() == null || article.getAuthor().trim().isEmpty())) {
+                AdminUser admin = adminUserMapper.findById(article.getAuthorAdminId());
+                if (admin != null) {
+                    String displayName = (admin.getRealName() != null && !admin.getRealName().isBlank())
+                            ? admin.getRealName().trim()
+                            : admin.getUsername();
+                    article.setAuthor(displayName);
+                }
+            }
+
             if (article.getAuthor() == null || article.getAuthor().trim().isEmpty()) {
                 return results.error("作者不能为空");
             }
@@ -75,14 +114,21 @@ public class articlesServiceimpl implements articlesService {
     }
     
     @Override
-    public results getArticleById(long id) {
+    public results getArticleById(long id, Long userId) {
         try {
             articles article = articlesMapper.selectArticleById(id);
-            if (article != null) {
-                return results.success("查询文章成功", article);
-            } else {
+            if (article == null) {
                 return results.error("文章不存在");
             }
+            articlesMapper.increaseViewCount(id);
+            article.setViewCount(article.getViewCount() + 1);
+            int likeCount = articleLikeService.getLikeCount(id);
+            boolean liked = userId != null && articleLikeService.isLiked(id, userId);
+            Map<String, Object> data = new HashMap<>();
+            data.put("article", article);
+            data.put("likeCount", likeCount);
+            data.put("liked", liked);
+            return results.success("查询文章成功", data);
         } catch (Exception e) {
             return results.error("查询文章失败: " + e.getMessage());
         }
@@ -105,7 +151,10 @@ public class articlesServiceimpl implements articlesService {
             // 设置更新时间
             String currentTime = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             article.setUpdatedAt(currentTime);
-            
+            if (article.getIsPinned() == null) {
+                article.setIsPinned(0);
+            }
+
             int affectedRows = articlesMapper.updateArticle(article);
             if (affectedRows > 0) {
                 return results.success("更新文章成功", article);
@@ -129,6 +178,19 @@ public class articlesServiceimpl implements articlesService {
             return results.success("搜索完成", articles);
         } catch (Exception e) {
             return results.error("搜索文章失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public results updateArticlePinned(long id, boolean pinned) {
+        try {
+            int n = articlesMapper.updateArticlePinned(id, pinned ? 1 : 0);
+            if (n > 0) {
+                return results.success(pinned ? "已置顶" : "已取消置顶", null);
+            }
+            return results.error("文章不存在或更新失败");
+        } catch (Exception e) {
+            return results.error("更新置顶失败: " + e.getMessage());
         }
     }
 }

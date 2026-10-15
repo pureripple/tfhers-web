@@ -147,6 +147,134 @@ public class FileUploadController {
     }
     
     /**
+     * 上传文章正文内容中的图片
+     * @param file 图片文件
+     * @return 上传结果（返回可直接用于正文中的图片URL）
+     */
+    @PostMapping("/upload/article-content")
+    public results uploadArticleContentImage(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file == null || file.isEmpty()) {
+                return results.error("请选择要上传的图片");
+            }
+            
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return results.error("只能上传图片文件");
+            }
+            
+            long maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.getSize() > maxSize) {
+                return results.error("图片大小不能超过5MB");
+            }
+            
+            // 上传到 articles/content 目录，便于区分
+            String fileUrl = ossUtil.uploadFile(file, "articles/content");
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("url", fileUrl);
+            data.put("originalName", file.getOriginalFilename());
+            data.put("size", file.getSize());
+            data.put("contentType", contentType);
+            
+            return results.success("正文图片上传成功", data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("正文图片上传失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 上传角色官方出招表图（仅图片）
+     */
+    @PostMapping("/upload/character-move-list")
+    public results uploadCharacterMoveList(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file == null || file.isEmpty()) {
+                return results.error("请选择要上传的图片");
+            }
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return results.error("只能上传图片文件");
+            }
+            long maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.getSize() > maxSize) {
+                return results.error("图片大小不能超过10MB");
+            }
+            String fileUrl = ossUtil.uploadFile(file, "characters/move-list");
+            Map<String, Object> data = new HashMap<>();
+            data.put("url", fileUrl);
+            data.put("originalName", file.getOriginalFilename());
+            data.put("size", file.getSize());
+            data.put("contentType", contentType);
+            return results.success("出招表图上传成功", data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("出招表图上传失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 上传用户连段文件（仅允许 .tfhc 游戏连段文件）
+     */
+    @PostMapping("/upload/combo-file")
+    public results uploadComboFile(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file == null || file.isEmpty()) {
+                return results.error("请选择要上传的连段文件");
+            }
+            String name = file.getOriginalFilename();
+            if (name == null || !name.toLowerCase().endsWith(".tfhc")) {
+                return results.error("仅支持 .tfhc 连段文件");
+            }
+            long maxSize = 20 * 1024 * 1024; // 20MB
+            if (file.getSize() > maxSize) {
+                return results.error("文件大小不能超过20MB");
+            }
+            String fileUrl = ossUtil.uploadFile(file, "combos/files");
+            Map<String, Object> data = new HashMap<>();
+            data.put("url", fileUrl);
+            data.put("originalName", file.getOriginalFilename());
+            data.put("size", file.getSize());
+            data.put("contentType", file.getContentType());
+            return results.success("连段文件上传成功", data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("连段文件上传失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 上传用户连段视频
+     */
+    @PostMapping("/upload/combo-video")
+    public results uploadComboVideo(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file == null || file.isEmpty()) {
+                return results.error("请选择要上传的视频");
+            }
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("video/")) {
+                return results.error("只能上传视频文件");
+            }
+            long maxSize = 100 * 1024 * 1024; // 100MB
+            if (file.getSize() > maxSize) {
+                return results.error("视频大小不能超过100MB");
+            }
+            String fileUrl = ossUtil.uploadFile(file, "combos/videos");
+            Map<String, Object> data = new HashMap<>();
+            data.put("url", fileUrl);
+            data.put("originalName", file.getOriginalFilename());
+            data.put("size", file.getSize());
+            data.put("contentType", contentType);
+            return results.success("连段视频上传成功", data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("连段视频上传失败：" + e.getMessage());
+        }
+    }
+    
+    /**
      * 删除文件
      * @param url 文件URL
      * @return 删除结果

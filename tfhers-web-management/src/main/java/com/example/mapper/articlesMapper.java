@@ -46,4 +46,13 @@ public interface articlesMapper {
      * @return 文章列表
      */
     List<articles> searchArticles(@Param("keyword") String keyword);
+
+    /**
+     * 浏览量 +1（查看详情时调用）
+     * @param id 文章ID
+     * @return 更新行数
+     */
+    int increaseViewCount(@Param("id") long id);
+
+    int updateArticlePinned(@Param("id") long id, @Param("pinned") int pinned);
 }

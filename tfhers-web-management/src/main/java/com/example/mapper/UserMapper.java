@@ -4,7 +4,9 @@ import com.example.pojo.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户Mapper接口
@@ -128,4 +130,33 @@ public interface UserMapper {
     int updateLastLoginInfo(@Param("id") Long id, 
                            @Param("lastLoginTime") java.time.LocalDateTime lastLoginTime, 
                            @Param("lastLoginIp") String lastLoginIp);
+
+    /**
+     * 清除 Steam 绑定信息
+     * @param id 用户ID
+     * @return 影响行数
+     */
+    int clearSteamBinding(@Param("id") Long id);
+
+    /**
+     * 查询需要同步 Steam 时长的用户（按 steam_playtime_updated_at 过期时间）
+     * @param limit 每次同步最大数量
+     * @param updatedBefore 同步阈值：steam_playtime_updated_at <= updatedBefore 的用户会被同步
+     */
+    List<User> findSteamUsersToSync(@Param("limit") int limit, @Param("updatedBefore") LocalDateTime updatedBefore);
+
+    /**
+     * Steam 游戏时长 TopN（已绑定 Steam、有缓存时长、正常状态）
+     */
+    List<User> selectSteamPlaytimeTopUsers(@Param("limit") int limit);
+
+    /**
+     * 按时长区间统计人数（单行多列 seg0..seg10：0–2000h 每 200h 一段 + ≥2000h），仅统计已绑定 Steam 且 status=1
+     */
+    Map<String, Object> selectSteamPlaytimeHistogramRow();
+
+    /**
+     * 本站成就统计：已绑定 Steam、状态正常且存在成就缓存 JSON 的用户（每条一行 JSON，供聚合解锁率）
+     */
+    List<String> selectSteamAchievementJsonForSiteStats();
 }

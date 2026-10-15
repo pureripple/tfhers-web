@@ -3,125 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI游戏助手 - 蹄斗族群助手</title>
+    <title>AI 助手 - 蹄斗助手后台</title>
+    <link rel="stylesheet" href="css/fonts-local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/ai-chat.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-    <!-- 侧边栏 -->
+<body class="admin-ai-chat-page">
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="logo">
-                <i class="fas fa-fist-raised"></i>
+                <img src="images/logo.png" alt="蹄斗助手" style="height: 34px; width: auto; display: block;">
                 <span>蹄斗助手</span>
             </div>
-            <div class="admin-title">AI游戏助手</div>
+            <div class="admin-title">后台管理</div>
         </div>
-        
         <nav class="sidebar-nav">
             <ul class="nav-list">
-                <!-- AI聊天页面不需要额外的导航链接 -->
+                <li class="nav-item">
+                    <a href="index.html#articles" class="nav-link">
+                        <i class="fas fa-newspaper"></i>
+                        <span>资讯管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="index.html#characters" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        <span>角色管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="index.html#user-combos" class="nav-link">
+                        <i class="fas fa-user-check"></i>
+                        <span>用户连段审核</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="index.html#reports" class="nav-link">
+                        <i class="fas fa-flag"></i>
+                        <span>举报审核</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="index.html#comment-review" class="nav-link">
+                        <i class="fas fa-comments"></i>
+                        <span>评论审核</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="index.html#statistics" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>数据统计</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="index.html#games" class="nav-link">
+                        <i class="fas fa-gamepad"></i>
+                        <span>游戏管理</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="ai-chat.html" class="nav-link">
+                        <i class="fas fa-robot"></i>
+                        <span>AI 助手</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="user-management.html?v=1" class="nav-link">
+                        <i class="fas fa-user-cog"></i>
+                        <span>用户管理</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="profile.html?v=1" class="nav-link">
+                        <i class="fas fa-user-circle"></i>
+                        <span>个人设置</span>
+                    </a>
+                </li>
             </ul>
         </nav>
     </aside>
 
-    <!-- 主内容区域 -->
     <main class="main-content">
-        <!-- 顶部导航栏 -->
         <header class="top-header">
             <div class="header-left">
-                <h1 class="page-title">
-                    <i class="fas fa-robot"></i>
-                    AI游戏助手
-                </h1>
-            </div>
-            <div class="header-center">
-                <div class="chat-history-nav">
-                    <button class="history-toggle" id="historyToggle" title="对话历史">
-                        <i class="fas fa-history"></i>
-                        <span>历史记录</span>
-                    </button>
-                    <div class="history-dropdown" id="historyDropdown">
-                        <div class="history-header">
-                            <h4>对话历史</h4>
-                            <button class="clear-history-btn" id="clearHistoryBtn" title="清空历史">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        <div class="history-list" id="historyList">
-                            <!-- 历史记录将通过JavaScript动态加载 -->
-                        </div>
-                    </div>
-                </div>
+                <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="展开菜单">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">AI 助手</h1>
             </div>
             <div class="header-right">
-                <div class="ai-status">
-                    <span class="status-indicator" id="aiStatus">
-                        <i class="fas fa-circle"></i>
-                        在线
-                    </span>
+                <div class="user-menu" id="userMenu">
+                    <div class="user-info" id="userInfo">
+                        <img src="images/CSel3_LargePortTianhuo.png" alt="头像" class="user-avatar" id="userAvatar">
+                        <span class="user-name" id="userName">管理员</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="profile.html?v=1" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i>
+                            <span>个人设置</span>
+                        </a>
+                        <a href="#" class="dropdown-item" onclick="logout(); return false;">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>退出登录</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- AI聊天内容 -->
-        <div class="ai-chat-container">
-            <!-- 聊天区域 -->
-            <div class="chat-area full-width">
-                <div class="chat-header">
-                    <div class="ai-avatar">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="ai-info">
-                        <h3>蹄斗族群AI助手</h3>
-                        <p>我是您的专属游戏助手，可以回答关于蹄斗族群的各种问题</p>
-                    </div>
-                    <div class="chat-actions">
-                        <button class="btn btn-secondary" id="clearChatBtn" title="清空对话">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                        <button class="btn btn-secondary" id="exportChatBtn" title="导出对话">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 消息列表 -->
-                <div class="messages-container" id="messagesContainer">
-                    <div class="message ai-message">
-                        <div class="message-avatar">
-                            <i class="fas fa-robot"></i>
+        <div class="admin-ai-chat-inner">
+            <div class="ai-chat-layout grok-layout">
+                <div class="grok-chat-panel">
+                    <header class="grok-head">
+                        <div class="grok-head-left">
+                            <span class="grok-model-badge">蹄斗 AI</span>
+                            <span class="status-indicator grok-status-dot is-online" id="aiStatus">
+                                <i class="fas fa-circle"></i>
+                                <span class="grok-status-text">在线</span>
+                            </span>
                         </div>
-                        <div class="message-content">
-                            <div class="message-text">
-                                您好！我是蹄斗族群AI助手，很高兴为您服务！您可以问我关于游戏角色、技能、攻略等任何问题。
+                        <div class="grok-head-actions">
+                            <div class="chat-history-nav grok-history-wrap">
+                                <button type="button" class="grok-icon-btn history-toggle" id="historyToggle" title="历史记录">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                <div class="history-dropdown grok-history-dropdown" id="historyDropdown">
+                                    <div class="history-header">
+                                        <h4>最近对话</h4>
+                                        <button type="button" class="clear-history-btn" id="clearHistoryBtn" title="清空">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="history-list" id="historyList"></div>
+                                </div>
                             </div>
-                            <div class="message-time">刚刚</div>
+                            <button type="button" class="grok-icon-btn" id="clearChatBtn" title="清空当前对话">
+                                <i class="fas fa-broom"></i>
+                            </button>
+                            <button type="button" class="grok-icon-btn" id="exportChatBtn" title="导出记录">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </header>
+
+                    <div class="grok-thread">
+                        <div class="messages-container grok-messages" id="messagesContainer">
+                            <div class="message ai-message grok-msg grok-msg--assistant grok-msg--appear" id="welcomeMessage">
+                                <div class="message-avatar grok-msg-avatar grok-msg-avatar--img">
+                                    <img src="images/CSel3_LargePortOleander.png" alt="" id="welcomeAiAvatar"
+                                         onerror="this.onerror=null;this.src='images/CSel3_LargePortTianhuo.png'">
+                                </div>
+                                <div class="message-content grok-msg-body">
+                                    <div class="message-text">
+                                        你好，我是蹄斗族群 AI 助手。可以问我角色、技能、攻略等问题。
+                                    </div>
+                                    <div class="message-time grok-msg-time">刚刚</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 输入区域 -->
-                <div class="input-area">
-                    <div class="input-container">
-                        <textarea 
-                            id="messageInput" 
-                            placeholder="请输入您的问题..." 
-                            rows="1"
-                            maxlength="1000"
-                        ></textarea>
-                        <button class="send-btn" id="sendBtn" disabled>
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                    <div class="input-footer">
-                        <span class="char-count" id="charCount">0/1000</span>
-                        <div class="quick-questions">
-                            <span class="quick-label">快速提问：</span>
-                            <button class="quick-btn" data-question="蹄斗族群有哪些角色？">角色介绍</button>
-                            <button class="quick-btn" data-question="如何提升角色等级？">升级攻略</button>
-                            <button class="quick-btn" data-question="游戏中有哪些技能？">技能系统</button>
+                    <div class="grok-composer">
+                        <div class="grok-composer-field">
+                            <textarea
+                                id="messageInput"
+                                class="grok-textarea"
+                                placeholder="询问任何问题…"
+                                rows="1"
+                                maxlength="1000"
+                            ></textarea>
+                            <button type="button" class="grok-send-btn" id="sendBtn" disabled title="发送">
+                                <i class="fas fa-arrow-up"></i>
+                            </button>
+                        </div>
+                        <div class="grok-composer-meta">
+                            <span class="char-count grok-char-count" id="charCount">0 / 1000</span>
                         </div>
                     </div>
                 </div>
@@ -129,23 +187,20 @@
         </div>
     </main>
 
-    <!-- 加载指示器 -->
     <div id="loadingIndicator" class="loading-indicator">
         <div class="spinner"></div>
-        <p>AI正在思考中...</p>
+        <p>AI 正在思考中…</p>
     </div>
 
-    <!-- 消息提示 -->
     <div id="messageToast" class="message-toast">
         <i class="fas fa-check-circle"></i>
         <span id="messageText">操作成功</span>
     </div>
 
-    <!-- AI助手固定按钮 -->
-    <a href="index.html" class="ai-assistant-fab" title="返回主页">
-        <i class="fas fa-robot"></i>
-    </a>
-
     <script src="js/ai-chat.js"></script>
 </body>
 </html>
+
+</html>
+
+

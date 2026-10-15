@@ -4,40 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理员登录 - 蹄斗助手后台管理系统</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/fonts-local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
+    <link rel="stylesheet" href="css/index.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            /* 暗色主题色彩 - 与主页保持一致 */
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --bg-tertiary: #2a2a2a;
-            --bg-quaternary: #3a3a3a;
-            --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --text-muted: #666666;
-            --accent-primary: #ff6b6b;
-            --accent-secondary: #4ecdc4;
-            --accent-tertiary: #45b7d1;
-            --border-color: #333333;
-            --border-light: #444444;
-            --shadow: rgba(0, 0, 0, 0.3);
-            --shadow-hover: rgba(0, 0, 0, 0.5);
-            --success-color: #4caf50;
-            --warning-color: #ff9800;
-            --danger-color: #f44336;
-            --info-color: #2196f3;
-        }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            background: var(--bg-primary);
-            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -45,32 +16,18 @@
             overflow: hidden;
         }
         
-        /* 背景装饰 */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(78, 205, 196, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(69, 183, 209, 0.1) 0%, transparent 50%);
-            z-index: 1;
-        }
-        
         .login-container {
-            background: var(--bg-secondary);
+            background: rgba(17, 17, 22, 0.88);
             padding: 50px 40px;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px var(--shadow-hover);
+            border-radius: 20px;
+            box-shadow: var(--shadow-md);
             width: 100%;
             max-width: 420px;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border-strong);
             position: relative;
             z-index: 2;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(18px) saturate(1.1);
+            -webkit-backdrop-filter: blur(18px) saturate(1.1);
         }
         
         .login-header {
@@ -83,10 +40,11 @@
             align-items: center;
             justify-content: center;
             gap: 12px;
-            font-size: 32px;
+            font-size: 1.35rem;
             font-weight: 700;
-            color: var(--accent-primary);
+            color: var(--text-primary);
             margin-bottom: 12px;
+            letter-spacing: -0.02em;
         }
         
         .logo i {
@@ -131,8 +89,8 @@
         
         .form-group input:focus {
             outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+            border-color: rgba(255, 122, 122, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 122, 122, 0.12);
         }
         
         .form-group input::placeholder {
@@ -142,16 +100,17 @@
         .login-btn {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, var(--accent-primary) 0%, #ff5252 100%);
-            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            color: #0c0c10;
             border: none;
-            border-radius: 8px;
+            border-radius: 9999px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.28s var(--ease-out), box-shadow 0.28s var(--ease-out), filter 0.28s var(--ease-out);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 24px rgba(255, 122, 122, 0.3);
         }
         
         .login-btn::before {
@@ -171,7 +130,8 @@
         
         .login-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            box-shadow: 0 12px 36px rgba(255, 122, 122, 0.38);
+            filter: brightness(1.05);
         }
         
         .login-btn:active {
@@ -195,15 +155,15 @@
         }
         
         .message.success {
-            background: rgba(76, 175, 80, 0.1);
+            background: rgba(94, 207, 138, 0.12);
             color: var(--success-color);
-            border-color: rgba(76, 175, 80, 0.3);
+            border-color: rgba(94, 207, 138, 0.35);
         }
         
         .message.error {
-            background: rgba(244, 67, 54, 0.1);
+            background: rgba(240, 113, 103, 0.12);
             color: var(--danger-color);
-            border-color: rgba(244, 67, 54, 0.3);
+            border-color: rgba(240, 113, 103, 0.35);
         }
         
         .user-info {
@@ -233,16 +193,16 @@
             margin-top: 16px;
             padding: 10px 20px;
             background: var(--danger-color);
-            color: var(--text-primary);
+            color: #0c0c10;
             border: none;
-            border-radius: 6px;
+            border-radius: 9999px;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            font-weight: 600;
+            transition: transform 0.28s var(--ease-out), filter 0.28s var(--ease-out);
         }
         
         .logout-btn:hover {
-            background: #d32f2f;
+            filter: brightness(1.08);
             transform: translateY(-1px);
         }
         
@@ -271,7 +231,7 @@
     <div class="login-container">
         <div class="login-header">
             <div class="logo">
-                <i class="fas fa-fist-raised"></i>
+                <img src="images/logo.png" alt="蹄斗助手" style="height: 44px; width: auto; display: block;">
                 <span>蹄斗助手</span>
             </div>
             <h1>管理员登录</h1>
@@ -407,9 +367,5 @@
         }
     </script>
 
-    <!-- AI助手固定按钮 -->
-    <a href="ai-chat.html" class="ai-assistant-fab" title="AI游戏助手">
-        <i class="fas fa-robot"></i>
-    </a>
 </body>
 </html>

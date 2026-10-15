@@ -11,6 +11,15 @@
         <result column="email" property="email"/>
         <result column="phone" property="phone"/>
         <result column="avatar_url" property="avatarUrl"/>
+        <result column="steam_id" property="steamId"/>
+        <result column="steam_persona_name" property="steamPersonaName"/>
+        <result column="steam_avatar_url" property="steamAvatarUrl"/>
+        <result column="steam_playtime_minutes" property="steamPlaytimeMinutes"/>
+        <result column="steam_playtime_updated_at" property="steamPlaytimeUpdatedAt"/>
+        <result column="steam_achievements_json" property="steamAchievementsJson"/>
+        <result column="steam_achievements_total" property="steamAchievementsTotal"/>
+        <result column="steam_achievements_count" property="steamAchievementsCount"/>
+        <result column="steam_achievements_updated_at" property="steamAchievementsUpdatedAt"/>
         <result column="role" property="role"/>
         <result column="status" property="status"/>
         <result column="last_login_time" property="lastLoginTime"/>
@@ -21,7 +30,10 @@
 
     <!-- 根据ID查找用户 -->
     <select id="findById" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url, 
+        SELECT id, username, nickname, password, email, phone, avatar_url,
+               steam_id, steam_persona_name, steam_avatar_url,
+               steam_playtime_minutes, steam_playtime_updated_at,
+               steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE id = #{id}
@@ -29,7 +41,10 @@
 
     <!-- 根据用户名查找用户 -->
     <select id="findByUsername" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url, 
+        SELECT id, username, nickname, password, email, phone, avatar_url,
+               steam_id, steam_persona_name, steam_avatar_url,
+               steam_playtime_minutes, steam_playtime_updated_at,
+               steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE username = #{username}
@@ -37,7 +52,10 @@
 
     <!-- 根据ID查找用户（别名方法） -->
     <select id="selectById" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url, 
+        SELECT id, username, nickname, password, email, phone, avatar_url,
+               steam_id, steam_persona_name, steam_avatar_url,
+               steam_playtime_minutes, steam_playtime_updated_at,
+               steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE id = #{id}
@@ -45,7 +63,10 @@
 
     <!-- 根据用户名查找用户（别名方法） -->
     <select id="selectByUsername" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url, 
+        SELECT id, username, nickname, password, email, phone, avatar_url,
+               steam_id, steam_persona_name, steam_avatar_url,
+               steam_playtime_minutes, steam_playtime_updated_at,
+               steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE username = #{username}
@@ -53,7 +74,9 @@
 
     <!-- 根据邮箱查找用户 -->
     <select id="selectByEmail" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url, 
+        SELECT id, username, nickname, password, email, phone, avatar_url,
+               steam_id, steam_persona_name, steam_avatar_url,
+               steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE email = #{email}
@@ -61,7 +84,10 @@
 
     <!-- 分页查询用户列表 -->
     <select id="findUsersWithPagination" resultMap="UserResultMap">
-        SELECT id, username, nickname, email, phone, avatar_url, 
+        SELECT id, username, nickname, email, phone, avatar_url,
+               steam_id, steam_persona_name, steam_avatar_url,
+               steam_playtime_minutes, steam_playtime_updated_at,
+               steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         <where>
@@ -118,6 +144,15 @@
             <if test="email != null">email = #{email},</if>
             <if test="phone != null">phone = #{phone},</if>
             <if test="avatarUrl != null">avatar_url = #{avatarUrl},</if>
+            <if test="steamId != null">steam_id = #{steamId},</if>
+            <if test="steamPersonaName != null">steam_persona_name = #{steamPersonaName},</if>
+            <if test="steamAvatarUrl != null">steam_avatar_url = #{steamAvatarUrl},</if>
+            <if test="steamPlaytimeMinutes != null">steam_playtime_minutes = #{steamPlaytimeMinutes},</if>
+            <if test="steamPlaytimeUpdatedAt != null">steam_playtime_updated_at = #{steamPlaytimeUpdatedAt},</if>
+            <if test="steamAchievementsJson != null">steam_achievements_json = #{steamAchievementsJson},</if>
+            <if test="steamAchievementsTotal != null">steam_achievements_total = #{steamAchievementsTotal},</if>
+            <if test="steamAchievementsCount != null">steam_achievements_count = #{steamAchievementsCount},</if>
+            <if test="steamAchievementsUpdatedAt != null">steam_achievements_updated_at = #{steamAchievementsUpdatedAt},</if>
             <if test="role != null">role = #{role},</if>
             <if test="status != null">status = #{status},</if>
             updated_at = NOW()
@@ -159,5 +194,88 @@
             updated_at = NOW()
         WHERE id = #{id}
     </update>
+
+    <!-- 清除 Steam 绑定信息 -->
+    <update id="clearSteamBinding">
+        UPDATE users
+        SET steam_id = NULL,
+            steam_persona_name = NULL,
+            steam_avatar_url = NULL,
+            steam_playtime_minutes = NULL,
+            steam_playtime_updated_at = NULL,
+            steam_achievements_json = NULL,
+            steam_achievements_total = NULL,
+            steam_achievements_count = NULL,
+            steam_achievements_updated_at = NULL,
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 查询需要同步 Steam 时长的用户 -->
+    <select id="findSteamUsersToSync" resultMap="UserResultMap">
+        SELECT id, username, nickname, email, phone, avatar_url,
+               steam_id, steam_persona_name, steam_avatar_url,
+               steam_playtime_minutes, steam_playtime_updated_at,
+               steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               role, status, last_login_time, last_login_ip, created_at, updated_at
+        FROM users
+        WHERE steam_id IS NOT NULL
+          AND status = 1
+          AND (steam_playtime_updated_at IS NULL OR steam_playtime_updated_at &lt;= #{updatedBefore})
+        ORDER BY steam_playtime_updated_at ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- Steam 时长排行榜（不 SELECT password） -->
+    <select id="selectSteamPlaytimeTopUsers" resultMap="UserResultMap">
+        SELECT id, username, nickname, email, phone, avatar_url,
+               steam_id, steam_persona_name, steam_avatar_url,
+               steam_playtime_minutes, steam_playtime_updated_at,
+               steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               role, status, last_login_time, last_login_ip, created_at, updated_at
+        FROM users
+        WHERE steam_id IS NOT NULL
+          AND status = 1
+          AND steam_playtime_minutes IS NOT NULL
+        ORDER BY steam_playtime_minutes DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 时长分段：0–2000h 每 200h 一段（200h=12000 分钟），seg10 为 ≥2000h -->
+    <select id="selectSteamPlaytimeHistogramRow" resultType="map">
+        SELECT
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &lt; 12000 THEN 1 ELSE 0 END) AS seg0,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 12000
+                      AND COALESCE(steam_playtime_minutes, 0) &lt; 24000 THEN 1 ELSE 0 END) AS seg1,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 24000
+                      AND COALESCE(steam_playtime_minutes, 0) &lt; 36000 THEN 1 ELSE 0 END) AS seg2,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 36000
+                      AND COALESCE(steam_playtime_minutes, 0) &lt; 48000 THEN 1 ELSE 0 END) AS seg3,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 48000
+                      AND COALESCE(steam_playtime_minutes, 0) &lt; 60000 THEN 1 ELSE 0 END) AS seg4,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 60000
+                      AND COALESCE(steam_playtime_minutes, 0) &lt; 72000 THEN 1 ELSE 0 END) AS seg5,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 72000
+                      AND COALESCE(steam_playtime_minutes, 0) &lt; 84000 THEN 1 ELSE 0 END) AS seg6,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 84000
+                      AND COALESCE(steam_playtime_minutes, 0) &lt; 96000 THEN 1 ELSE 0 END) AS seg7,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 96000
+                      AND COALESCE(steam_playtime_minutes, 0) &lt; 108000 THEN 1 ELSE 0 END) AS seg8,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 108000
+                      AND COALESCE(steam_playtime_minutes, 0) &lt; 120000 THEN 1 ELSE 0 END) AS seg9,
+            SUM(CASE WHEN COALESCE(steam_playtime_minutes, 0) &gt;= 120000 THEN 1 ELSE 0 END) AS seg10
+        FROM users
+        WHERE steam_id IS NOT NULL
+          AND status = 1
+    </select>
+
+    <select id="selectSteamAchievementJsonForSiteStats" resultType="java.lang.String">
+        SELECT steam_achievements_json
+        FROM users
+        WHERE steam_id IS NOT NULL
+          AND status = 1
+          AND steam_achievements_json IS NOT NULL
+          AND TRIM(steam_achievements_json) != ''
+    </select>
 
 </mapper>

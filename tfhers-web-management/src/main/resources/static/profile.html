@@ -4,46 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人设置 - TFhers管理后台</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/fonts-local.css">
+    <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
     <style>
-        /* CSS变量定义 - 与主页保持一致 */
-        :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --bg-tertiary: #2a2a2a;
-            --bg-quaternary: #3a3a3a;
-            --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --text-muted: #666666;
-            --accent-primary: #ff6b6b;
-            --accent-secondary: #4ecdc4;
-            --accent-tertiary: #45b7d1;
-            --border-color: #333333;
-            --border-light: #444444;
-            --shadow: rgba(0, 0, 0, 0.3);
-            --shadow-hover: rgba(0, 0, 0, 0.5);
-            --success-color: #4caf50;
-            --warning-color: #ff9800;
-            --danger-color: #f44336;
-            --info-color: #2196f3;
-        }
-
-        /* 基础样式 */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background-color: var(--bg-primary);
-            margin: 0;
-            padding: 0;
-        }
-
-        /* 个人设置页面特有样式 */
+        /* 个人设置页面特有样式（主题变量见 css/index.css） */
         .profile-content {
             padding: 20px;
             max-width: 800px;
             margin: 0 auto;
+        }
+
+        .profile-loading-hint {
+            margin: 0 0 16px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .profile-loading-hint[hidden] {
+            display: none;
         }
         
         .profile-tabs {
@@ -123,8 +102,8 @@
         
         .form-group input:focus {
             outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+            border-color: rgba(255, 122, 122, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 122, 122, 0.12);
         }
         
         .form-group input[readonly] {
@@ -144,39 +123,6 @@
             display: flex;
             gap: 12px;
             margin-top: 30px;
-        }
-        
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .btn-primary {
-            background-color: var(--accent-primary);
-            color: var(--text-primary);
-        }
-        
-        .btn-primary:hover {
-            background-color: #e55a5a;
-        }
-        
-        .btn-secondary {
-            background-color: var(--bg-quaternary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-        
-        .btn-secondary:hover {
-            background-color: var(--bg-tertiary);
         }
         
         /* 头像设置样式 */
@@ -359,7 +305,7 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <i class="fas fa-fist-raised"></i>
+                    <img src="images/logo.png" alt="蹄斗助手" style="height: 34px; width: auto; display: block;">
                     <span>蹄斗助手</span>
                 </div>
                 <div class="admin-title">后台管理</div>
@@ -368,7 +314,7 @@
             <nav class="sidebar-nav">
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="index.html" class="nav-link">
+                        <a href="index.html#articles" class="nav-link">
                             <i class="fas fa-newspaper"></i>
                             <span>资讯管理</span>
                         </a>
@@ -380,20 +326,50 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="index.html#users" class="nav-link">
+                        <a href="index.html#user-combos" class="nav-link">
+                            <i class="fas fa-user-check"></i>
+                            <span>用户连段审核</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#reports" class="nav-link">
+                            <i class="fas fa-flag"></i>
+                            <span>举报审核</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#comment-review" class="nav-link">
+                            <i class="fas fa-comments"></i>
+                            <span>评论审核</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#statistics" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span>数据统计</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html#games" class="nav-link">
+                            <i class="fas fa-gamepad"></i>
+                            <span>游戏管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="ai-chat.html" class="nav-link">
+                            <i class="fas fa-robot"></i>
+                            <span>AI 助手</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="user-management.html?v=1" class="nav-link">
                             <i class="fas fa-user-cog"></i>
                             <span>用户管理</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="index.html#settings" class="nav-link">
-                            <i class="fas fa-cog"></i>
-                            <span>系统设置</span>
-                        </a>
-                    </li>
                     <li class="nav-item active">
-                        <a href="profile.html" class="nav-link">
-                            <i class="fas fa-user-cog"></i>
+                        <a href="profile.html?v=1" class="nav-link">
+                            <i class="fas fa-user-circle"></i>
                             <span>个人设置</span>
                         </a>
                     </li>
@@ -427,6 +403,7 @@
 
             <!-- 个人设置内容 -->
             <div class="profile-content">
+                <p class="profile-loading-hint" id="profileLoadingHint" role="status">正在加载个人信息…</p>
                 <div class="profile-tabs">
                     <button class="tab-btn active" data-tab="basic">基本信息</button>
                     <button class="tab-btn" data-tab="avatar">头像设置</button>
@@ -529,11 +506,6 @@
             <span class="toast-message"></span>
         </div>
     </div>
-
-    <!-- AI助手固定按钮 -->
-    <a href="ai-chat.html" class="ai-assistant-fab" title="AI游戏助手">
-        <i class="fas fa-robot"></i>
-    </a>
 
     <script src="js/profile.js"></script>
 </body>

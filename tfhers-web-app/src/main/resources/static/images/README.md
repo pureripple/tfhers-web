@@ -13,6 +13,10 @@
 - `CSel3_LargePortBaihe.png` - Baihe角色头像
 - `CSel3_LargePortNidra.png` - Nidra角色头像
 
+## 站点外观（App 顶栏与全页背景）
+- `logo.png` - 导航栏左侧 Logo（替换原图标）
+- `bg-app.png` - 全页背景图（CSS：`body::before`）
+
 ## 默认图片
 - `default-avatar.png` - 默认用户头像
 - `default-character.jpg` - 默认角色图片

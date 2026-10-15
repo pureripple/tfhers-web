@@ -1,5 +1,6 @@
 package com.example.pojo;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class articles {
@@ -9,7 +10,15 @@ public class articles {
     private String coverUrl;  // 驼峰命名
     private String summary;
     private String author;
+    /** 发布用户 ID，列表/详情 LEFT JOIN users 取头像 */
+    private Long authorId;
+    /** 发布管理员 ID（admin_users），与 author_id 二选一 */
+    private Long authorAdminId;
+    /** 关联查询填充，非 articles 表字段 */
+    private String authorAvatarUrl;
     private int viewCount;    // 驼峰命名
+    /** 置顶：1 置顶，0 否 */
+    private Integer isPinned;
     private String createdAt; // 驼峰命名
     private String updatedAt; // 驼峰命名
 
@@ -80,6 +89,36 @@ public class articles {
     public void setAuthor(String author) {
         this.author = author;
     }
+
+    @JsonProperty("author_id")
+    public Long getAuthorId() {
+        return authorId;
+    }
+
+    @JsonProperty("author_id")
+    public void setAuthorId(Long authorId) {
+        this.authorId = authorId;
+    }
+
+    @JsonProperty("author_admin_id")
+    public Long getAuthorAdminId() {
+        return authorAdminId;
+    }
+
+    @JsonProperty("author_admin_id")
+    public void setAuthorAdminId(Long authorAdminId) {
+        this.authorAdminId = authorAdminId;
+    }
+
+    @JsonProperty("author_avatar_url")
+    public String getAuthorAvatarUrl() {
+        return authorAvatarUrl;
+    }
+
+    @JsonProperty("author_avatar_url")
+    public void setAuthorAvatarUrl(String authorAvatarUrl) {
+        this.authorAvatarUrl = authorAvatarUrl;
+    }
     
     @JsonProperty("view_count")
     public int getViewCount() {
@@ -90,7 +129,18 @@ public class articles {
     public void setViewCount(int viewCount) {
         this.viewCount = viewCount;
     }
-    
+
+    @JsonProperty("is_pinned")
+    public Integer getIsPinned() {
+        return isPinned;
+    }
+
+    @JsonProperty("is_pinned")
+    @JsonAlias("isPinned")
+    public void setIsPinned(Integer isPinned) {
+        this.isPinned = isPinned;
+    }
+
     @JsonProperty("created_at")
     public String getCreatedAt() {
         return createdAt;

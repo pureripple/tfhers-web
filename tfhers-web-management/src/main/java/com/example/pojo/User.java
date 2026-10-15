@@ -13,6 +13,15 @@ public class User {
     private String email;
     private String phone;
     private String avatarUrl;
+    private Long steamId;          // 绑定的 Steam 64 位 ID
+    private String steamPersonaName; // Steam 昵称（可选）
+    private String steamAvatarUrl;   // Steam 头像URL（可选）
+    private Integer steamPlaytimeMinutes; // 缓存的蹄斗族群总时长（分钟）
+    private LocalDateTime steamPlaytimeUpdatedAt; // 缓存更新时间
+    private String steamAchievementsJson; // 缓存成就列表 JSON
+    private Integer steamAchievementsTotal; // 缓存成就总数
+    private Integer steamAchievementsCount; // 缓存已获得成就数
+    private LocalDateTime steamAchievementsUpdatedAt; // 缓存更新时间
     private String role; // USER, ADMIN
     private Integer status; // 0-禁用，1-正常
     private LocalDateTime lastLoginTime;
@@ -88,6 +97,78 @@ public class User {
         this.avatarUrl = avatarUrl;
     }
 
+    public Long getSteamId() {
+        return steamId;
+    }
+
+    public void setSteamId(Long steamId) {
+        this.steamId = steamId;
+    }
+
+    public String getSteamPersonaName() {
+        return steamPersonaName;
+    }
+
+    public void setSteamPersonaName(String steamPersonaName) {
+        this.steamPersonaName = steamPersonaName;
+    }
+
+    public String getSteamAvatarUrl() {
+        return steamAvatarUrl;
+    }
+
+    public void setSteamAvatarUrl(String steamAvatarUrl) {
+        this.steamAvatarUrl = steamAvatarUrl;
+    }
+
+    public Integer getSteamPlaytimeMinutes() {
+        return steamPlaytimeMinutes;
+    }
+
+    public void setSteamPlaytimeMinutes(Integer steamPlaytimeMinutes) {
+        this.steamPlaytimeMinutes = steamPlaytimeMinutes;
+    }
+
+    public LocalDateTime getSteamPlaytimeUpdatedAt() {
+        return steamPlaytimeUpdatedAt;
+    }
+
+    public void setSteamPlaytimeUpdatedAt(LocalDateTime steamPlaytimeUpdatedAt) {
+        this.steamPlaytimeUpdatedAt = steamPlaytimeUpdatedAt;
+    }
+
+    public String getSteamAchievementsJson() {
+        return steamAchievementsJson;
+    }
+
+    public void setSteamAchievementsJson(String steamAchievementsJson) {
+        this.steamAchievementsJson = steamAchievementsJson;
+    }
+
+    public Integer getSteamAchievementsTotal() {
+        return steamAchievementsTotal;
+    }
+
+    public void setSteamAchievementsTotal(Integer steamAchievementsTotal) {
+        this.steamAchievementsTotal = steamAchievementsTotal;
+    }
+
+    public Integer getSteamAchievementsCount() {
+        return steamAchievementsCount;
+    }
+
+    public void setSteamAchievementsCount(Integer steamAchievementsCount) {
+        this.steamAchievementsCount = steamAchievementsCount;
+    }
+
+    public LocalDateTime getSteamAchievementsUpdatedAt() {
+        return steamAchievementsUpdatedAt;
+    }
+
+    public void setSteamAchievementsUpdatedAt(LocalDateTime steamAchievementsUpdatedAt) {
+        this.steamAchievementsUpdatedAt = steamAchievementsUpdatedAt;
+    }
+
     public String getRole() {
         return role;
     }
@@ -145,6 +226,14 @@ public class User {
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
                 ", avatarUrl='" + avatarUrl + '\'' +
+                ", steamId=" + steamId +
+                ", steamPersonaName='" + steamPersonaName + '\'' +
+                ", steamAvatarUrl='" + steamAvatarUrl + '\'' +
+                ", steamPlaytimeMinutes=" + steamPlaytimeMinutes +
+                ", steamPlaytimeUpdatedAt=" + steamPlaytimeUpdatedAt +
+                ", steamAchievementsTotal=" + steamAchievementsTotal +
+                ", steamAchievementsCount=" + steamAchievementsCount +
+                ", steamAchievementsUpdatedAt=" + steamAchievementsUpdatedAt +
                 ", role='" + role + '\'' +
                 ", status=" + status +
                 ", lastLoginTime=" + lastLoginTime +

@@ -23,8 +23,8 @@
     }
     
     .articles-grid {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
     }
     
     .characters-grid {
@@ -42,15 +42,18 @@
     .nav-menu {
         position: fixed;
         left: -100%;
-        top: 70px;
+        top: var(--nav-height, 72px);
         flex-direction: column;
-        background-color: white;
+        background-color: rgba(18, 18, 18, 0.96);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
         width: 100%;
         text-align: center;
         transition: 0.3s;
-        box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 27px rgba(0, 0, 0, 0.35);
         padding: 20px 0;
         gap: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     
     .nav-menu.active {
@@ -60,7 +63,12 @@
     .nav-link {
         padding: 15px 20px;
         border-radius: 0;
-        border-bottom: 1px solid #f1f2f6;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--text-secondary, #b3b3b3);
+    }
+
+    .nav-link::after {
+        display: none;
     }
     
     .nav-toggle {
@@ -80,7 +88,7 @@
     }
     
     .main-content {
-        margin-top: 70px;
+        margin-top: var(--nav-height, 72px);
     }
     
     .page {
@@ -130,8 +138,18 @@
     .article-card {
         border-radius: 15px;
     }
-    
-    .article-cover {
+
+    .article-card-media {
+        min-height: 200px;
+        height: 220px;
+    }
+
+    .article-card-media .article-cover {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .article-cover-container .article-cover {
         height: 180px;
     }
     
@@ -246,10 +264,12 @@
 @media screen and (max-width: 480px) {
     .nav-brand {
         font-size: 20px;
+        gap: 8px;
     }
     
-    .nav-brand i {
-        font-size: 24px;
+    .nav-brand-logo {
+        height: 32px;
+        max-width: 120px;
     }
     
     .hero-title {
@@ -394,8 +414,8 @@
     }
     
     .articles-grid {
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: 40px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 32px;
     }
     
     .characters-grid {

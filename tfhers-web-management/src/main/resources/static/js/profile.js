@@ -6,59 +6,38 @@ let originalBasicData = {};
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM加载完成，开始初始化...');
     try {
         initializePage();
     } catch (error) {
         console.error('页面初始化失败:', error);
-        // 即使初始化失败，也要确保页面可见
         document.body.style.display = 'block';
+        setProfileLoadingHint(false);
     }
 });
 
 // 初始化页面
 function initializePage() {
-    console.log('开始初始化个人设置页面...');
-    
-    // 检查登录状态
     if (!checkLoginStatus()) {
-        console.log('未登录，跳转到登录页面');
         window.location.href = 'admin-login.html';
         return;
     }
-    
-    console.log('登录状态检查通过，继续初始化...');
-    
-    // 初始化标签页
+
     initializeTabs();
-    console.log('标签页初始化完成');
-    
-    // 初始化用户菜单
     initializeUserMenu();
-    console.log('用户菜单初始化完成');
-    
-    // 加载用户信息
-    loadUserInfo();
-    console.log('用户信息加载完成');
-    
-    // 初始化头像上传
     initializeAvatarUpload();
-    console.log('头像上传初始化完成');
-    
-    // 初始化表单
     initializeForms();
-    console.log('表单初始化完成');
-    
-    console.log('个人设置页面初始化完成');
+    loadUserInfo();
 }
 
 // 检查登录状态
 function checkLoginStatus() {
     const token = localStorage.getItem('admin_token');
-    console.log('检查登录状态，token:', token);
-    const isValid = token && token !== 'null';
-    console.log('登录状态有效:', isValid);
-    return isValid;
+    return token && token !== 'null';
+}
+
+function setProfileLoadingHint(visible) {
+    const el = document.getElementById('profileLoadingHint');
+    if (el) el.hidden = !visible;
 }
 
 // 初始化标签页
@@ -99,6 +78,7 @@ function initializeUserMenu() {
 
 // 加载用户信息
 async function loadUserInfo() {
+    setProfileLoadingHint(true);
     try {
         const response = await fetch('/api/profile/info', {
             method: 'GET',
@@ -109,7 +89,6 @@ async function loadUserInfo() {
         });
         
         const result = await response.json();
-        console.log('用户信息响应：', result);
         
         if (result.code === 200) {
             currentUser = result.data;
@@ -120,8 +99,9 @@ async function loadUserInfo() {
         }
     } catch (error) {
         console.error('加载用户信息失败：', error);
-        console.error('错误详情：', error.message);
         showToast('加载用户信息失败：' + error.message, 'error');
+    } finally {
+        setProfileLoadingHint(false);
     }
 }
 
