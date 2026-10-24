@@ -1,5 +1,6 @@
 package com.example.pojo;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -13,6 +14,12 @@ public class User {
     private String email;
     private String phone;
     private String avatarUrl;
+    private String signature; // 个性签名
+    private String gender; // 性别：保密/男/女
+    private LocalDate birthday; // 生日
+    private String coverUrl; // 个人主页背景封面
+    /** 非持久化：为 true 时 updateUser 将 birthday 置 NULL */
+    private Boolean clearBirthday;
     private Long steamId;          // 绑定的 Steam 64 位 ID
     private String steamPersonaName; // Steam 昵称（可选）
     private String steamAvatarUrl;   // Steam 头像URL（可选）
@@ -21,7 +28,8 @@ public class User {
     private String steamAchievementsJson; // 缓存成就列表 JSON
     private Integer steamAchievementsTotal; // 缓存成就总数
     private Integer steamAchievementsCount; // 缓存已获得成就数
-    private LocalDateTime steamAchievementsUpdatedAt; // 缓存更新时间
+    private LocalDateTime steamAchievementsUpdatedAt;
+    private Integer steamLevel; // Steam account level (IPlayerService/GetSteamLevel/v1)
     private String role; // USER, ADMIN
     private Integer status; // 0-禁用，1-正常
     private LocalDateTime lastLoginTime;
@@ -97,6 +105,47 @@ public class User {
         this.avatarUrl = avatarUrl;
     }
 
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
+    }
+
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public LocalDate getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(LocalDate birthday) {
+        this.birthday = birthday;
+    }
+
+    public Boolean getClearBirthday() {
+        return clearBirthday;
+    }
+
+    public void setClearBirthday(Boolean clearBirthday) {
+        this.clearBirthday = clearBirthday;
+    }
+
+    public String getCoverUrl() {
+        return coverUrl;
+    }
+
+    public void setCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
+    }
+
     public Long getSteamId() {
         return steamId;
     }
@@ -169,6 +218,15 @@ public class User {
         this.steamAchievementsUpdatedAt = steamAchievementsUpdatedAt;
     }
 
+
+    public Integer getSteamLevel() {
+        return steamLevel;
+    }
+
+    public void setSteamLevel(Integer steamLevel) {
+        this.steamLevel = steamLevel;
+    }
+
     public String getRole() {
         return role;
     }
@@ -226,6 +284,10 @@ public class User {
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
                 ", avatarUrl='" + avatarUrl + '\'' +
+                ", signature='" + signature + '\'' +
+                ", gender='" + gender + '\'' +
+                ", birthday=" + birthday +
+                ", coverUrl='" + coverUrl + '\'' +
                 ", steamId=" + steamId +
                 ", steamPersonaName='" + steamPersonaName + '\'' +
                 ", steamAvatarUrl='" + steamAvatarUrl + '\'' +
@@ -234,6 +296,7 @@ public class User {
                 ", steamAchievementsTotal=" + steamAchievementsTotal +
                 ", steamAchievementsCount=" + steamAchievementsCount +
                 ", steamAchievementsUpdatedAt=" + steamAchievementsUpdatedAt +
+                ", steamLevel=" + steamLevel +
                 ", role='" + role + '\'' +
                 ", status=" + status +
                 ", lastLoginTime=" + lastLoginTime +

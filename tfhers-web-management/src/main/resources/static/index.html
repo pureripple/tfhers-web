@@ -1,118 +1,101 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="tfhers-admin">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>蹄斗族群助手 - 后台管理系统</title>
     <link rel="stylesheet" href="css/fonts-local.css">
     <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
-    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/index.css?v=20261024a">
 </head>
 <body>
 
-    <!-- 侧边栏 -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <img src="images/logo.png" alt="蹄斗助手" style="height: 34px; width: auto; display: block;">
-                <span>蹄斗助手</span>
-            </div>
-            <div class="admin-title">后台管理</div>
+        <aside class="app-sidebar" id="appSidebar" aria-label="管理导航">
+        <div class="sidebar-top">
+            <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="收起侧栏" title="收起/展开">
+                <i class="fas fa-bars"></i>
+            </button>
+            <span class="sidebar-brand">tfhers管理端</span>
         </div>
-        
-        <nav class="sidebar-nav">
-            <ul class="nav-list">
-                <li class="nav-item active">
-                    <a href="#articles" class="nav-link" data-page="articles">
-                        <i class="fas fa-newspaper"></i>
-                        <span>资讯管理</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#characters" class="nav-link" data-page="characters">
-                        <i class="fas fa-users"></i>
-                        <span>角色管理</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#user-combos" class="nav-link" data-page="user-combos">
-                        <i class="fas fa-user-check"></i>
-                        <span>用户连段审核</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#reports" class="nav-link" data-page="reports">
-                        <i class="fas fa-flag"></i>
-                        <span>举报审核</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#comment-review" class="nav-link" data-page="comment-review">
-                        <i class="fas fa-comments"></i>
-                        <span>评论审核</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#statistics" class="nav-link" data-page="statistics">
-                        <i class="fas fa-chart-line"></i>
-                        <span>数据统计</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#games" class="nav-link" data-page="games">
-                        <i class="fas fa-gamepad"></i>
-                        <span>游戏管理</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="ai-chat.html" class="nav-link">
-                        <i class="fas fa-robot"></i>
-                        <span>AI 助手</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="user-management.html?v=1" class="nav-link">
-                        <i class="fas fa-user-cog"></i>
-                        <span>用户管理</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="profile.html?v=1" class="nav-link">
-                        <i class="fas fa-user-circle"></i>
-                        <span>个人设置</span>
-                    </a>
-                </li>
-            </ul>
+        <nav class="sidebar-nav" id="navMenu">
+            <a href="#articles" class="nav-link active" data-page="articles">
+                <i class="fas fa-newspaper"></i><span>资讯管理</span>
+            </a>
+            <a href="#characters" class="nav-link" data-page="characters">
+                <i class="fas fa-users"></i><span>角色管理</span>
+            </a>
+            <a href="#user-combos" class="nav-link" data-page="user-combos">
+                <i class="fas fa-user-check"></i><span>用户连段审核</span>
+            </a>
+            <a href="#reports" class="nav-link" data-page="reports">
+                <i class="fas fa-flag"></i><span>举报处理</span>
+            </a>
+            <a href="#feedback" class="nav-link" data-page="feedback">
+                <i class="fas fa-comment-dots"></i><span>问题反馈</span>
+            </a>
+            <a href="#comment-review" class="nav-link" data-page="comment-review">
+                <i class="fas fa-comments"></i><span>评论审核</span>
+            </a>
+            <a href="#statistics" class="nav-link" data-page="statistics">
+                <i class="fas fa-chart-line"></i><span>数据统计</span>
+            </a>
+            <a href="#games" class="nav-link" data-page="games">
+                <i class="fas fa-gamepad"></i><span>游戏管理</span>
+            </a>
+            <a href="#tournaments" class="nav-link" data-page="tournaments">
+                <i class="fas fa-trophy"></i><span>赛事管理</span>
+            </a>
+            <a href="ai-chat.html" class="nav-link nav-link-ai">
+                <i class="fas fa-robot"></i><span>AI 助手</span>
+            </a>
+            <a href="user-management.html?v=1" class="nav-link">
+                <i class="fas fa-user-cog"></i><span>用户管理</span>
+            </a>
+            <a href="profile.html?v=1" class="nav-link">
+                <i class="fas fa-user-circle"></i><span>个人设置</span>
+            </a>
         </nav>
     </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden aria-hidden="true"></div>
+    <div class="sidebar-float-cluster" id="sidebarFloatCluster">
+        <button type="button" class="sidebar-float-toggle" id="sidebarFloatToggle" aria-label="展开侧栏" title="展开/收起">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="sidebar-float-brand">tfhers管理端</span>
+    </div>
 
-    <!-- 主内容区域 -->
-    <main class="main-content">
-        <!-- 顶部导航栏 -->
-        <header class="top-header">
-            <div class="header-left">
-                <button class="sidebar-toggle" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="page-title">资讯管理</h1>
-            </div>
-            <div class="header-right">
-                <div class="user-menu" id="userMenu" style="display: none;">
-                    <div class="user-info" id="userInfo">
-                        <img src="/images/CSel3_LargePortTianhuo.png" alt="管理员头像" class="user-avatar" id="userAvatar">
-                        <span class="user-name" id="userName">管理员</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="user-dropdown" id="userDropdown">
-                        <a href="#" class="dropdown-item" onclick="logout()">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>退出登录</span>
-                        </a>
+    <header class="app-topbar" id="appTopbar">
+        <div class="app-topbar-inner">
+            <h1 class="page-title" id="pageTitle">资讯管理</h1>
+            <div class="app-top-actions" id="appTopActions">
+                <div class="top-avatar-wrap" id="topAvatarWrap">
+                    <button type="button" class="top-avatar-btn" id="topAvatarBtn" title="账户" aria-label="账户" aria-haspopup="true" aria-expanded="false">
+                        <img id="userAvatar" src="images/CSel3_LargePortTianhuo.png" alt="">
+                    </button>
+                    <div class="top-account-panel" id="topAccountPanel" hidden role="menu" aria-label="账户面板">
+                        <div class="tap-head">
+                            <img id="tapAvatar" class="tap-avatar" src="images/CSel3_LargePortTianhuo.png" alt="">
+                            <div class="tap-names">
+                                <div class="tap-nickname" id="tapNickname">管理员</div>
+                                <div class="tap-username" id="tapUsername">@admin</div>
+                            </div>
+                        </div>
+                        <div class="tap-actions">
+                            <a href="profile.html?v=1" class="tap-action-btn" id="tapProfileBtn">
+                                <i class="fas fa-user-circle"></i><span>个人资料</span>
+                            </a>
+                            <button type="button" class="tap-action-btn" id="tapLogoutBtn" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i><span>退出登录</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
 
+    <!-- 主内容区域 -->
+    <main class="main-content">
         <!-- 页面内容 -->
         <div class="page-content">
             <!-- 资讯管理页面 -->
@@ -312,6 +295,55 @@
                 </div>
             </section>
 
+
+            <!-- 问题反馈处理 -->
+            <section id="feedback" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">问题反馈</h3>
+                        <div class="card-actions">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <select id="feedbackStatusFilter" class="select-input">
+                                    <option value="">全部状态</option>
+                                    <option value="0">待处理</option>
+                                    <option value="1">处理中</option>
+                                    <option value="2">已处理</option>
+                                    <option value="3">已关闭</option>
+                                </select>
+                                <select id="feedbackCategoryFilter" class="select-input">
+                                    <option value="">全部类型</option>
+                                    <option value="bug">问题/Bug</option>
+                                    <option value="suggestion">功能建议</option>
+                                    <option value="other">其他</option>
+                                </select>
+                                <button class="btn btn-secondary" id="refreshFeedbackBtn">
+                                    <i class="fas fa-sync-alt"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="feedbackTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>用户</th>
+                                    <th>类型</th>
+                                    <th>标题</th>
+                                    <th>内容</th>
+                                    <th>状态</th>
+                                    <th>提交时间</th>
+                                    <th>处理结果</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feedbackTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="feedbackPagination"></div>
+                </div>
+            </section>
             <!-- 评论审核（先审后发：用户评论默认待审核） -->
             <section id="comment-review" class="page">
                 <div class="content-card">
@@ -474,6 +506,27 @@
                                 <div id="steamAchievementSchemaTotal" style="font-weight: 700;">—</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 赛事管理 -->
+            <section id="tournaments" class="page">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">赛事管理</h3>
+                        <div class="card-actions">
+                            <button class="btn btn-primary" id="createTournamentBtn" type="button">
+                                <i class="fas fa-plus"></i> 创建比赛
+                            </button>
+                            <button class="btn btn-secondary" id="refreshTournamentsBtn" type="button">
+                                <i class="fas fa-sync"></i> 刷新
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding:16px;">
+                        <div id="adminTournamentList" style="display:grid;gap:10px;"></div>
+                        <div id="adminTournamentDetail" style="display:none;margin-top:18px;"></div>
                     </div>
                 </div>
             </section>
@@ -784,6 +837,37 @@
         </div>
     </div>
 
+
+    <!-- 问题反馈：更新状态/回复 -->
+    <div id="feedbackStatusModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>处理反馈</h3>
+                <button class="modal-close" onclick="closeFeedbackStatusModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="feedbackStatusModalId">
+                <div class="form-group">
+                    <label>状态</label>
+                    <select id="feedbackStatusSelect" class="select-input" style="width:100%;">
+                        <option value="1">处理中</option>
+                        <option value="2">已处理</option>
+                        <option value="3">已关闭</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>处理结果（用户可见）</label>
+                    <textarea id="feedbackAdminReply" rows="4" placeholder="填写给用户看的处理说明..." style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary);"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeFeedbackStatusModal()">取消</button>
+                <button class="btn btn-primary" id="confirmFeedbackStatusBtn">确认</button>
+            </div>
+        </div>
+    </div>
     <!-- 加载指示器 -->
     <div id="loadingIndicator" class="loading-indicator">
         <div class="spinner"></div>
@@ -797,6 +881,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js" crossorigin="anonymous"></script>
-    <script src="js/index.js?v=20260320-steam-charts"></script>
+    <script src="js/index.js?v=20261024a"></script>
 </body>
 </html>

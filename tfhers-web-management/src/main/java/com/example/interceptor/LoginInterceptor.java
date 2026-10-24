@@ -104,13 +104,29 @@ public class LoginInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // 前台角色教程接口（不需要登录验证）
+                // 前台角色教程接口（不需要登录验证）
         if (path.startsWith("/api/characters")) {
             return true;
         }
 
+        // 赛事：公开 GET 列表/详情/对阵；报名需登录
+// 排行榜公开
+        if (path.equals("/api/rankings") || path.startsWith("/api/rankings?")) {
+            return true;
+        }
+
+        if (path.startsWith("/api/tournaments")) {
+            if ("GET".equals(m)) {
+                return true;
+            }
+            return false;
+        }
+
         // 资讯接口：仅 GET 公开列表/详情/评论列表；发布/修改/删除及点赞评论举报需登录
         if (path.startsWith("/api/articles")) {
+            if ("GET".equals(m) && "/api/articles/mine".equals(path)) {
+                return false;
+            }
             if ("POST".equals(m) && "/api/articles".equals(path)) {
                 return false;
             }
@@ -127,6 +143,11 @@ public class LoginInterceptor implements HandlerInterceptor {
                 return false;
             }
             return true;
+        }
+
+        // 用户连段：提交/我的列表/删除需登录
+        if (path.startsWith("/api/combos")) {
+            return false;
         }
 
         // 前台/后台正文图片上传接口（允许跨域调用）

@@ -55,4 +55,8 @@ public interface articlesMapper {
     int increaseViewCount(@Param("id") long id);
 
     int updateArticlePinned(@Param("id") long id, @Param("pinned") int pinned);
+
+    /** 当前用户发布的资讯（author_id） */
+    List<articles> selectByAuthorId(@Param("authorId") long authorId);
 }
+

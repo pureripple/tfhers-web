@@ -157,10 +157,17 @@ public class UserController {
             userData.put("email", user.getEmail());
             userData.put("phone", user.getPhone());
             userData.put("avatarUrl", user.getAvatarUrl());
+            userData.put("signature", user.getSignature());
+            userData.put("gender", user.getGender());
+            userData.put("birthday", user.getBirthday() != null ? user.getBirthday().toString() : null);
+            userData.put("coverUrl", user.getCoverUrl());
             userData.put("steamId", user.getSteamId());
             userData.put("steamPersonaName", user.getSteamPersonaName());
             userData.put("steamAvatarUrl", user.getSteamAvatarUrl());
             userData.put("steamPlaytimeMinutes", user.getSteamPlaytimeMinutes());
+            userData.put("steamLevel", user.getSteamLevel());
+            userData.put("steamAchievementsCount", user.getSteamAchievementsCount());
+            userData.put("steamAchievementsTotal", user.getSteamAchievementsTotal());
             userData.put("token", token);
             
             response.put("data", userData);
@@ -214,6 +221,33 @@ public class UserController {
     /**
      * 获取用户信息
      */
+    
+    /**
+     * 上传个人主页背景封面
+     */
+    @PostMapping("/upload-cover")
+    public ResponseEntity<Map<String, Object>> uploadCover(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestHeader("Authorization") String token) {
+        try {
+            if (token == null || !token.startsWith("Bearer ") || !jwtUtil.validateToken(token.substring(7))) {
+                return ResponseEntity.status(401).body(apiJson(401, "认证失败"));
+            }
+            Long userId = jwtUtil.getUserIdFromToken(token.substring(7));
+            results result = userService.uploadCover(userId, file);
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", result.getCode());
+            response.put("msg", result.getMsg());
+            response.put("data", result.getData());
+            if (result.getCode() == 200) {
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(apiJson(500, "封面上传失败: " + e.getMessage()));
+        }
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<Map<String, Object>> getProfile(@RequestHeader("Authorization") String token) {
         try {
@@ -241,6 +275,81 @@ public class UserController {
                 "msg", "获取用户信息失败: " + e.getMessage(),
                 "data", null
             ));
+        }
+    }
+
+
+    /**
+     * 更新社区用户个人资料（昵称/邮箱/手机/签名）
+     */
+    @PutMapping("/profile")
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, String> body) {
+        try {
+            String token = authHeader != null && authHeader.startsWith("Bearer ")
+                    ? authHeader.substring(7) : null;
+            if (token == null || !jwtUtil.validateToken(token)) {
+                return ResponseEntity.status(401).body(apiJson(401, "认证失败"));
+            }
+            Long userId = jwtUtil.getUserIdFromToken(token);
+            results result = userService.updateCommunityProfile(
+                    userId,
+                    body.get("nickname"),
+                    body.get("email"),
+                    body.get("phone"),
+                    body.get("signature"),
+                    body.get("gender"),
+                    body.get("birthday"),
+                    body.get("coverUrl")
+            );
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", result.getCode());
+            response.put("msg", result.getMsg());
+            response.put("data", result.getData());
+            if (result.getCode() == 200) {
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(apiJson(500, "更新失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 修改社区用户密码
+     */
+    @PutMapping("/password")
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, String> body) {
+        try {
+            String token = authHeader != null && authHeader.startsWith("Bearer ")
+                    ? authHeader.substring(7) : null;
+            if (token == null || !jwtUtil.validateToken(token)) {
+                return ResponseEntity.status(401).body(apiJson(401, "认证失败"));
+            }
+            Long userId = jwtUtil.getUserIdFromToken(token);
+
+            String oldPassword = body.get("oldPassword");
+            String newPassword = body.get("newPassword");
+            String confirmPassword = body.get("confirmPassword");
+            if (confirmPassword != null && newPassword != null
+                    && !newPassword.equals(confirmPassword)) {
+                return ResponseEntity.badRequest().body(apiJson(400, "新密码和确认密码不一致"));
+            }
+
+            results result = userService.changePassword(userId, oldPassword, newPassword);
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", result.getCode());
+            response.put("msg", result.getMsg());
+            response.put("data", result.getData());
+            if (result.getCode() == 200) {
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(apiJson(500, "修改密码失败: " + e.getMessage()));
         }
     }
 
@@ -365,6 +474,7 @@ public class UserController {
             data.put("playtime_hours", hours);
             data.put("personaName", user.getSteamPersonaName());
             data.put("avatarUrl", user.getSteamAvatarUrl());
+            data.put("steamLevel", user.getSteamLevel());
             return ResponseEntity.ok(Map.of(
                     "code", 200,
                     "msg", "本地数据（点击刷新可从 Steam 更新）",
@@ -386,6 +496,7 @@ public class UserController {
                 data.put("playtime_hours", hours);
                 data.put("personaName", user.getSteamPersonaName());
                 data.put("avatarUrl", user.getSteamAvatarUrl());
+            data.put("steamLevel", user.getSteamLevel());
                 return ResponseEntity.ok(Map.of(
                         "code", 200,
                         "msg", "使用上次缓存数据（本次从 Steam 获取失败）",
@@ -416,6 +527,7 @@ public class UserController {
             data.put("playtime_hours", hours);
             data.put("personaName", user.getSteamPersonaName());
             data.put("avatarUrl", user.getSteamAvatarUrl());
+            data.put("steamLevel", user.getSteamLevel());
             return ResponseEntity.ok(Map.of(
                     "code", 200,
                     "msg", "查询成功（Steam 时长未增长：本次不更新缓存）",
@@ -424,6 +536,7 @@ public class UserController {
         }
 
         Map<String, String> profile = fetchSteamProfile(user.getSteamId());
+        Integer steamLevel = fetchSteamLevel(user.getSteamId());
         User toUpdate = new User();
         toUpdate.setId(userId);
         toUpdate.setSteamPlaytimeMinutes((int) minutesFromSteam);
@@ -431,6 +544,9 @@ public class UserController {
         if (profile != null) {
             toUpdate.setSteamPersonaName(profile.get("personaName"));
             toUpdate.setSteamAvatarUrl(profile.get("avatarUrl"));
+        }
+        if (steamLevel != null) {
+            toUpdate.setSteamLevel(steamLevel);
         }
         userService.updateUser(toUpdate);
 
@@ -453,6 +569,11 @@ public class UserController {
         if (profile != null) {
             data.put("personaName", profile.get("personaName"));
             data.put("avatarUrl", profile.get("avatarUrl"));
+        }
+        if (steamLevel != null) {
+            data.put("steamLevel", steamLevel);
+        } else if (user.getSteamLevel() != null) {
+            data.put("steamLevel", user.getSteamLevel());
         }
         return ResponseEntity.ok(Map.of(
                 "code", 200,
@@ -531,6 +652,18 @@ public class UserController {
                 // 只有写入快照（说明本次确实去 Steam 拉了新时长）才同步一次 profile
                 try {
                     profile = fetchSteamProfile(user.getSteamId());
+                    Integer lvl = fetchSteamLevel(user.getSteamId());
+                    if (profile != null || lvl != null) {
+                        User pu = new User();
+                        pu.setId(userId);
+                        if (profile != null) {
+                            if (profile.get("personaName") != null) pu.setSteamPersonaName(profile.get("personaName"));
+                            if (profile.get("avatarUrl") != null) pu.setSteamAvatarUrl(profile.get("avatarUrl"));
+                        }
+                        if (lvl != null) pu.setSteamLevel(lvl);
+                        userService.updateUser(pu);
+                        if (lvl != null) user.setSteamLevel(lvl);
+                    }
                 } catch (Exception ignored) {
                 }
             }
@@ -556,6 +689,7 @@ public class UserController {
         data.put("steamId", user.getSteamId());
         data.put("personaName", personaName);
         data.put("avatarUrl", avatarUrl);
+        data.put("steamLevel", user.getSteamLevel());
         data.put("playtime_minutes_2w", deltaMinutes);
         data.put("playtime_hours_2w", deltaHours);
         data.put("available", available);
@@ -942,6 +1076,38 @@ public class UserController {
         } catch (org.springframework.web.client.RestClientException e) {
             // 调用失败（如隐私设置、网络问题），视为 0 分钟，不抛出 500
             return 0L;
+        }
+    }
+
+
+    /**
+     * 获取 Steam 账号等级（IPlayerService/GetSteamLevel/v1，需 API Key + steamid）。
+     * 资料设为私密时仍通常可取等级；失败返回 null。
+     */
+    private Integer fetchSteamLevel(Long steamId) {
+        if (steamId == null || steamApiKey == null || steamApiKey.isBlank()) return null;
+        String url = "https://api.steampowered.com/IPlayerService/GetSteamLevel/v1/"
+                + "?key=" + steamApiKey
+                + "&steamid=" + steamId;
+        org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> resp = restTemplate.getForObject(url, Map.class);
+            if (resp == null) return null;
+            Object respObj = resp.get("response");
+            if (!(respObj instanceof Map)) return null;
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = (Map<String, Object>) respObj;
+            Object levelObj = response.get("player_level");
+            if (levelObj == null) return null;
+            if (levelObj instanceof Number) return ((Number) levelObj).intValue();
+            try {
+                return Integer.parseInt(levelObj.toString());
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        } catch (org.springframework.web.client.RestClientException e) {
+            return null;
         }
     }
 

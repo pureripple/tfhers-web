@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.CharacterMapper">
+
+    <resultMap id="CharacterResultMap" type="com.example.pojo.GameCharacter">
+        <id column="id" property="id"/>
+        <result column="name_en" property="nameEn"/>
+        <result column="name_zh" property="nameZh"/>
+        <result column="avatar_url" property="avatarUrl"/>
+        <result column="intro" property="intro"/>
+        <result column="background" property="background"/>
+        <result column="difficulty_level" property="difficultyLevel"/>
+        <result column="official_video_url" property="officialVideoUrl"/>
+        <result column="move_list_image_url" property="moveListImageUrl"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="CharacterResultMap">
+        SELECT id, name_en, name_zh, avatar_url, intro, background,
+               difficulty_level, official_video_url, move_list_image_url, created_at, updated_at
+        FROM characters
+        ORDER BY id ASC
+    </select>
+
+    <select id="findById" resultMap="CharacterResultMap">
+        SELECT id, name_en, name_zh, avatar_url, intro, background,
+               difficulty_level, official_video_url, move_list_image_url, created_at, updated_at
+        FROM characters
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.example.pojo.GameCharacter" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO characters
+        (name_en, name_zh, avatar_url, intro, background,
+         difficulty_level, official_video_url, move_list_image_url)
+        VALUES
+        (#{nameEn}, #{nameZh}, #{avatarUrl}, #{intro}, #{background},
+         #{difficultyLevel}, #{officialVideoUrl}, #{moveListImageUrl})
+    </insert>
+
+    <update id="update" parameterType="com.example.pojo.GameCharacter">
+        UPDATE characters
+        <set>
+            <if test="nameEn != null">name_en = #{nameEn},</if>
+            <if test="nameZh != null">name_zh = #{nameZh},</if>
+            <if test="avatarUrl != null">avatar_url = #{avatarUrl},</if>
+            <if test="intro != null">intro = #{intro},</if>
+            <if test="background != null">background = #{background},</if>
+            <if test="difficultyLevel != null">difficulty_level = #{difficultyLevel},</if>
+            <if test="officialVideoUrl != null">official_video_url = #{officialVideoUrl},</if>
+            <if test="moveListImageUrl != null">move_list_image_url = #{moveListImageUrl},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM characters WHERE id = #{id}
+    </delete>
+
+</mapper>
+

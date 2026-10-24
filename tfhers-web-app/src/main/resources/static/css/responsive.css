@@ -539,3 +539,69 @@
         animation: none;
     }
 }
+
+
+/* ===== Left sidebar overrides (after top-nav redesign) ===== */
+@media screen and (max-width: 768px) {
+    .main-content {
+        margin-left: 0 !important;
+        margin-top: var(--nav-height, calc(var(--mobile-topbar-height, 52px) + var(--app-topbar-height, 56px))) !important;
+    }
+    .app-sidebar .nav-link {
+        border-bottom: none;
+        border-radius: 12px;
+        text-align: left;
+    }
+    .app-sidebar .nav-link::after {
+        display: none;
+    }
+    html.tfhers-authed .sidebar-float-cluster,
+    html.tfhers-authed .sidebar-float-toggle {
+        display: none !important;
+    }
+}
+
+@media screen and (min-width: 769px) {
+    .mobile-topbar {
+        display: none !important;
+    }
+    html.tfhers-authed:not(.sidebar-collapsed) .main-content {
+        margin-top: var(--app-topbar-height, 56px) !important;
+        margin-left: var(--sidebar-width-expanded) !important;
+    }
+    html.tfhers-authed.sidebar-collapsed .main-content {
+        margin-top: var(--app-topbar-height, 56px) !important;
+        margin-left: 0 !important;
+    }
+}
+
+
+/* Settings page mobile */
+@media (max-width: 768px) {
+    .page-settings {
+        max-width: none;
+    }
+    .settings-page-title {
+        font-size: 1.4rem;
+    }
+    .settings-block {
+        padding: 18px 0;
+    }
+}
+
+
+/* Manuscripts page mobile */
+@media (max-width: 768px) {
+    .page-manuscripts {
+        max-width: none;
+    }
+    .manuscripts-tabs {
+        width: 100%;
+        display: flex;
+    }
+    .manuscripts-tab {
+        flex: 1;
+        justify-content: center;
+    }
+}
+

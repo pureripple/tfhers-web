@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.UserRatingMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.pojo.UserRating">
+        <id column="user_id" property="userId"/>
+        <result column="rating" property="rating"/>
+        <result column="matches_played" property="matchesPlayed"/>
+        <result column="wins" property="wins"/>
+        <result column="losses" property="losses"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="nickname" property="nickname"/>
+        <result column="avatar_url" property="avatarUrl"/>
+        <result column="username" property="username"/>
+    </resultMap>
+
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT user_id, rating, matches_played, wins, losses, created_at, updated_at
+        FROM user_ratings
+        WHERE user_id = #{userId}
+    </select>
+
+    <insert id="insertDefault">
+        INSERT IGNORE INTO user_ratings (user_id, rating, matches_played, wins, losses, created_at, updated_at)
+        VALUES (#{userId}, #{rating}, 0, 0, 0, NOW(), NOW())
+    </insert>
+
+    <update id="updateRating">
+        UPDATE user_ratings
+        SET rating = #{rating},
+            matches_played = matches_played + 1,
+            wins = wins + #{winInc},
+            losses = losses + #{lossInc},
+            updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <select id="listLeaderboard" resultMap="BaseResultMap">
+        SELECT r.user_id, r.rating, r.matches_played, r.wins, r.losses, r.created_at, r.updated_at,
+               u.nickname, u.avatar_url, u.username
+        FROM user_ratings r
+        INNER JOIN users u ON u.id = r.user_id
+        WHERE u.status = 1
+        ORDER BY r.rating DESC, r.user_id ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="countRank" resultType="java.lang.Integer">
+        SELECT COUNT(*) + 1
+        FROM user_ratings r
+        INNER JOIN users u ON u.id = r.user_id
+        WHERE u.status = 1
+          AND (
+            r.rating &gt; #{rating}
+            OR (r.rating = #{rating} AND r.user_id &lt; #{userId})
+          )
+    </select>
+</mapper>

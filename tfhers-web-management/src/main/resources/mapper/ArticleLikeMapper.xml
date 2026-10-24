@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.ArticleLikeMapper">
+
+    <select id="countByArticleId" resultType="int">
+        SELECT COUNT(*) FROM article_likes WHERE article_id = #{articleId}
+    </select>
+
+    <select id="exists" resultType="int">
+        SELECT COUNT(*) FROM article_likes WHERE article_id = #{articleId} AND user_id = #{userId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO article_likes (article_id, user_id) VALUES (#{articleId}, #{userId})
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM article_likes WHERE article_id = #{articleId} AND user_id = #{userId}
+    </delete>
+
+    <delete id="deleteByArticleId">
+        DELETE FROM article_likes WHERE article_id = #{articleId}
+    </delete>
+</mapper>

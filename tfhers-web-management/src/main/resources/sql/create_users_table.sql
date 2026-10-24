@@ -22,6 +22,6 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- 插入一些测试数据
 INSERT INTO `users` (`username`, `nickname`, `password`, `email`, `phone`, `avatar_url`, `role`, `status`) VALUES
-('testuser1', '测试用户1', '123456', 'test1@example.com', '13800138001', '/images/default-avatar.png', 'USER', 1),
-('testuser2', '测试用户2', '123456', 'test2@example.com', '13800138002', '/images/default-avatar.png', 'USER', 1),
-('testadmin', '测试管理员', '123456', 'admin@example.com', '13800138003', '/images/default-avatar.png', 'ADMIN', 1);
+('testuser1', '测试用户1', '123456', 'test1@example.com', '13800138001', '/images/CSel3_LargePortTianhuo.png', 'USER', 1),
+('testuser2', '测试用户2', '123456', 'test2@example.com', '13800138002', '/images/CSel3_LargePortTianhuo.png', 'USER', 1),
+('testadmin', '测试管理员', '123456', 'admin@example.com', '13800138003', '/images/CSel3_LargePortTianhuo.png', 'ADMIN', 1);

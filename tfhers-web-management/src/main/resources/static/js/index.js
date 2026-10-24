@@ -24,6 +24,11 @@ const AppState = {
     reportsPage: 1,
     reportsPageSize: 10,
     reportsTotal: 0,
+    // 问题反馈
+    feedbackList: [],
+    feedbackPage: 1,
+    feedbackPageSize: 10,
+    feedbackTotal: 0,
     // 举报审核弹窗上下文（资讯举报 or 评论审核合并）
     reportStatusContext: null,
     // 评论审核
@@ -64,11 +69,16 @@ function escapeHtml(s) {
 
 // DOM元素引用
 const elements = {
-    sidebar: document.querySelector('.sidebar'),
+    sidebar: document.getElementById('appSidebar') || document.querySelector('.app-sidebar'),
     sidebarToggle: document.getElementById('sidebarToggle'),
-    navLinks: document.querySelectorAll('.nav-link'),
+    sidebarFloatToggle: document.getElementById('sidebarFloatToggle'),
+    sidebarBackdrop: document.getElementById('sidebarBackdrop'),
+    navLinks: document.querySelectorAll('#navMenu .nav-link, .sidebar-nav .nav-link'),
     pages: document.querySelectorAll('.page'),
-    pageTitle: document.querySelector('.page-title'),
+    pageTitle: document.getElementById('pageTitle') || document.querySelector('.page-title'),
+    topAvatarWrap: document.getElementById('topAvatarWrap'),
+    topAvatarBtn: document.getElementById('topAvatarBtn'),
+    topAccountPanel: document.getElementById('topAccountPanel'),
     searchInput: document.getElementById('searchInput'),
     searchBtn: document.getElementById('searchBtn'),
     refreshBtn: document.getElementById('refreshBtn'),
@@ -125,6 +135,17 @@ const elements = {
     reportStatusSelect: document.getElementById('reportStatusSelect'),
     reportAdminRemark: document.getElementById('reportAdminRemark'),
     confirmReportStatusBtn: document.getElementById('confirmReportStatusBtn'),
+    // 问题反馈
+    feedbackStatusFilter: document.getElementById('feedbackStatusFilter'),
+    feedbackCategoryFilter: document.getElementById('feedbackCategoryFilter'),
+    feedbackTableBody: document.getElementById('feedbackTableBody'),
+    refreshFeedbackBtn: document.getElementById('refreshFeedbackBtn'),
+    feedbackPagination: document.getElementById('feedbackPagination'),
+    feedbackStatusModal: document.getElementById('feedbackStatusModal'),
+    feedbackStatusModalId: document.getElementById('feedbackStatusModalId'),
+    feedbackStatusSelect: document.getElementById('feedbackStatusSelect'),
+    feedbackAdminReply: document.getElementById('feedbackAdminReply'),
+    confirmFeedbackStatusBtn: document.getElementById('confirmFeedbackStatusBtn'),
     // 评论审核
     commentReviewStatusFilter: document.getElementById('commentReviewStatusFilter'),
     commentReviewArticleId: document.getElementById('commentReviewArticleId'),
@@ -148,7 +169,7 @@ function initApp() {
     loadArticles();
     // 从 URL hash 恢复页面（从用户管理/个人设置点「系统设置」等链接进来时直接显示对应页）
     const hash = window.location.hash.replace(/^#/, '');
-    const validPages = ['articles', 'characters', 'user-combos', 'reports', 'comment-review', 'statistics', 'games'];
+    const validPages = ['articles', 'characters', 'user-combos', 'reports', 'feedback', 'comment-review', 'statistics', 'games'];
     const pageId = hash && validPages.includes(hash) ? hash : 'articles';
     showPage(pageId);
 
@@ -171,7 +192,7 @@ function checkLoginStatus() {
         getUserInfo();
     } else {
         // 未登录，重定向到登录页面
-        window.location.href = '/admin-login.html';
+        window.location.href = 'admin-login.html';
     }
 }
 
@@ -202,35 +223,46 @@ async function getUserInfo() {
 
 // 更新用户信息显示
 function updateUserInfo() {
-    const userMenu = document.getElementById('userMenu');
-    const userName = document.getElementById('userName');
     const userAvatar = document.getElementById('userAvatar');
-    
-    if (AppState.user && userMenu && userName) {
-        userName.textContent = AppState.user.realName || AppState.user.username || '管理员';
-        if (userAvatar && AppState.user.avatarUrl) {
-            userAvatar.src = AppState.user.avatarUrl;
-        }
-        userMenu.style.display = 'flex';
-    }
+    const tapAvatar = document.getElementById('tapAvatar');
+    const tapNickname = document.getElementById('tapNickname');
+    const tapUsername = document.getElementById('tapUsername');
+    const name = (AppState.user && (AppState.user.realName || AppState.user.username)) || '管理员';
+    const uname = (AppState.user && AppState.user.username) || 'admin';
+    const avatar = (AppState.user && AppState.user.avatarUrl) || 'images/CSel3_LargePortTianhuo.png';
+    if (tapNickname) tapNickname.textContent = name;
+    if (tapUsername) tapUsername.textContent = '@' + uname;
+    if (userAvatar) userAvatar.src = avatar;
+    if (tapAvatar) tapAvatar.src = avatar;
 }
 
 // 设置用户菜单
 function setupUserMenu() {
-    const userInfo = document.getElementById('userInfo');
-    const userDropdown = document.getElementById('userDropdown');
-    
-    if (userInfo && userDropdown) {
-        userInfo.addEventListener('click', function(e) {
-            e.stopPropagation();
-            userDropdown.classList.toggle('show');
-        });
-        
-        // 点击其他地方关闭菜单
-        document.addEventListener('click', function() {
-            userDropdown.classList.remove('show');
-        });
+    const wrap = elements.topAvatarWrap || document.getElementById('topAvatarWrap');
+    const btn = elements.topAvatarBtn || document.getElementById('topAvatarBtn');
+    const panel = elements.topAccountPanel || document.getElementById('topAccountPanel');
+    if (!wrap || !btn || !panel) return;
+
+    function closePanel() {
+        wrap.classList.remove('is-open');
+        panel.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        btn.classList.remove('is-open');
     }
+    function openPanel() {
+        wrap.classList.add('is-open');
+        panel.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        btn.classList.add('is-open');
+    }
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (wrap.classList.contains('is-open')) closePanel();
+        else openPanel();
+    });
+    panel.addEventListener('click', function (e) { e.stopPropagation(); });
+    document.addEventListener('click', function () { closePanel(); });
 }
 
 // 登出功能
@@ -243,16 +275,26 @@ function logout() {
     localStorage.removeItem('user');
     
     // 重定向到登录页面
-    window.location.href = '/admin-login.html';
+    window.location.href = 'admin-login.html';
 }
 
 // 设置事件监听器
 function setupEventListeners() {
     
-    // 侧边栏切换
+    // 侧边栏切换（可收缩，对齐用户端）
+    initSidebarPreference();
     if (elements.sidebarToggle) {
-        elements.sidebarToggle.addEventListener('click', toggleSidebar);
+        elements.sidebarToggle.addEventListener('click', onSidebarToggleClick);
     }
+    if (elements.sidebarFloatToggle) {
+        elements.sidebarFloatToggle.addEventListener('click', onSidebarToggleClick);
+    }
+    if (elements.sidebarBackdrop) {
+        elements.sidebarBackdrop.addEventListener('click', closeNavMenu);
+    }
+    window.addEventListener('resize', function () {
+        if (!isMobileSidebar()) closeNavMenu();
+    });
     
     // 导航链接点击
     elements.navLinks.forEach(link => {
@@ -262,6 +304,7 @@ function setupEventListeners() {
             if (page) {
                 e.preventDefault();
                 showPage(page);
+                if (typeof closeNavMenu === 'function') closeNavMenu();
             }
             // 如果没有data-page属性，则允许默认的链接跳转行为
         });
@@ -369,6 +412,18 @@ function setupEventListeners() {
     if (elements.confirmReportStatusBtn) {
         elements.confirmReportStatusBtn.addEventListener('click', confirmReportStatus);
     }
+    if (elements.feedbackStatusFilter) {
+        elements.feedbackStatusFilter.addEventListener('change', () => { AppState.feedbackPage = 1; loadFeedback(); });
+    }
+    if (elements.feedbackCategoryFilter) {
+        elements.feedbackCategoryFilter.addEventListener('change', () => { AppState.feedbackPage = 1; loadFeedback(); });
+    }
+    if (elements.refreshFeedbackBtn) {
+        elements.refreshFeedbackBtn.addEventListener('click', () => loadFeedback());
+    }
+    if (elements.confirmFeedbackStatusBtn) {
+        elements.confirmFeedbackStatusBtn.addEventListener('click', confirmFeedbackStatus);
+    }
 
     if (elements.commentReviewStatusFilter) {
         elements.commentReviewStatusFilter.addEventListener('change', () => {
@@ -447,8 +502,74 @@ function setupEventListeners() {
 }
 
 // 切换侧边栏
+function isMobileSidebar() {
+    try {
+        return window.matchMedia('(max-width: 768px)').matches;
+    } catch (e) {
+        return window.innerWidth <= 768;
+    }
+}
+
+function initSidebarPreference() {
+    try {
+        if (localStorage.getItem('tfhers_admin_sidebar_collapsed') === '1') {
+            document.documentElement.classList.add('sidebar-collapsed');
+            document.body.classList.add('sidebar-collapsed');
+        }
+    } catch (e) { /* ignore */ }
+    updateSidebarChrome();
+}
+
+function updateSidebarChrome() {
+    const collapsed = document.documentElement.classList.contains('sidebar-collapsed');
+    const floatBtn = elements.sidebarFloatToggle;
+    if (floatBtn) {
+        floatBtn.setAttribute('aria-label', collapsed ? '展开侧栏' : '收起侧栏');
+        floatBtn.title = collapsed ? '展开' : '收起';
+    }
+    const inBtn = elements.sidebarToggle;
+    if (inBtn) {
+        inBtn.setAttribute('aria-label', '收起侧栏');
+        inBtn.title = '收起';
+    }
+}
+
+function onSidebarToggleClick(e) {
+    if (e) {
+        try { e.preventDefault(); } catch (err) { /* ignore */ }
+    }
+    if (isMobileSidebar()) {
+        const open = !document.documentElement.classList.contains('sidebar-open');
+        document.documentElement.classList.toggle('sidebar-open', open);
+        document.body.classList.toggle('sidebar-open', open);
+        const bd = elements.sidebarBackdrop;
+        if (bd) {
+            bd.hidden = !open;
+            bd.setAttribute('aria-hidden', open ? 'false' : 'true');
+        }
+        return;
+    }
+    const collapsed = !document.documentElement.classList.contains('sidebar-collapsed');
+    document.documentElement.classList.toggle('sidebar-collapsed', collapsed);
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
+    try {
+        localStorage.setItem('tfhers_admin_sidebar_collapsed', collapsed ? '1' : '0');
+    } catch (err) { /* ignore */ }
+    updateSidebarChrome();
+}
+
 function toggleSidebar() {
-    elements.sidebar.classList.toggle('open');
+    onSidebarToggleClick();
+}
+
+function closeNavMenu() {
+    document.documentElement.classList.remove('sidebar-open');
+    document.body.classList.remove('sidebar-open');
+    const bd = elements.sidebarBackdrop;
+    if (bd) {
+        bd.hidden = true;
+        bd.setAttribute('aria-hidden', 'true');
+    }
 }
 
 // 显示页面
@@ -465,12 +586,10 @@ function showPage(pageId) {
         AppState.currentPage = pageId;
     }
     
-    // 更新导航状态
+    // 更新导航状态（扁平 .nav-link）
     elements.navLinks.forEach(link => {
-        link.parentElement.classList.remove('active');
-        if (link.dataset.page === pageId) {
-            link.parentElement.classList.add('active');
-        }
+        if (!link.dataset.page) return;
+        link.classList.toggle('active', link.dataset.page === pageId);
     });
     
     // 更新页面标题
@@ -478,10 +597,12 @@ function showPage(pageId) {
         'articles': '资讯管理',
         'characters': '角色管理',
         'user-combos': '用户连段审核',
-        'reports': '举报审核',
+        'reports': '举报处理',
+        'feedback': '问题反馈',
         'comment-review': '评论审核',
         'statistics': '数据统计',
-        'games': '游戏管理'
+        'games': '游戏管理',
+        'tournaments': '赛事管理'
     };
     
     if (elements.pageTitle) {
@@ -497,12 +618,16 @@ function showPage(pageId) {
         loadUserCombos();
     } else if (pageId === 'reports') {
         loadReports();
+    } else if (pageId === 'feedback') {
+        loadFeedback();
     } else if (pageId === 'comment-review') {
         loadCommentReview();
     } else if (pageId === 'statistics') {
         loadStatisticsDashboard();
     } else if (pageId === 'games') {
         // 游戏管理：暂不自动加载
+    } else if (pageId === 'tournaments') {
+        loadAdminTournaments();
     }
 
     if (pageId && window.history && window.history.replaceState) {
@@ -2346,6 +2471,144 @@ async function confirmReportStatus() {
     }
 }
 
+
+
+// ================== 问题反馈 ==================
+async function loadFeedback() {
+    if (!elements.feedbackTableBody) return;
+    showLoading();
+    try {
+        const page = AppState.feedbackPage || 1;
+        const size = AppState.feedbackPageSize || 10;
+        const statusFilter = elements.feedbackStatusFilter ? elements.feedbackStatusFilter.value : '';
+        const category = elements.feedbackCategoryFilter ? elements.feedbackCategoryFilter.value : '';
+        let url = `/api/admin/feedback/list?page=${page}&size=${size}`;
+        if (statusFilter !== '') url += '&status=' + encodeURIComponent(statusFilter);
+        if (category !== '') url += '&category=' + encodeURIComponent(category);
+        const response = await fetch(url, { headers: { 'Authorization': 'Bearer ' + AppState.token } });
+        const data = await response.json();
+        if (data.code === 200 && data.data) {
+            AppState.feedbackList = data.data.list || [];
+            AppState.feedbackTotal = data.data.total != null ? data.data.total : 0;
+            renderFeedbackTable();
+            renderFeedbackPagination();
+        } else {
+            showMessage(data.msg || '加载反馈列表失败', 'error');
+        }
+    } catch (error) {
+        console.error('加载反馈列表失败:', error);
+        showMessage('加载反馈列表失败，请重试', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+function renderFeedbackTable() {
+    if (!elements.feedbackTableBody) return;
+    const list = AppState.feedbackList || [];
+    const statusText = { 0: '待处理', 1: '处理中', 2: '已处理', 3: '已关闭' };
+    const catText = { bug: '问题/Bug', suggestion: '功能建议', other: '其他' };
+    if (list.length === 0) {
+        elements.feedbackTableBody.innerHTML = '<tr><td colspan="9" class="empty-row">暂无反馈数据</td></tr>';
+        return;
+    }
+    elements.feedbackTableBody.innerHTML = list.map(r => {
+        const status = statusText[r.status] != null ? statusText[r.status] : ('状态' + r.status);
+        const cat = catText[r.category] || r.category || '-';
+        const createdAt = (r.createdAt || r.created_at) ? formatDateTime(r.createdAt || r.created_at) : '-';
+        const content = escapeHtml(r.content || '').substring(0, 80);
+        const reply = escapeHtml(r.adminReply || r.admin_reply || '').substring(0, 60);
+        const title = escapeHtml(r.title || '');
+        const userLabel = r.username
+            ? (escapeHtml(r.username) + ' (#' + (r.userId != null ? r.userId : (r.user_id != null ? r.user_id : '?')) + ')')
+            : (r.userId != null ? r.userId : (r.user_id != null ? r.user_id : '-'));
+        const canAction = r.status === 0 || r.status === 1 || r.status === 2;
+        const actions = canAction
+            ? `<button class="action-btn edit btn-sm" onclick="openFeedbackStatusModal(${r.id})" title="处理">处理</button>`
+            : '';
+        return `<tr>
+            <td>${r.id}</td>
+            <td>${userLabel}</td>
+            <td>${escapeHtml(cat)}</td>
+            <td title="${title}">${title.length > 30 ? title.substring(0, 30) + '...' : title}</td>
+            <td title="${escapeHtml(r.content || '')}">${content}${(r.content && r.content.length > 80) ? '...' : ''}</td>
+            <td>${status}</td>
+            <td>${createdAt}</td>
+            <td title="${escapeHtml(r.adminReply || r.admin_reply || '')}">${reply}${(r.adminReply || r.admin_reply || '').length > 60 ? '...' : ''}</td>
+            <td>${actions}</td>
+        </tr>`;
+    }).join('');
+}
+
+function renderFeedbackPagination() {
+    if (!elements.feedbackPagination) return;
+    const total = AppState.feedbackTotal || 0;
+    const size = AppState.feedbackPageSize || 10;
+    const page = AppState.feedbackPage || 1;
+    const totalPages = Math.max(1, Math.ceil(total / size));
+    if (totalPages <= 1) {
+        elements.feedbackPagination.innerHTML = total ? `<span class="pagination-info">共 ${total} 条</span>` : '';
+        return;
+    }
+    let html = '';
+    if (page > 1) {
+        html += `<button class="btn btn-secondary btn-sm" onclick="AppState.feedbackPage=${page - 1};loadFeedback();">上一页</button>`;
+    }
+    html += `<span class="pagination-info" style="margin:0 12px;">第 ${page} / ${totalPages} 页，共 ${total} 条</span>`;
+    if (page < totalPages) {
+        html += `<button class="btn btn-secondary btn-sm" onclick="AppState.feedbackPage=${page + 1};loadFeedback();">下一页</button>`;
+    }
+    elements.feedbackPagination.innerHTML = html;
+}
+
+function openFeedbackStatusModal(id) {
+    const r = (AppState.feedbackList || []).find(x => x.id === id);
+    if (!r || !elements.feedbackStatusModal) return;
+    if (elements.feedbackStatusModalId) elements.feedbackStatusModalId.value = id;
+    if (elements.feedbackStatusSelect) {
+        const rs = r.status != null ? Number(r.status) : 0;
+        const next = rs === 0 ? 1 : rs;
+        elements.feedbackStatusSelect.value = String(next === 0 ? 1 : next);
+    }
+    if (elements.feedbackAdminReply) {
+        elements.feedbackAdminReply.value = r.adminReply || r.admin_reply || '';
+    }
+    elements.feedbackStatusModal.style.display = 'flex';
+}
+
+function closeFeedbackStatusModal() {
+    if (elements.feedbackStatusModal) elements.feedbackStatusModal.style.display = 'none';
+}
+
+async function confirmFeedbackStatus() {
+    const idEl = elements.feedbackStatusModalId;
+    const id = idEl ? parseInt(idEl.value, 10) : null;
+    if (!id) return;
+    const status = elements.feedbackStatusSelect ? parseInt(elements.feedbackStatusSelect.value, 10) : 1;
+    const adminReply = elements.feedbackAdminReply ? elements.feedbackAdminReply.value.trim() : '';
+    showLoading();
+    try {
+        const body = { status, adminReply: adminReply || null };
+        const response = await fetch(`/api/admin/feedback/${id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AppState.token },
+            body: JSON.stringify(body)
+        });
+        const data = await response.json();
+        if (data.code === 200) {
+            showMessage('更新成功', 'success');
+            closeFeedbackStatusModal();
+            loadFeedback();
+        } else {
+            showMessage(data.msg || '更新失败', 'error');
+        }
+    } catch (e) {
+        showMessage('操作失败，请重试', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
 // ================== 评论审核 ==================
 async function loadCommentReview() {
     if (!elements.commentReviewTableBody) return;
@@ -2749,3 +3012,264 @@ document.addEventListener('DOMContentLoaded', function() {
     initApp();
 });
 
+
+
+/* ========== 赛事管理 ========== */
+const TOURNAMENT_STATUS_LABEL = {
+    draft: '草稿',
+    registration: '报名中',
+    closed: '报名截止',
+    ongoing: '进行中',
+    finished: '已结束',
+    cancelled: '已取消'
+};
+
+function escHtml(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+async function loadAdminTournaments() {
+    const listEl = document.getElementById('adminTournamentList');
+    const detailEl = document.getElementById('adminTournamentDetail');
+    if (!listEl) return;
+    if (detailEl) {
+        detailEl.style.display = 'none';
+        detailEl.innerHTML = '';
+    }
+    listEl.innerHTML = '<div style="opacity:.7">加载中…</div>';
+    try {
+        const resp = await fetch('/api/admin/tournaments', {
+            headers: { 'Authorization': 'Bearer ' + AppState.token }
+        });
+        const data = await resp.json();
+        if (!data || data.code !== 200) {
+            listEl.innerHTML = '<div style="color:#ff8a80">' + escHtml((data && data.msg) || '加载失败') + '</div>';
+            return;
+        }
+        const list = Array.isArray(data.data) ? data.data : [];
+        if (!list.length) {
+            listEl.innerHTML = '<div style="opacity:.65">暂无比赛，点击右上角「创建比赛」开始</div>';
+            return;
+        }
+        listEl.innerHTML = list.map(function (t) {
+            const st = t.status || '';
+            return (
+                '<div class="content-card" style="padding:12px 14px;cursor:pointer;border:1px solid rgba(255,255,255,.1)" onclick="openAdminTournament(' + t.id + ')">' +
+                  '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center">' +
+                    '<strong>' + escHtml(t.title || '') + '</strong>' +
+                    '<span style="font-size:12px;opacity:.85">' + escHtml(TOURNAMENT_STATUS_LABEL[st] || st) + '</span>' +
+                  '</div>' +
+                  '<div style="margin-top:6px;font-size:13px;opacity:.7">' +
+                    '报名 ' + (t.registrationCount != null ? t.registrationCount : 0) + ' / ' + (t.maxSlots || 16) +
+                  '</div>' +
+                '</div>'
+            );
+        }).join('');
+    } catch (e) {
+        listEl.innerHTML = '<div style="color:#ff8a80">网络错误：' + escHtml(e.message || e) + '</div>';
+    }
+}
+
+async function openAdminTournament(id) {
+    const detailEl = document.getElementById('adminTournamentDetail');
+    if (!detailEl) return;
+    detailEl.style.display = 'block';
+    detailEl.innerHTML = '<div style="opacity:.7">加载详情…</div>';
+    try {
+        const resp = await fetch('/api/admin/tournaments/' + id, {
+            headers: { 'Authorization': 'Bearer ' + AppState.token }
+        });
+        const data = await resp.json();
+        if (!data || data.code !== 200) {
+            detailEl.innerHTML = '<div style="color:#ff8a80">' + escHtml((data && data.msg) || '加载失败') + '</div>';
+            return;
+        }
+        const t = (data.data && data.data.tournament) || {};
+        const regs = (data.data && data.data.registrations) || [];
+        const bracket = data.data && data.data.bracket;
+        const st = t.status || '';
+
+        const statusOptions = ['draft', 'registration', 'closed', 'ongoing', 'finished', 'cancelled']
+            .map(function (s) {
+                return '<option value="' + s + '"' + (s === st ? ' selected' : '') + '>' +
+                    escHtml(TOURNAMENT_STATUS_LABEL[s] || s) + '</option>';
+            }).join('');
+
+        const regsHtml = regs.length
+            ? '<ul style="margin:8px 0 0;padding-left:18px">' + regs.map(function (r) {
+                return '<li>' + escHtml(r.nickname || r.username || ('用户' + r.userId)) +
+                    (r.seed != null ? '（签位 ' + r.seed + '）' : '') + '</li>';
+            }).join('') + '</ul>'
+            : '<div style="opacity:.6;margin-top:6px">暂无报名</div>';
+
+        let matchesHtml = '';
+        if (bracket && Array.isArray(bracket.matches) && bracket.matches.length) {
+            matchesHtml = '<div style="margin-top:14px"><h4 style="margin:0 0 8px">录入比分</h4>' +
+                '<div style="display:grid;gap:8px">' +
+                bracket.matches.map(function (m) {
+                    const n1 = m.player1Nickname || (m.player1UserId ? ('用户' + m.player1UserId) : '待定');
+                    const n2 = m.player2Nickname || (m.player2UserId ? ('用户' + m.player2UserId) : '待定');
+                    const label = (m.roundLabel || ('R' + m.round)) + ' #' + ((m.matchIndex || 0) + 1);
+                    const done = m.status === 'completed' || m.status === 'bye';
+                    const canEnter = m.player1UserId && m.player2UserId && !done;
+                    return (
+                        '<div style="border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px">' +
+                          '<div style="font-size:12px;opacity:.7;margin-bottom:6px">' + escHtml(label) +
+                            ' · ' + escHtml(m.status || '') + '</div>' +
+                          '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">' +
+                            '<span>' + escHtml(n1) + '</span>' +
+                            '<input type="number" min="0" id="score1_' + m.id + '" value="' + (m.score1 != null ? m.score1 : '') +
+                              '" style="width:64px" ' + (canEnter ? '' : 'disabled') + '>' +
+                            '<span>:</span>' +
+                            '<input type="number" min="0" id="score2_' + m.id + '" value="' + (m.score2 != null ? m.score2 : '') +
+                              '" style="width:64px" ' + (canEnter ? '' : 'disabled') + '>' +
+                            '<span>' + escHtml(n2) + '</span>' +
+                            (canEnter
+                              ? '<button class="btn btn-primary btn-sm" type="button" onclick="submitMatchResult(' + m.id + ',' + id + ')">提交</button>'
+                              : '') +
+                          '</div>' +
+                        '</div>'
+                    );
+                }).join('') +
+                '</div></div>';
+        } else {
+            matchesHtml = '<div style="margin-top:12px;opacity:.65">尚未生成对阵</div>';
+        }
+
+        detailEl.innerHTML =
+            '<div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px">' +
+              '<h3 style="margin:0 0 10px">' + escHtml(t.title || '') + ' <small style="opacity:.7">#' + t.id + '</small></h3>' +
+              '<p style="opacity:.8;white-space:pre-wrap">' + escHtml(t.description || '') + '</p>' +
+              '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0">' +
+                '<label>状态 <select id="adminTournamentStatus">' + statusOptions + '</select></label>' +
+                '<button class="btn btn-secondary" type="button" onclick="updateTournamentStatus(' + id + ')">更新状态</button>' +
+                '<button class="btn btn-primary" type="button" onclick="generateTournamentBracket(' + id + ')">生成/重置对阵（随机签）</button>' +
+              '</div>' +
+              '<div><strong>报名选手（' + regs.length + '）</strong>' + regsHtml + '</div>' +
+              matchesHtml +
+            '</div>';
+    } catch (e) {
+        detailEl.innerHTML = '<div style="color:#ff8a80">加载失败：' + escHtml(e.message || e) + '</div>';
+    }
+}
+
+async function createTournamentPrompt() {
+    const title = prompt('比赛名称：');
+    if (!title || !title.trim()) return;
+    const description = prompt('比赛说明（可留空）：', '') || '';
+    const slotsRaw = prompt('名额（8 或 16，默认 16）：', '16');
+    let maxSlots = parseInt(slotsRaw || '16', 10);
+    if (maxSlots !== 8 && maxSlots !== 16) maxSlots = 16;
+    const openReg = confirm('创建后立即开放报名？\n确定=报名中，取消=草稿');
+    try {
+        const resp = await fetch('/api/admin/tournaments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + AppState.token
+            },
+            body: JSON.stringify({
+                title: title.trim(),
+                description: description,
+                maxSlots: maxSlots,
+                status: openReg ? 'registration' : 'draft'
+            })
+        });
+        const data = await resp.json();
+        if (data && data.code === 200) {
+            alert(data.msg || '创建成功');
+            loadAdminTournaments();
+            if (data.data && data.data.id) openAdminTournament(data.data.id);
+        } else {
+            alert((data && data.msg) || '创建失败');
+        }
+    } catch (e) {
+        alert('创建失败：' + (e.message || e));
+    }
+}
+
+async function updateTournamentStatus(id) {
+    const sel = document.getElementById('adminTournamentStatus');
+    if (!sel) return;
+    const status = sel.value;
+    try {
+        const resp = await fetch('/api/admin/tournaments/' + id + '/status', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + AppState.token
+            },
+            body: JSON.stringify({ status: status })
+        });
+        const data = await resp.json();
+        alert((data && data.msg) || (data && data.code === 200 ? '已更新' : '失败'));
+        if (data && data.code === 200) {
+            loadAdminTournaments();
+            openAdminTournament(id);
+        }
+    } catch (e) {
+        alert('更新失败：' + (e.message || e));
+    }
+}
+
+async function generateTournamentBracket(id) {
+    if (!confirm('将清空并重新生成对阵图（随机签），确定？\n请先把状态改为「报名截止」或「进行中」。')) return;
+    try {
+        const resp = await fetch('/api/admin/tournaments/' + id + '/generate-bracket', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + AppState.token
+            },
+            body: JSON.stringify({ shuffle: true })
+        });
+        const data = await resp.json();
+        alert((data && data.msg) || (data && data.code === 200 ? '已生成' : '失败'));
+        if (data && data.code === 200) {
+            loadAdminTournaments();
+            openAdminTournament(id);
+        }
+    } catch (e) {
+        alert('生成失败：' + (e.message || e));
+    }
+}
+
+async function submitMatchResult(matchId, tournamentId) {
+    const s1El = document.getElementById('score1_' + matchId);
+    const s2El = document.getElementById('score2_' + matchId);
+    if (!s1El || !s2El) return;
+    const score1 = parseInt(s1El.value, 10);
+    const score2 = parseInt(s2El.value, 10);
+    if (Number.isNaN(score1) || Number.isNaN(score2)) {
+        alert('请填写双方比分');
+        return;
+    }
+    try {
+        const resp = await fetch('/api/admin/tournaments/matches/' + matchId + '/result', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + AppState.token
+            },
+            body: JSON.stringify({ score1: score1, score2: score2 })
+        });
+        const data = await resp.json();
+        alert((data && data.msg) || (data && data.code === 200 ? '已录入' : '失败'));
+        if (data && data.code === 200) {
+            openAdminTournament(tournamentId);
+        }
+    } catch (e) {
+        alert('录入失败：' + (e.message || e));
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const createBtn = document.getElementById('createTournamentBtn');
+    if (createBtn) createBtn.addEventListener('click', createTournamentPrompt);
+    const refreshBtn = document.getElementById('refreshTournamentsBtn');
+    if (refreshBtn) refreshBtn.addEventListener('click', loadAdminTournaments);
+});

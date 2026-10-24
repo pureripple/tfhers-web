@@ -1,4 +1,45 @@
+# Build outputs
 tfhers-web-app/target/
 tfhers-web-management/target/
+
+# IDE
 .idea/
 .vscode/
+
+# Node
+node_modules/
+**/node_modules/
+
+# Backup / scratch
+*.bak*
+**/*.bak*
+*.bak_avatar_fix
+
+# Local secrets (never commit)
+**/application-local.yml
+**/application-secret.yml
+.env
+.env.*
+!.env.example
+
+# SQL dumps at repo root (keep curated migrations under database/)
+*.sql
+!tfhers-web-management/database/**/*.sql
+_localhost*.sql
+
+# Runtime logs
+logs/
+**/logs/
+
+# Deploy / CI private keys (never commit)
+secrets/
+**/secrets/
+*gha-deploy*
+**/*gha-deploy*
+tfhers-gha-deploy
+tfhers-gha-deploy.pub
+
+# Local scratch helpers
+_tmp_*.py
+_patch_*/
+_revert_*.txt

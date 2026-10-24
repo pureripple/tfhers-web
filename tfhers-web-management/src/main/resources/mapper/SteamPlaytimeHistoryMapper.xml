@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.SteamPlaytimeHistoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.pojo.SteamPlaytimeHistory">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="steam_id" property="steamId"/>
+        <result column="playtime_minutes" property="playtimeMinutes"/>
+        <result column="captured_at" property="capturedAt"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.pojo.SteamPlaytimeHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO steam_playtime_history (user_id, steam_id, playtime_minutes, captured_at)
+        VALUES (#{userId}, #{steamId}, #{playtimeMinutes}, NOW())
+    </insert>
+
+    <select id="selectLatestBefore" resultMap="BaseResultMap">
+        SELECT id, user_id, steam_id, playtime_minutes, captured_at
+        FROM steam_playtime_history
+        WHERE user_id = #{userId}
+          AND captured_at &lt;= #{time}
+        ORDER BY captured_at DESC
+        LIMIT 1
+    </select>
+
+</mapper>
+

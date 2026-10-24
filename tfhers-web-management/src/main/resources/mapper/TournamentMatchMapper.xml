@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.TournamentMatchMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.pojo.TournamentMatch">
+        <id column="id" property="id"/>
+        <result column="tournament_id" property="tournamentId"/>
+        <result column="round" property="round"/>
+        <result column="match_index" property="matchIndex"/>
+        <result column="player1_user_id" property="player1UserId"/>
+        <result column="player2_user_id" property="player2UserId"/>
+        <result column="score1" property="score1"/>
+        <result column="score2" property="score2"/>
+        <result column="winner_id" property="winnerId"/>
+        <result column="next_match_id" property="nextMatchId"/>
+        <result column="next_slot" property="nextSlot"/>
+        <result column="status" property="status"/>
+        <result column="rating_applied" property="ratingApplied"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="player1_nickname" property="player1Nickname"/>
+        <result column="player1_avatar_url" property="player1AvatarUrl"/>
+        <result column="player2_nickname" property="player2Nickname"/>
+        <result column="player2_avatar_url" property="player2AvatarUrl"/>
+        <result column="winner_nickname" property="winnerNickname"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.pojo.TournamentMatch" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tournament_matches
+        (tournament_id, round, match_index, player1_user_id, player2_user_id, score1, score2, winner_id,
+         next_match_id, next_slot, status, created_at, updated_at)
+        VALUES
+        (#{tournamentId}, #{round}, #{matchIndex}, #{player1UserId}, #{player2UserId}, #{score1}, #{score2}, #{winnerId},
+         #{nextMatchId}, #{nextSlot}, #{status}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.example.pojo.TournamentMatch">
+        UPDATE tournament_matches
+        SET player1_user_id = #{player1UserId},
+            player2_user_id = #{player2UserId},
+            score1 = #{score1},
+            score2 = #{score2},
+            winner_id = #{winnerId},
+            next_match_id = #{nextMatchId},
+            next_slot = #{nextSlot},
+            status = #{status},
+            rating_applied = COALESCE(#{ratingApplied}, rating_applied),
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateNextMatchId">
+        UPDATE tournament_matches
+        SET next_match_id = #{nextMatchId}, next_slot = #{nextSlot}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="setPlayerSlot">
+        UPDATE tournament_matches
+        <set>
+            <if test="slot == 1">player1_user_id = #{userId},</if>
+            <if test="slot == 2">player2_user_id = #{userId},</if>
+            status = #{status},
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT m.*,
+               u1.nickname AS player1_nickname, u1.avatar_url AS player1_avatar_url,
+               u2.nickname AS player2_nickname, u2.avatar_url AS player2_avatar_url,
+               uw.nickname AS winner_nickname
+        FROM tournament_matches m
+        LEFT JOIN users u1 ON u1.id = m.player1_user_id
+        LEFT JOIN users u2 ON u2.id = m.player2_user_id
+        LEFT JOIN users uw ON uw.id = m.winner_id
+        WHERE m.id = #{id}
+    </select>
+
+    <select id="listByTournament" resultMap="BaseResultMap">
+        SELECT m.*,
+               u1.nickname AS player1_nickname, u1.avatar_url AS player1_avatar_url,
+               u2.nickname AS player2_nickname, u2.avatar_url AS player2_avatar_url,
+               uw.nickname AS winner_nickname
+        FROM tournament_matches m
+        LEFT JOIN users u1 ON u1.id = m.player1_user_id
+        LEFT JOIN users u2 ON u2.id = m.player2_user_id
+        LEFT JOIN users uw ON uw.id = m.winner_id
+        WHERE m.tournament_id = #{tournamentId}
+        ORDER BY m.round ASC, m.match_index ASC
+    </select>
+
+    <delete id="deleteByTournament">
+        DELETE FROM tournament_matches WHERE tournament_id = #{tournamentId}
+    </delete>
+</mapper>

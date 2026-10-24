@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蹄斗族群助手 - 网页版</title>
+    <title>蹄斗族群助手</title>
     <!-- 本地字体与图标，避免外网 CDN 拖慢首屏 -->
     <link href="/css/fonts-local.css" rel="stylesheet">
     <link href="/vendor/font-awesome/css/all.min.css" rel="stylesheet">
@@ -11,44 +11,227 @@
     <link href="/css/character-detail.css" rel="stylesheet">
     <link href="/css/combo-detail.css" rel="stylesheet">
     <link href="/css/responsive.css" rel="stylesheet">
+    <link href="/css/tournaments.css" rel="stylesheet">
+    <link href="/css/rankings.css" rel="stylesheet">
+    <link href="/css/rooms.css" rel="stylesheet">
     <link href="/css/ai-chat.css" rel="stylesheet">
+    <script>
+        /* 未登录时先藏主导航/内容，避免首屏闪一下资讯 */
+        (function () {
+            try {
+                document.title = '蹄斗族群助手';
+                if (localStorage.getItem('user')) {
+                    document.documentElement.classList.add('tfhers-authed');
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <script>
+    /* THEME_PREF_KEY early: 默认黑暗；仅当 localStorage 为 light 时切浅色，避免闪白 */
+    (function () {
+        try {
+            if (localStorage.getItem('tfhers-theme') === 'light') {
+                document.documentElement.classList.add('theme-light');
+            }
+        } catch (e) {}
+    })();
+    </script>
 </head>
 <body>
-    <!-- 导航栏 -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <img src="/images/logo.png" alt="蹄斗助手" class="nav-brand-logo" width="40" height="40">
-                <span class="nav-brand-text">蹄斗助手</span>
+
+    <!-- 未登录入口页（pixiv 风格：无侧栏，居中卡片） -->
+    <div id="authEntryOverlay" class="auth-entry" role="dialog" aria-modal="true" aria-labelledby="authEntryTitle">
+        <header class="auth-entry-top">
+            <div class="auth-entry-brand">
+                <img src="/images/logo.png" alt="tfhers" class="auth-entry-logo" width="40" height="40">
+                <span class="auth-entry-brand-text">tfhers</span>
             </div>
-            <div class="nav-menu" id="navMenu">
-                <a href="#news" class="nav-link active" data-page="news">
-                    <i class="fas fa-newspaper"></i>
-                    <span>资讯</span>
-                </a>
-                <a href="#characters" class="nav-link" data-page="characters">
-                    <i class="fas fa-book-open"></i>
-                    <span>教程</span>
-                </a>
-                <a href="#my" class="nav-link" data-page="my">
-                    <i class="fas fa-user"></i>
-                    <span>我的</span>
-                </a>
-                <a href="#ai-chat" class="nav-link nav-link-ai" data-page="ai-chat">
-                    <i class="fas fa-robot"></i>
-                    <span>AI 助手</span>
-                </a>
-            </div>
-            <div class="nav-toggle" id="navToggle">
-                <span class="bar"></span>
-                <span class="bar"></span>
-                <span class="bar"></span>
+        </header>
+
+        <div class="auth-entry-center">
+            <div class="auth-entry-card" id="authEntryCard">
+                <!-- 步骤：入口按钮 -->
+                <div id="authEntryStepActions" class="auth-entry-step is-active">
+                    <h1 id="authEntryTitle" class="auth-entry-card-title">用 tfhers 账号登录</h1>
+                    <div class="auth-entry-card-actions">
+                        <button type="button" class="auth-entry-btn auth-entry-btn--primary" onclick="showRegisterModal()">注册账号</button>
+                        <button type="button" class="auth-entry-btn auth-entry-btn--secondary" onclick="showLoginModal()">登录</button>
+                    </div>
+                </div>
+
+                <!-- 步骤：登录表单（卡片内展开，非全屏弹窗） -->
+                <div id="authEntryStepLogin" class="auth-entry-step" hidden>
+                    <h2 class="auth-entry-card-title auth-entry-card-title--form">登录</h2>
+                    <form id="loginForm" class="auth-entry-form">
+                        <div class="form-group">
+                            <label for="loginUsername">用户名</label>
+                            <input type="text" id="loginUsername" name="username" required autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">密码</label>
+                            <div class="password-field"><input type="password" id="loginPassword" name="password" required autocomplete="current-password"><button type="button" class="password-toggle" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="显示或隐藏密码" title="显示/隐藏密码"><i class="fas fa-eye" aria-hidden="true"></i></button></div>
+                        </div>
+                        <button type="submit" id="loginSubmitBtn" class="auth-entry-btn auth-entry-btn--primary">登录</button>
+                    </form>
+                    <p class="auth-entry-switch">还没有账号？ <a href="#" onclick="switchToRegister(); return false;">立即注册</a></p>
+                </div>
+
+                <!-- 步骤：注册表单 -->
+                <div id="authEntryStepRegister" class="auth-entry-step" hidden>
+                    <h2 class="auth-entry-card-title auth-entry-card-title--form">注册账号</h2>
+                    <form id="registerForm" class="auth-entry-form" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="regUsername">用户名</label>
+                            <input type="text" id="regUsername" name="username" required autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="regNickname">昵称</label>
+                            <input type="text" id="regNickname" name="nickname" required autocomplete="nickname">
+                        </div>
+                        <div class="form-group">
+                            <label for="regPassword">密码</label>
+                            <div class="password-field"><input type="password" id="regPassword" name="password" required autocomplete="new-password"><button type="button" class="password-toggle" onclick="togglePasswordVisibility('regPassword', this)" aria-label="显示或隐藏密码" title="显示/隐藏密码"><i class="fas fa-eye" aria-hidden="true"></i></button></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="regEmail">邮箱</label>
+                            <input type="email" id="regEmail" name="email" autocomplete="email">
+                        </div>
+                        <button type="submit" id="registerSubmitBtn" class="auth-entry-btn auth-entry-btn--primary">注册</button>
+                    </form>
+                    <p class="auth-entry-switch">已有账号？ <a href="#" onclick="switchToLogin(); return false;">立即登录</a></p>
+                </div>
             </div>
         </div>
-    </nav>
 
-    <!-- 主内容区域 -->
-    <main class="main-content">
+        <footer class="auth-entry-footer">
+            <div class="auth-entry-about" tabindex="0">
+                <span class="auth-entry-footer-link">关于 tfhers</span>
+                <div class="auth-entry-about-tip" role="tooltip">tfhers是蹄斗族群玩家们自己的社区</div>
+            </div>
+        </footer>
+    </div>
+
+
+
+    <!-- Logged-in left sidebar -->
+    <aside class="app-sidebar" id="appSidebar" aria-label="main nav">
+        <div class="sidebar-top">
+            <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="collapse sidebar" title="collapse/expand">
+                <i class="fas fa-bars"></i>
+            </button>
+            <span class="sidebar-brand">tfhers</span>
+        </div>
+        <nav class="sidebar-nav" id="navMenu">
+            <a href="#news" class="nav-link active" data-page="news">
+                <i class="fas fa-newspaper"></i>
+                <span>资讯</span>
+            </a>
+            <a href="#characters" class="nav-link" data-page="characters">
+                <i class="fas fa-book-open"></i>
+                <span>教程</span>
+            </a>
+            <a href="#tournaments" class="nav-link" data-page="tournaments">
+                <i class="fas fa-trophy"></i>
+                <span>比赛</span>
+            </a>
+            <a href="#lobby" class="nav-link" data-page="lobby">
+                <i class="fas fa-door-open"></i>
+                <span>大厅</span>
+            </a>
+            <a href="#rankings" class="nav-link" data-page="rankings">
+                <i class="fas fa-medal"></i>
+                <span>排行</span>
+            </a>
+            <a href="#ai-chat" class="nav-link nav-link-ai" data-page="ai-chat">
+                <i class="fas fa-robot"></i>
+                <span>AI 助手</span>
+            </a>
+        </nav>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden aria-hidden="true"></div>
+    <div class="sidebar-float-cluster" id="sidebarFloatCluster">
+        <button type="button" class="sidebar-float-toggle" id="sidebarFloatToggle" aria-label="open sidebar" title="open sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="sidebar-float-brand" aria-hidden="true">tfhers</span>
+    </div>
+
+    <div class="mobile-topbar" id="mobileTopbar">
+        <button type="button" class="sidebar-toggle" id="sidebarToggleMobile" aria-label="open nav" title="open nav">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="sidebar-brand">tfhers</span>
+        <div class="mobile-topbar-spacer"></div>
+    </div>
+
+    <!-- Logged-in top-right actions (pixiv-like): 投稿 / 私信 / 通知 / 头像 -->
+            <!-- Logged-in top bar: actions (right) -->
+    <header class="app-topbar" id="appTopbar" hidden>
+        <div class="app-topbar-inner">
+            <div class="app-top-actions" id="appTopActions">
+
+        <div class="top-post-wrap">
+            <button type="button" class="top-post-btn" id="topPostBtn" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-pen"></i>
+                <span class="top-post-label">投稿</span>
+                <i class="fas fa-caret-down"></i>
+            </button>
+            <div class="top-post-menu" id="topPostMenu" hidden>
+                <button type="button" class="top-post-item" data-post="article">资讯</button>
+                <button type="button" class="top-post-item" data-post="combo">连段</button>
+            </div>
+        </div>
+        <button type="button" class="top-icon-btn" id="topMsgBtn" title="私信" aria-label="私信">
+            <i class="fas fa-envelope"></i>
+        </button>
+        <button type="button" class="top-icon-btn" id="topNotifyBtn" title="通知" aria-label="通知">
+            <i class="fas fa-bell"></i>
+        </button>
+        <div class="top-avatar-wrap" id="topAvatarWrap">
+            <button type="button" class="top-avatar-btn" id="topAvatarBtn" title="账户" aria-label="账户" aria-haspopup="true" aria-expanded="false">
+                <img id="topUserAvatar" src="/images/CSel3_LargePortTianhuo.png" alt="">
+            </button>
+            <div class="top-account-panel" id="topAccountPanel" hidden role="menu" aria-label="账户面板">
+                <div class="tap-head">
+                    <img id="tapAvatar" class="tap-avatar" src="/images/CSel3_LargePortTianhuo.png" alt="">
+                    <div class="tap-names">
+                        <div class="tap-nickname" id="tapNickname">—</div>
+                        <div class="tap-username" id="tapUsername">@—</div>
+                    </div>
+                </div>
+                <div class="tap-section tap-rating-row">
+                    <div class="tap-rating" id="tapRating">
+                        <span class="tap-tier" id="tapTier">—</span>
+                        <span class="tap-score" id="tapScore">—</span>
+                    </div>
+                    <div class="tap-rank" id="tapRank">#—</div>
+                </div>
+                <div class="tap-actions">
+                    <button type="button" class="tap-action-btn" id="tapDataBtn">
+                        <i class="fas fa-chart-bar"></i><span>数据</span>
+                    </button>
+                    <button type="button" class="tap-action-btn" id="tapManuscriptsBtn">
+                        <i class="fas fa-folder-open"></i><span>稿件管理</span>
+                    </button>
+                    <button type="button" class="tap-action-btn" id="tapSettingsBtn">
+                        <i class="fas fa-cog"></i><span>设置</span>
+                    </button>
+                    <button type="button" class="tap-action-btn" id="tapFeedbackBtn">
+                        <i class="fas fa-comment-dots"></i><span>问题反馈</span>
+                    </button>
+                </div>
+                <div class="tap-footer">
+                    <button type="button" class="tap-action-btn tap-logout-btn" id="tapLogoutBtn" role="menuitem">
+                        <i class="fas fa-sign-out-alt"></i><span>退出登录</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+            </div>
+        </div>
+    </header>
+
+<main class="main-content">
         <!-- 资讯页面 -->
         <section id="news" class="page page-news active">
             <div class="hot-news-hero" id="hotNewsHero">
@@ -111,123 +294,47 @@
         </section>
 
         <!-- 我的页面 -->
-        <section id="my" class="page">
-            <!-- 未登录状态 -->
-            <div id="loginSection" class="login-section">
-                <div class="login-card login-card--quote">
-                    <div class="login-quote">
-                        <div class="login-quote-text">Do not let the defeat be the end.</div>
-                        <div class="login-quote-meta">—— Tianhuo</div>
-                    </div>
-                    <div class="login-buttons login-buttons--glass">
-                        <button class="btn btn-glass" onclick="showLoginModal()">
-                            <i class="fas fa-sign-in-alt"></i>
-                            登录
-                        </button>
-                        <button class="btn btn-glass" onclick="showRegisterModal()">
-                            <i class="fas fa-user-plus"></i>
-                            注册
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 已登录状态 -->
-            <div id="userSection" class="user-section" style="display: none;">
-                <div class="my-layout">
-                    <div class="my-left-column">
-                        <div class="profile-card profile-card-main">
-                            <div class="profile-top-actions">
-                                <button class="profile-settings-btn" type="button" title="设置" onclick="showProfileSettings()">
-                                    <i class="fas fa-cog"></i>
-                                </button>
-                                <button class="profile-logout-btn" type="button" title="退出登录" onclick="logout()">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                </button>
-                            </div>
-                            <div class="profile-avatar">
-                                <img id="userAvatar" src="/images/default-avatar.png" alt="用户头像">
-                            </div>
-                            <div class="profile-info">
-                                <h3 id="userName" class="profile-name">用户名</h3>
-                                <p id="userSignature" class="profile-signature">这个人很懒，还没有个性签名</p>
-                            </div>
-                        </div>
-
-                        <div class="steam-box" id="steamBox">
-                            <div class="steam-box-header">
-                                <div class="steam-box-title">
-                                    <i class="fab fa-steam-symbol"></i>
-                                    <span>Steam 档案</span>
-                                </div>
-                                <div class="steam-box-actions">
-                                    <button class="steam-refresh-btn" id="refreshSteamPlaytimeButton" type="button" title="刷新">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                    <button class="steam-icon-btn" type="button" onclick="unbindSteam()" id="unbindSteamButton" title="解除绑定" style="display:none;">
-                                        <i class="fas fa-unlink"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="steam-box-body">
-                                <div id="steamInfo" class="profile-steam-info" style="margin-top:8px;"></div>
-                                <div id="steamAchievements" class="steam-achievements" style="margin-top:12px;"></div>
-                                <button class="btn btn-primary" type="button" onclick="bindSteam()" id="bindSteamButton" style="margin-top:10px;">
-                                    <i class="fab fa-steam-symbol"></i>
-                                    绑定 Steam
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="action-section">
-                            <h3 class="section-title">我的创作</h3>
-                            <div class="action-grid">
-                                <div class="action-card" onclick="showCreateArticle()">
-                                    <div class="action-icon">
-                                        <i class="fas fa-edit"></i>
-                                    </div>
-                                    <h4 class="action-title">发布资讯</h4>
-                                    <p class="action-desc">分享游戏心得和攻略</p>
-                                </div>
-                                <div class="action-card" onclick="showCreateCombo()">
-                                    <div class="action-icon">
-                                        <i class="fas fa-link"></i>
-                                    </div>
-                                    <h4 class="action-title">投稿连段</h4>
-                                    <p class="action-desc">分享你的连招技巧</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="my-right-column">
-                        <div class="my-stats-card">
-                            <h3 class="section-title">个人统计</h3>
-                            <div class="my-stats-grid">
-                                <div class="my-stat-item">
-                                    <span class="my-stat-label">发布资讯</span>
-                                    <strong class="my-stat-value" id="myArticleCount">0</strong>
-                                </div>
-                                <div class="my-stat-item">
-                                    <span class="my-stat-label">投稿连段</span>
-                                    <strong class="my-stat-value" id="myComboCount">0</strong>
-                                </div>
-                                <div class="my-stat-item">
-                                    <span class="my-stat-label">Steam 成就</span>
-                                    <strong class="my-stat-value" id="myAchievementCount">0/0</strong>
-                                </div>
-                                <div class="my-stat-item">
-                                    <span class="my-stat-label">总游戏时长</span>
-                                    <strong class="my-stat-value" id="myPlaytimeHours">0h</strong>
-                                </div>
-                            </div>
-                        </div>
+        <!-- 比赛页面 -->
+        <section id="tournaments" class="page">
+            <div class="tournaments-page">
+                <div class="tournaments-layout">
+                    <div id="tournamentList" class="tournament-list" aria-label="比赛列表"></div>
+                    <div id="tournamentDetail" class="tournament-detail active" aria-label="比赛详情">
+                        <div class="tournament-empty">请选择左侧比赛查看详情</div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- AI 助手（单页 #ai-chat，与资讯/教程/我的同级） -->
+        <!-- 大厅 -->
+        <section id="lobby" class="page">
+            <div class="rooms-page">
+                <div class="rooms-layout">
+                    <div class="rooms-list-col">
+                        <header class="rooms-rail-head" id="roomsToolbar" style="display:none">
+                            <button type="button" class="rooms-icon-btn" id="roomsRefreshBtn" title="刷新列表" aria-label="刷新列表" onclick="refreshRoomList()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </header>
+                        <div id="roomList" class="room-list" aria-label="房间列表"></div>
+                    </div>
+                    <div id="roomDetail" class="room-detail is-idle" aria-label="房间详情"></div>
+                </div>
+            </div>
+        </section>
+
+
+        
+        <!-- 排行榜页面 -->
+        <section id="rankings" class="page">
+            <div class="rankings-page">
+                <div id="rankingsList" class="rankings-list">
+                    <div class="rankings-empty">加载中…</div>
+                </div>
+            </div>
+        </section>
+
+                <!-- AI 助手（单页 #ai-chat，与资讯/教程/我的同级） -->
         <section id="ai-chat" class="page page-ai-chat">
             <div class="ai-chat-layout grok-layout">
                 <div class="grok-chat-panel">
@@ -267,7 +374,7 @@
                         <div class="messages-container grok-messages" id="messagesContainer">
                             <div class="message ai-message grok-msg grok-msg--assistant">
                                 <div class="message-avatar grok-msg-avatar grok-msg-avatar--img">
-                                    <img src="/images/CSel3_LargePortOleander.png" alt="" onerror="this.onerror=null;this.src='/images/default-avatar.png'">
+                                    <img src="/images/CSel3_LargePortOleander.png" alt="" onerror="this.onerror=null;this.src='/images/CSel3_LargePortTianhuo.png'">
                                 </div>
                                 <div class="message-content grok-msg-body">
                                     <div class="message-text">
@@ -334,98 +441,302 @@
             if (t === 'ai-chat') document.body.classList.add('ai-chat-page');
         })();
         </script>
+    
+        <!-- 设置页面 -->
+
+        <!-- 数据页：Steam 资料 -->
+        <section id="data" class="page page-data">
+            <div class="data-page-wrap">
+                <header class="data-page-header">
+                    <div class="data-page-header-text">
+                        <h1 class="data-page-title">数据</h1>
+                        <p class="data-page-desc">已绑定的 Steam 资料与游戏数据</p>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm data-refresh-btn" id="myDataSteamRefreshBtn" onclick="refreshSteamPlaytime(true)" title="刷新 Steam 数据" style="display:none;">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </header>
+
+                <div class="data-page-body" id="myDataDetail">
+                    <div id="myDataSteamBound" class="data-steam-bound" style="display:none;">
+                        <div class="data-profile-card" id="myDataSteam">
+                            <img id="myDataSteamAvatar" class="data-steam-avatar" src="" alt="Steam 头像">
+                            <div class="data-steam-meta">
+                                <div class="data-steam-name" id="myDataSteamName">—</div>
+                                <div class="data-steam-chips">
+                                    <span class="data-chip"><span class="data-chip-label">等级</span> <strong id="myDataSteamLevel">—</strong></span>
+                                    <span class="data-chip"><span class="data-chip-label">好友代码</span> <strong id="myDataSteamFriendCode">—</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="data-stats-row">
+                            <div class="data-stat-card">
+                                <div class="data-stat-label">游戏时长</div>
+                                <div class="data-stat-value" id="myPlaytimeHours">0h</div>
+                            </div>
+                            <div class="data-stat-card data-stat-card--achv">
+                                <div class="data-stat-label">成就进度</div>
+                                <div class="data-stat-value"><strong id="myAchievementCount">0/0</strong></div>
+                                <div class="my-data-achv-bar" aria-hidden="true">
+                                    <span class="my-data-achv-bar-fill" id="myAchievementBar"></span>
+                                </div>
+                                <span class="my-data-achv-pct" id="myAchievementPct"></span>
+                            </div>
+                        </div>
+
+                        <section class="data-achv-section" id="dataSteamAchievements">
+                            <header class="data-achv-header">
+                                <h2 class="data-achv-title">成就列表</h2>
+                                <span class="data-achv-count" id="dataAchvCount"></span>
+                            </header>
+                            <div id="dataAchievementsList" class="data-achievements-list"></div>
+                        </section>
+                    </div>
+
+                    <div id="myDataSteamUnbound" class="data-steam-unbound">
+                        <div class="data-unbound-card">
+                            <i class="fab fa-steam" aria-hidden="true"></i>
+                            <p>尚未绑定 Steam 账号</p>
+                            <button type="button" class="btn btn-primary" onclick="openSettingsFromPanel()">去设置绑定</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 个人信息页 -->
+        <section id="profile" class="page page-profile">
+            <div class="profile-page-wrap">
+                <div class="profile-cover" id="profileCover">
+                    <div class="profile-cover-placeholder" id="profileCoverPlaceholder">
+                        <i class="fas fa-image" aria-hidden="true"></i>
+                        <span>暂无背景封面</span>
+                    </div>
+                </div>
+                <div class="profile-page-body">
+                    <div class="profile-identity">
+                        <div class="profile-identity-top">
+                            <img id="profileAvatar" class="profile-page-avatar" src="/images/CSel3_LargePortTianhuo.png" alt="头像">
+                            <div class="profile-page-actions">
+                                <button type="button" class="btn btn-primary" id="editProfileBtn" onclick="openEditProfileModal()">
+                                    <i class="fas fa-user-edit"></i> 编辑个人资料
+                                </button>
+                            </div>
+                        </div>
+                        <div class="profile-identity-meta">
+                            <h1 class="profile-page-nickname" id="profileNickname">昵称</h1>
+                            <p class="profile-page-username" id="profileUsername">@username</p>
+                            <p class="profile-page-bio" id="profileBio"></p>
+                            <div class="profile-page-facts" id="profileFacts"></div>
+                        </div>
+                    </div>
+
+                                        <section class="profile-home" aria-labelledby="profileHomeHeading">
+                        <header class="profile-home-header">
+                            <h2 id="profileHomeHeading" class="profile-home-title">主页</h2>
+                            <p class="profile-home-desc">发布的资讯与连段作品</p>
+                        </header>
+                        <div class="profile-home-tabs" role="tablist" aria-label="主页内容">
+                            <button type="button" class="profile-home-tab is-active" role="tab" aria-selected="true" data-ph-tab="articles" id="phTabArticles">
+                                资讯 <span class="profile-home-tab-count" id="phArticleTabCount">0</span>
+                            </button>
+                            <button type="button" class="profile-home-tab" role="tab" aria-selected="false" data-ph-tab="combos" id="phTabCombos">
+                                连段 <span class="profile-home-tab-count" id="phComboTabCount">0</span>
+                            </button>
+                        </div>
+                        <div class="profile-home-panels">
+                            <div class="profile-home-panel is-active" id="phPanelArticles" role="tabpanel" aria-labelledby="phTabArticles">
+                                <div id="profileArticlesList" class="profile-works-list">
+                                    <div class="profile-works-empty">加载中…</div>
+                                </div>
+                            </div>
+                            <div class="profile-home-panel" id="phPanelCombos" role="tabpanel" aria-labelledby="phTabCombos" hidden>
+                                <div id="profileCombosList" class="profile-works-list">
+                                    <div class="profile-works-empty">加载中…</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </section>
+
+        <section id="settings" class="page page-settings">
+            <div class="settings-page-wrap">
+                <header class="settings-page-header">
+                    <h1 class="settings-page-title">设置</h1>
+                    <p class="settings-page-desc">管理账号、通知、绑定与外观</p>
+                </header>
+
+                <div class="settings-page-body">
+                    <!-- 1. 账号 -->
+                    <section class="settings-block" id="settingsAccountBlock" aria-labelledby="settingsAccountHeading">
+                        <h2 id="settingsAccountHeading" class="settings-block-title">账号</h2>
+                        <form id="profileBasicForm" class="settings-block-form" onsubmit="return false;">
+                            <div class="form-group">
+                                <label for="settingsUsername">用户名</label>
+                                <input type="text" id="settingsUsername" name="username" disabled>
+                                <small class="form-hint">用户名不可修改</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="settingsEmail">邮箱地址</label>
+                                <input type="email" id="settingsEmail" name="email" maxlength="100" autocomplete="email">
+                            </div>
+                            <div class="settings-form-actions">
+                                <button type="button" class="btn btn-primary" id="saveProfileBasicBtn" onclick="saveProfileBasic()">
+                                    <i class="fas fa-save"></i> 保存邮箱
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="settings-subsection">
+                            <h3 class="settings-subsection-title">密码</h3>
+                            <form id="profilePasswordForm" onsubmit="return false;">
+                                <div class="form-group">
+                                    <label for="settingsOldPassword">当前密码</label>
+                                    <div class="password-field">
+                                        <input type="password" id="settingsOldPassword" name="oldPassword" required autocomplete="current-password">
+                                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('settingsOldPassword', this)" aria-label="显示或隐藏密码" title="显示/隐藏密码"><i class="fas fa-eye" aria-hidden="true"></i></button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="settingsNewPassword">新密码</label>
+                                    <div class="password-field">
+                                        <input type="password" id="settingsNewPassword" name="newPassword" minlength="6" maxlength="64" required autocomplete="new-password">
+                                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('settingsNewPassword', this)" aria-label="显示或隐藏密码" title="显示/隐藏密码"><i class="fas fa-eye" aria-hidden="true"></i></button>
+                                    </div>
+                                    <small class="form-hint">至少 6 位</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="settingsConfirmPassword">确认新密码</label>
+                                    <div class="password-field">
+                                        <input type="password" id="settingsConfirmPassword" name="confirmPassword" minlength="6" maxlength="64" required autocomplete="new-password">
+                                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('settingsConfirmPassword', this)" aria-label="显示或隐藏密码" title="显示/隐藏密码"><i class="fas fa-eye" aria-hidden="true"></i></button>
+                                    </div>
+                                </div>
+                                <div class="settings-form-actions">
+                                    <button type="button" class="btn btn-outline" onclick="resetProfilePasswordForm()">清空</button>
+                                    <button type="button" class="btn btn-primary" id="saveProfilePasswordBtn" onclick="saveProfilePassword()">
+                                        <i class="fas fa-key"></i> 修改密码
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <hr class="settings-divider" />
+
+                    <!-- 2. 通知 -->
+                    <section class="settings-block" id="settingsNotifyBlock" aria-labelledby="settingsNotifyHeading">
+                        <h2 id="settingsNotifyHeading" class="settings-block-title">通知</h2>
+                        <div class="settings-notify-list">
+                            <label class="settings-toggle-row" for="settingsNotifyLike">
+                                <span>作品被赞</span>
+                                <input type="checkbox" id="settingsNotifyLike" role="switch">
+                            </label>
+                            <label class="settings-toggle-row" for="settingsNotifyComment">
+                                <span>作品有新评论</span>
+                                <input type="checkbox" id="settingsNotifyComment" role="switch">
+                            </label>
+                        </div>
+                    </section>
+
+                    <hr class="settings-divider" />
+
+                    <!-- 3. 绑定服务 -->
+                    <section class="settings-block" id="settingsBindBlock" aria-labelledby="settingsBindHeading">
+                        <h2 id="settingsBindHeading" class="settings-block-title">绑定服务</h2>
+                        <div class="settings-bind-block">
+                            <h3 class="settings-subsection-title"><i class="fab fa-steam-symbol"></i> Steam</h3>
+                            <div id="settingsBindSteamStatus" class="settings-bind-steam-status">未绑定</div>
+                            <div class="settings-form-actions" style="justify-content:flex-start;gap:8px;">
+                                <button type="button" class="btn btn-primary" id="settingsBindSteamBtn" onclick="bindSteam()">
+                                    <i class="fab fa-steam-symbol"></i> 绑定 Steam
+                                </button>
+                                <button type="button" class="btn btn-outline" id="settingsUnbindSteamBtn" onclick="unbindSteam()" style="display:none;">
+                                    解除绑定
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <hr class="settings-divider" />
+
+                    <!-- 4. 页面颜色 -->
+                    <section class="settings-block" id="settingsThemeBlock" aria-labelledby="settingsThemeHeading">
+                        <h2 id="settingsThemeHeading" class="settings-block-title">页面颜色</h2>
+                        <label class="settings-toggle-row" for="settingsDarkMode">
+                            <span>黑暗模式<span class="settings-toggle-hint">（默认开启）</span></span>
+                            <input type="checkbox" id="settingsDarkMode" role="switch" checked>
+                        </label>
+                    </section>
+                </div>
+            </div>
+        </section>
+
+
+
+        <section id="manuscripts" class="page page-manuscripts">
+            <div class="settings-page-wrap manuscripts-page-wrap">
+                <header class="settings-page-header">
+                    <h1 class="settings-page-title">稿件管理</h1>
+                    <p class="settings-page-desc">管理你发布的资讯与连段</p>
+                </header>
+
+                <div class="manuscripts-tabs" role="tablist" aria-label="稿件类型">
+                    <button type="button" class="manuscripts-tab is-active" role="tab" aria-selected="true" data-ms-tab="articles" id="msTabArticles">
+                        资讯 <span class="manuscripts-tab-count" id="msArticleTabCount">0</span>
+                    </button>
+                    <button type="button" class="manuscripts-tab" role="tab" aria-selected="false" data-ms-tab="combos" id="msTabCombos">
+                        连段 <span class="manuscripts-tab-count" id="msComboTabCount">0</span>
+                    </button>
+                </div>
+
+                <div class="manuscripts-panels">
+                    <div class="manuscripts-panel is-active" id="msPanelArticles" role="tabpanel" aria-labelledby="msTabArticles">
+                        <div id="manuscriptsArticlesList" class="my-content-list manuscripts-list">
+                            <div class="my-content-empty">暂无资讯</div>
+                        </div>
+                    </div>
+                    <div class="manuscripts-panel" id="msPanelCombos" role="tabpanel" aria-labelledby="msTabCombos" hidden>
+                        <div id="manuscriptsCombosList" class="my-content-list manuscripts-list">
+                            <div class="my-content-empty">暂无连段</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <!-- AI 登录门：放在 main 外，避免 body.ai-chat-page--gated 对 .main-content 的 blur 把弹层一起糊掉 -->
+        <!-- 大厅登录门：与 AI 助手同款毛玻璃居中卡 -->
+    <div id="roomsLoginGate" class="ai-chat-login-gate" hidden aria-hidden="true">
+        <div class="ai-chat-login-gate__panel" role="dialog" aria-modal="true" aria-labelledby="roomsLoginGateTitle">
+            <div class="ai-chat-login-gate__icon"><i class="fas fa-lock"></i></div>
+            <h2 id="roomsLoginGateTitle" class="ai-chat-login-gate__title">请先登录</h2>
+            <p class="ai-chat-login-gate__desc">登录后即可使用大厅</p>
+            <a href="javascript:void(0)" class="ai-chat-login-gate__btn" onclick="showLoginModal()">去登录</a>
+        </div>
+    </div>
+<!-- AI 登录门：放在 main 外，避免 body.ai-chat-page--gated 对 .main-content 的 blur 把弹层一起糊掉 -->
     <div id="aiChatLoginGate" class="ai-chat-login-gate" hidden aria-hidden="true">
         <div class="ai-chat-login-gate__panel" role="dialog" aria-modal="true" aria-labelledby="aiChatLoginGateTitle">
             <div class="ai-chat-login-gate__icon"><i class="fas fa-lock"></i></div>
             <h2 id="aiChatLoginGateTitle" class="ai-chat-login-gate__title">请先登录</h2>
             <p class="ai-chat-login-gate__desc">登录后即可使用 AI 助手</p>
-            <a href="#my" class="ai-chat-login-gate__btn">去登录</a>
+            <a href="javascript:void(0)" class="ai-chat-login-gate__btn" onclick="showLoginModal()">去登录</a>
         </div>
     </div>
 
-    <!-- 登录模态框 -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>登录</h3>
-                <button class="modal-close" onclick="closeLoginModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="loginUsername">用户名</label>
-                        <input type="text" id="loginUsername" name="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">密码</label>
-                        <input type="password" id="loginPassword" name="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">
-                        <i class="fas fa-sign-in-alt"></i>
-                        登录
-                    </button>
-                </form>
-                <div class="modal-footer">
-                    <p>还没有账号？ <a href="#" onclick="switchToRegister()">立即注册</a></p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- 登录模态框（表单已迁入入口卡片，保留空壳避免旧引用报错） -->
+    <div id="loginModal" class="modal" style="display:none !important;" aria-hidden="true"></div>
 
-    <!-- 注册模态框 -->
-    <div id="registerModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>注册账号</h3>
-                <button class="modal-close" onclick="closeRegisterModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="registerForm" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label for="regUsername">用户名</label>
-                        <input type="text" id="regUsername" name="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="regNickname">昵称</label>
-                        <input type="text" id="regNickname" name="nickname" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="regPassword">密码</label>
-                        <input type="password" id="regPassword" name="password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="regEmail">邮箱</label>
-                        <input type="email" id="regEmail" name="email">
-                    </div>
-                    <div class="form-group">
-                        <label for="regPhone">电话</label>
-                        <input type="tel" id="regPhone" name="phone">
-                    </div>
-                    <div class="form-group">
-                        <label for="regAvatar">头像</label>
-                        <input type="file" id="regAvatar" name="avatar" accept="image/*">
-                        <div class="avatar-preview" id="avatarPreview" style="display: none;">
-                            <img id="previewImg" src="" alt="头像预览">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">
-                        <i class="fas fa-user-plus"></i>
-                        注册
-                    </button>
-                </form>
-                <div class="modal-footer">
-                    <p>已有账号？ <a href="#" onclick="switchToLogin()">立即登录</a></p>
-                </div>
-            </div>
-        </div>
-    </div>
+
+    <!-- 注册模态框（表单已迁入入口卡片，保留空壳避免旧引用报错） -->
+    <div id="registerModal" class="modal" style="display:none !important;" aria-hidden="true"></div>
+
 
     <!-- 角色教程模态框：左栏（信息+背景+出招表）、右栏（玩家连段），各自滚动 -->
     <div id="characterModal" class="modal character-tutorial-modal" role="dialog" aria-modal="true" aria-label="角色教程">
@@ -590,6 +901,249 @@
         </div>
     </div>
 
+
+
+    <!-- 问题反馈：提交 + 查看处理结果 -->
+    <div id="feedbackModal" class="modal" aria-hidden="true">
+        <div class="modal-content modal-large feedback-modal-content">
+            <div class="modal-header">
+                <h3>问题反馈</h3>
+                <button class="modal-close" type="button" onclick="closeFeedbackModal()" aria-label="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body feedback-modal-body">
+                <div class="feedback-tabs" role="tablist">
+                    <button type="button" class="feedback-tab active" id="feedbackTabSubmit" data-tab="submit">提交反馈</button>
+                    <button type="button" class="feedback-tab" id="feedbackTabMine" data-tab="mine">我的反馈</button>
+                </div>
+
+                <div id="feedbackSubmitPane" class="feedback-pane">
+                    <form id="feedbackForm" onsubmit="return false;">
+                        <div class="form-group">
+                            <label for="feedbackCategory">类型 *</label>
+                            <select id="feedbackCategory" class="select-input" style="width:100%;">
+                                <option value="bug">问题 / Bug</option>
+                                <option value="suggestion">功能建议</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="feedbackTitle">标题 *</label>
+                            <input type="text" id="feedbackTitle" maxlength="100" placeholder="一句话概括问题或建议" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="feedbackContent">详细描述 *</label>
+                            <textarea id="feedbackContent" rows="6" maxlength="2000" placeholder="请尽量描述复现步骤、期望结果等" required style="width:100%;padding:12px 16px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary);"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="feedbackContact">联系方式（可选）</label>
+                            <input type="text" id="feedbackContact" maxlength="100" placeholder="QQ / 邮箱 / Steam，方便我们回访">
+                        </div>
+                    </form>
+                    <div class="modal-footer" style="padding:0;border:none;justify-content:flex-end;">
+                        <button type="button" class="btn btn-outline" onclick="closeFeedbackModal()">取消</button>
+                        <button type="button" class="btn btn-primary" id="feedbackSubmitBtn" onclick="submitFeedback()">
+                            <i class="fas fa-paper-plane"></i> 提交
+                        </button>
+                    </div>
+                </div>
+
+                <div id="feedbackMinePane" class="feedback-pane" hidden>
+                    <div id="feedbackMineList" class="feedback-mine-list">
+                        <div class="feedback-empty">加载中…</div>
+                    </div>
+                    <div class="feedback-mine-pager" id="feedbackMinePager"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 个人设置模态框 -->
+        <!-- 个人设置弹窗（已弃用：入口改为 #settings 页面） -->
+    <div id="profileSettingsModal" class="modal" style="display:none;" aria-hidden="true">
+        <div class="modal-content profile-settings-modal-content">
+            <div class="modal-header">
+                <h3>个人设置</h3>
+                <button class="modal-close" type="button" onclick="closeProfileSettings()" aria-label="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="settings-content-hint">设置已迁移至独立页面，正在跳转…</p>
+            </div>
+        </div>
+    </div>
+
+
+<!-- 通用确认弹窗 -->
+    <div id="appConfirmModal" class="modal app-confirm-modal" aria-hidden="true">
+        <div class="modal-content app-confirm-modal-content" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle">
+            <div class="modal-header">
+                <h3 id="appConfirmTitle">确认操作</h3>
+                <button class="modal-close" type="button" id="appConfirmCloseBtn" aria-label="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body app-confirm-body">
+                <div class="app-confirm-icon" aria-hidden="true">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p id="appConfirmMessage" class="app-confirm-message">确定要继续吗？</p>
+            </div>
+            <div class="app-confirm-actions">
+                <button type="button" class="btn btn-outline" id="appConfirmCancelBtn">取消</button>
+                <button type="button" class="btn btn-primary app-confirm-ok" id="appConfirmOkBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 头像裁剪弹窗（Steam 式方形拖拽/缩放） -->
+
+    <!-- 编辑个人资料 -->
+    <div id="editProfileModal" class="modal" style="display:none;" aria-hidden="true">
+        <div class="modal-content edit-profile-modal-content" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle">
+            <div class="modal-header">
+                <h3 id="editProfileTitle">编辑个人资料</h3>
+                <button class="modal-close" type="button" onclick="closeEditProfileModal()" aria-label="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body edit-profile-body">
+                <div class="edit-profile-cover-row">
+                    <label class="edit-profile-label">背景封面</label>
+                    <div class="edit-profile-cover-preview" id="editProfileCoverPreview">
+                        <span class="edit-profile-cover-hint">未设置</span>
+                    </div>
+                    <div class="edit-profile-cover-actions">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('editProfileCoverFile').click()">
+                            <i class="fas fa-crop-alt"></i> 上传并裁剪
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" id="editProfileCoverClearBtn" onclick="clearEditProfileCover()" style="display:none;">清除</button>
+                        <input type="file" id="editProfileCoverFile" accept="image/*" hidden>
+                    </div>
+                </div>
+
+                <div class="edit-profile-avatar-row">
+                    <label class="edit-profile-label">头像</label>
+                    <div class="edit-profile-avatar-wrap">
+                        <img id="editProfileAvatar" src="/images/CSel3_LargePortTianhuo.png" alt="头像预览">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('editProfileAvatarFile').click()">
+                            <i class="fas fa-camera"></i> 更换头像
+                        </button>
+                        <input type="file" id="editProfileAvatarFile" accept="image/*" hidden>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editProfileNickname">昵称</label>
+                    <input type="text" id="editProfileNickname" maxlength="100" autocomplete="nickname" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProfileBio">自我介绍</label>
+                    <textarea id="editProfileBio" maxlength="200" rows="3" placeholder="介绍一下自己吧"></textarea>
+                    <div class="char-count"><span id="editProfileBioCount">0</span>/200</div>
+                </div>
+                <div class="form-group">
+                    <label for="editProfileGender">性别</label>
+                    <select id="editProfileGender">
+                        <option value="保密">保密</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editProfileBirthday">生日</label>
+                    <input type="date" id="editProfileBirthday">
+                    <p class="form-hint">出生年月将根据生日自动显示</p>
+                </div>
+            </div>
+            <div class="edit-profile-footer">
+                <button type="button" class="btn btn-outline" onclick="closeEditProfileModal()">取消</button>
+                <button type="button" class="btn btn-primary" id="saveEditProfileBtn" onclick="saveEditProfile()">
+                    <i class="fas fa-save"></i> 保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+
+        <div id="coverCropModal" class="modal cover-crop-modal" aria-hidden="true">
+        <div class="modal-content cover-crop-modal-content">
+            <div class="modal-header">
+                <h3>裁剪封面</h3>
+                <button class="modal-close" type="button" onclick="closeCoverCropModal()" aria-label="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body cover-crop-body">
+                <p class="cover-crop-hint">拖动图片选择区域，滚轮或滑块缩放</p>
+                <div class="cover-crop-stage" id="coverCropStage">
+                    <div class="cover-crop-viewport" id="coverCropViewport">
+                        <img id="coverCropImage" alt="" draggable="false">
+                        <div class="cover-crop-frame" aria-hidden="true"></div>
+                    </div>
+                </div>
+                <div class="cover-crop-preview-row">
+                    <span class="cover-crop-preview-label">预览</span>
+                    <div class="cover-crop-preview-rect">
+                        <canvas id="coverCropPreview" width="240" height="80"></canvas>
+                    </div>
+                </div>
+                <div class="cover-crop-zoom-row">
+                    <i class="fas fa-search-minus" aria-hidden="true"></i>
+                    <input type="range" id="coverCropZoom" min="100" max="300" value="100" step="1" aria-label="缩放">
+                    <i class="fas fa-search-plus" aria-hidden="true"></i>
+                </div>
+                <div class="settings-form-actions cover-crop-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeCoverCropModal()">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmCoverCropBtn" onclick="confirmCoverCrop()">
+                        <i class="fas fa-check"></i> 保存封面
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div id="avatarCropModal" class="modal avatar-crop-modal" aria-hidden="true">
+        <div class="modal-content avatar-crop-modal-content">
+            <div class="modal-header">
+                <h3>调整头像</h3>
+                <button class="modal-close" type="button" onclick="closeAvatarCropModal()" aria-label="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body avatar-crop-body">
+                <p class="avatar-crop-hint">拖动图片选择区域，滚轮或滑块缩放</p>
+                <div class="avatar-crop-stage" id="avatarCropStage">
+                    <div class="avatar-crop-viewport" id="avatarCropViewport">
+                        <img id="avatarCropImage" alt="" draggable="false">
+                        <div class="avatar-crop-frame" aria-hidden="true"></div>
+                    </div>
+                </div>
+                <div class="avatar-crop-preview-row">
+                    <span class="avatar-crop-preview-label">预览</span>
+                    <div class="avatar-crop-preview-circle">
+                        <canvas id="avatarCropPreview" width="72" height="72"></canvas>
+                    </div>
+                </div>
+                <div class="avatar-crop-zoom-row">
+                    <i class="fas fa-search-minus" aria-hidden="true"></i>
+                    <input type="range" id="avatarCropZoom" min="100" max="300" value="100" step="1" aria-label="缩放">
+                    <i class="fas fa-search-plus" aria-hidden="true"></i>
+                </div>
+                <div class="settings-form-actions avatar-crop-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeAvatarCropModal()">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmAvatarCropBtn" onclick="confirmAvatarCrop()">
+                        <i class="fas fa-check"></i> 保存头像
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 轻提示 -->
+    <div id="appToast" class="app-toast" aria-live="polite"></div>
+
     <!-- 加载指示器 -->
     <div id="loadingIndicator" class="loading-indicator">
         <div class="spinner"></div>
@@ -597,6 +1151,9 @@
     </div>
 
     <script src="/js/ai-chat.js"></script>
+    <script src="/js/tournaments.js"></script>
+    <script src="/js/rankings.js"></script>
+    <script src="/js/rooms.js"></script>
     <script src="/js/main.js"></script>
 </body>
 </html>

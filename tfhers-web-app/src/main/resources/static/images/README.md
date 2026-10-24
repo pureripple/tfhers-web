@@ -18,7 +18,7 @@
 - `bg-app.png` - 全页背景图（CSS：`body::before`）
 
 ## 默认图片
-- `default-avatar.png` - 默认用户头像
+- `CSel3_LargePortTianhuo.png` - 默认用户头像（天火立绘）
 - `default-character.jpg` - 默认角色图片
 - `default-article.jpg` - 默认文章封面
 

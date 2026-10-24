@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.RoomMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.pojo.Room">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="password_hash" property="passwordHash"/>
+        <result column="password_plain" property="passwordPlain"/>
+        <result column="max_players" property="maxPlayers"/>
+        <result column="status" property="status"/>
+        <result column="host_user_id" property="hostUserId"/>
+        <result column="member_count" property="memberCount"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="closed_at" property="closedAt"/>
+        <result column="has_password" property="hasPassword"/>
+        <result column="host_nickname" property="hostNickname"/>
+        <result column="host_avatar_url" property="hostAvatarUrl"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.pojo.Room" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rooms
+        (title, password_hash, password_plain, max_players, status, host_user_id, member_count, created_at, updated_at)
+        VALUES
+        (#{title}, #{passwordHash}, #{passwordPlain}, #{maxPlayers}, #{status}, #{hostUserId}, #{memberCount}, NOW(), NOW())
+    </insert>
+
+    <update id="updateStatusAndCount">
+        UPDATE rooms
+        SET status = #{status},
+            member_count = #{memberCount},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="closeRoom">
+        UPDATE rooms
+        SET status = 'CLOSED',
+            closed_at = NOW(),
+            updated_at = NOW()
+        WHERE id = #{id} AND status &lt;&gt; 'CLOSED'
+    </update>
+
+    <update id="transferHost">
+        UPDATE rooms
+        SET host_user_id = #{hostUserId},
+            updated_at = NOW()
+        WHERE id = #{id} AND status IN ('OPEN', 'FULL')
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT r.id, r.title, r.password_hash, r.password_plain, r.max_players, r.status, r.host_user_id,
+               r.member_count, r.created_at, r.updated_at, r.closed_at,
+               (r.password_hash IS NOT NULL AND r.password_hash &lt;&gt; '') AS has_password,
+               COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS host_nickname,
+               u.avatar_url AS host_avatar_url
+        FROM rooms r
+        LEFT JOIN users u ON r.host_user_id = u.id
+        WHERE r.id = #{id}
+    </select>
+
+    <select id="listOpenOrFull" resultMap="BaseResultMap">
+        SELECT r.id, r.title, r.password_hash, r.password_plain, r.max_players, r.status, r.host_user_id,
+               r.member_count, r.created_at, r.updated_at, r.closed_at,
+               (r.password_hash IS NOT NULL AND r.password_hash &lt;&gt; '') AS has_password,
+               COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS host_nickname,
+               u.avatar_url AS host_avatar_url
+        FROM rooms r
+        LEFT JOIN users u ON r.host_user_id = u.id
+        WHERE r.status IN ('OPEN', 'FULL')
+        ORDER BY
+          CASE r.status WHEN 'OPEN' THEN 1 WHEN 'FULL' THEN 2 ELSE 3 END,
+          r.created_at DESC
+    </select>
+
+    <select id="countOpenByHost" resultType="int">
+        SELECT COUNT(1) FROM rooms
+        WHERE host_user_id = #{hostUserId}
+          AND status IN ('OPEN', 'FULL')
+    </select>
+
+    <select id="findOpenByHost" resultMap="BaseResultMap">
+        SELECT r.id, r.title, r.password_hash, r.password_plain, r.max_players, r.status, r.host_user_id,
+               r.member_count, r.created_at, r.updated_at, r.closed_at,
+               (r.password_hash IS NOT NULL AND r.password_hash &lt;&gt; '') AS has_password,
+               COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS host_nickname,
+               u.avatar_url AS host_avatar_url
+        FROM rooms r
+        LEFT JOIN users u ON r.host_user_id = u.id
+        WHERE r.host_user_id = #{hostUserId}
+          AND r.status IN ('OPEN', 'FULL')
+        ORDER BY r.created_at DESC
+        LIMIT 1
+    </select>
+
+    <select id="listClosedBefore" resultMap="BaseResultMap">
+        SELECT r.id, r.title, r.password_hash, r.password_plain, r.max_players, r.status, r.host_user_id,
+               r.member_count, r.created_at, r.updated_at, r.closed_at,
+               (r.password_hash IS NOT NULL AND r.password_hash &lt;&gt; '') AS has_password,
+               NULL AS host_nickname,
+               NULL AS host_avatar_url
+        FROM rooms r
+        WHERE r.status = 'CLOSED'
+          AND r.closed_at IS NOT NULL
+          AND r.closed_at &lt; #{cutoff}
+        ORDER BY r.closed_at ASC
+        LIMIT #{limit}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM rooms WHERE id = #{id}
+    </delete>
+
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(1) FROM rooms WHERE status = #{status}
+    </select>
+</mapper>

@@ -155,7 +155,7 @@ function renderUsers(data) {
         <tr>
             <td>
                 <div class="user-info">
-                    <img src="${user.avatarUrl || 'images/default-avatar.png'}" alt="头像" class="user-avatar">
+                    <img src="${user.avatarUrl || 'images/CSel3_LargePortTianhuo.png'}" alt="头像" class="user-avatar">
                     <div class="user-details">
                         <h4>${user.nickname}</h4>
                         <p>@${user.username}</p>

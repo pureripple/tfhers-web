@@ -10,6 +10,7 @@ import com.example.pojo.articles;
 import com.example.pojo.results;
 import com.example.service.ArticleLikeService;
 import com.example.service.articlesService;
+import com.example.util.OssUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,8 @@ public class articlesServiceimpl implements articlesService {
     private ArticleCommentMapper articleCommentMapper;
     @Autowired
     private ContentReportMapper contentReportMapper;
+    @Autowired
+    private OssUtil ossUtil;
 
     @Override
     public results getAllArticles() {
@@ -48,6 +51,21 @@ public class articlesServiceimpl implements articlesService {
     @Transactional(rollbackFor = Exception.class)
     public results deleteArticleById(long id) {
         try {
+            articles existing = articlesMapper.selectArticleById(id);
+            if (existing != null) {
+                if (existing.getCoverUrl() != null && !existing.getCoverUrl().isBlank()) {
+                    ossUtil.deleteByUrlIfOwned(existing.getCoverUrl());
+                }
+                if (existing.getContent() != null && ossUtil.getDomain() != null) {
+                    String domain = ossUtil.getDomain();
+                    String regex = java.util.regex.Pattern.quote(domain) + "/([^\\s\"'<>]+)";
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile(regex)
+                            .matcher(existing.getContent());
+                    while (m.find()) {
+                        ossUtil.deleteFile(m.group(1));
+                    }
+                }
+            }
             articleLikeMapper.deleteByArticleId(id);
             articleCommentMapper.deleteByArticleId(id);
             contentReportMapper.deleteByTarget("article", id);
@@ -137,6 +155,14 @@ public class articlesServiceimpl implements articlesService {
     @Override
     public results updateArticle(articles article) {
         try {
+            if (article.getId() > 0 && article.getCoverUrl() != null) {
+                articles old = articlesMapper.selectArticleById(article.getId());
+                if (old != null && old.getCoverUrl() != null && !old.getCoverUrl().isBlank()
+                        && !old.getCoverUrl().equals(article.getCoverUrl())) {
+                    // cover changed: delete previous OSS object
+                    ossUtil.deleteByUrlIfOwned(old.getCoverUrl());
+                }
+            }
             // 验证必填字段
             if (article.getTitle() == null || article.getTitle().trim().isEmpty()) {
                 return results.error("文章标题不能为空");
@@ -193,4 +219,38 @@ public class articlesServiceimpl implements articlesService {
             return results.error("更新置顶失败: " + e.getMessage());
         }
     }
+
+    @Override
+    public results getArticlesByAuthorId(long authorId) {
+        try {
+            List<articles> list = articlesMapper.selectByAuthorId(authorId);
+            return results.success("获取我的资讯成功", list);
+        } catch (Exception e) {
+            return results.error("获取我的资讯失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public results deleteArticleByIdForUser(long id, Long userId) {
+        if (userId == null) {
+            return results.error(401, "请先登录");
+        }
+        try {
+            articles existing = articlesMapper.selectArticleById(id);
+            if (existing == null) {
+                return results.error("文章不存在或已被删除");
+            }
+            boolean isAuthor = existing.getAuthorId() != null && existing.getAuthorId().equals(userId);
+            boolean isAdminAuthor = existing.getAuthorAdminId() != null && existing.getAuthorAdminId().equals(userId);
+            boolean isAdmin = adminUserMapper.findById(userId) != null;
+            if (!isAuthor && !isAdminAuthor && !isAdmin) {
+                return results.error(403, "只能删除自己发布的资讯");
+            }
+            return deleteArticleById(id);
+        } catch (Exception e) {
+            return results.error("删除文章失败: " + e.getMessage());
+        }
+    }
+
 }

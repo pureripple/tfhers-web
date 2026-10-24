@@ -69,17 +69,40 @@ public class articlesController {
      * @param id 文章id
      * @return 删除结果
      */
+    /**
+     * 我的资讯列表（需登录，仅返回当前用户 author_id 的文章）
+     */
+    @GetMapping(value = "/mine", produces = "application/json")
+    public ResponseEntity<Map<String, Object>> getMyArticles(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        Map<String, Object> response = new HashMap<>();
+        if (userId == null) {
+            response.put("code", 401);
+            response.put("msg", "请先登录");
+            response.put("data", null);
+            return ResponseEntity.status(401).body(response);
+        }
+        results result = articlesService.getArticlesByAuthorId(userId);
+        response.put("code", result.getCode());
+        response.put("msg", result.getMsg());
+        response.put("data", result.getData());
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Map<String, Object>> deleteArticleById(@PathVariable long id) {
-        results result = articlesService.deleteArticleById(id);
+    public ResponseEntity<Map<String, Object>> deleteArticleById(@PathVariable long id, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        results result = articlesService.deleteArticleByIdForUser(id, userId);
         Map<String, Object> response = new HashMap<>();
         response.put("code", result.getCode());
         response.put("msg", result.getMsg());
         response.put("data", result.getData());
-        
-        // 根据操作结果返回不同的HTTP状态码
         if (result.getCode() == 200) {
             return ResponseEntity.ok(response);
+        } else if (result.getCode() == 401) {
+            return ResponseEntity.status(401).body(response);
+        } else if (result.getCode() == 403) {
+            return ResponseEntity.status(403).body(response);
         } else {
             return ResponseEntity.badRequest().body(response);
         }

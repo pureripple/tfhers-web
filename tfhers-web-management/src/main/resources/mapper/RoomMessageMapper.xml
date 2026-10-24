@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.RoomMessageMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.pojo.RoomMessage">
+        <id column="id" property="id"/>
+        <result column="room_id" property="roomId"/>
+        <result column="user_id" property="userId"/>
+        <result column="content" property="content"/>
+        <result column="msg_type" property="msgType"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="nickname" property="nickname"/>
+        <result column="avatar_url" property="avatarUrl"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.pojo.RoomMessage" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO room_messages (room_id, user_id, content, msg_type, created_at)
+        VALUES (#{roomId}, #{userId}, #{content}, COALESCE(#{msgType}, 'text'), NOW())
+    </insert>
+
+    <select id="listAfter" resultMap="BaseResultMap">
+        SELECT msg.id, msg.room_id, msg.user_id, msg.content, msg.msg_type, msg.created_at,
+               COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS nickname,
+               u.avatar_url AS avatar_url
+        FROM room_messages msg
+        LEFT JOIN users u ON msg.user_id = u.id
+        WHERE msg.room_id = #{roomId}
+          AND msg.id &gt; #{afterId}
+        ORDER BY msg.id ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="listRecent" resultMap="BaseResultMap">
+        SELECT * FROM (
+            SELECT msg.id, msg.room_id, msg.user_id, msg.content, msg.msg_type, msg.created_at,
+                   COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS nickname,
+                   u.avatar_url AS avatar_url
+            FROM room_messages msg
+            LEFT JOIN users u ON msg.user_id = u.id
+            WHERE msg.room_id = #{roomId}
+            ORDER BY msg.id DESC
+            LIMIT #{limit}
+        ) t
+        ORDER BY t.id ASC
+    </select>
+
+    <delete id="deleteByRoomId">
+        DELETE FROM room_messages WHERE room_id = #{roomId}
+    </delete>
+
+    <select id="countByRoomId" resultType="int">
+        SELECT COUNT(1) FROM room_messages WHERE room_id = #{roomId}
+    </select>
+</mapper>

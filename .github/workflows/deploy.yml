@@ -1,0 +1,98 @@
+# Push to main → build → SSH deploy
+# Secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY (optional DEPLOY_PORT)
+name: Deploy TFHers
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Detect changes
+        id: changes
+        run: |
+          set -euo pipefail
+          mark_all() {
+            echo "java=true" >> "$GITHUB_OUTPUT"
+            echo "admin_static=true" >> "$GITHUB_OUTPUT"
+            echo "frontend_static=true" >> "$GITHUB_OUTPUT"
+            echo "nginx=false" >> "$GITHUB_OUTPUT"
+          }
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then mark_all; exit 0; fi
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then mark_all; exit 0; fi
+          FILES=$(git diff --name-only "$BEFORE" "${{ github.sha }}" || true)
+          echo "$FILES"
+          echo "java=false" >> "$GITHUB_OUTPUT"
+          echo "admin_static=false" >> "$GITHUB_OUTPUT"
+          echo "frontend_static=false" >> "$GITHUB_OUTPUT"
+          echo "nginx=false" >> "$GITHUB_OUTPUT"
+          echo "$FILES" | grep -qE '(^pom\.xml$|\.java$|tfhers-web-management/)' && echo "java=true" >> "$GITHUB_OUTPUT" || true
+          echo "$FILES" | grep -qE 'tfhers-web-management/.*/static/' && echo "admin_static=true" >> "$GITHUB_OUTPUT" || true
+          echo "$FILES" | grep -qE 'tfhers-web-app/.*/static/' && echo "frontend_static=true" >> "$GITHUB_OUTPUT" || true
+          if echo "$FILES" | grep -qE '\.java$|pom\.xml|tfhers-web-management/'; then echo "admin_static=true" >> "$GITHUB_OUTPUT"; fi
+          echo "$FILES" | grep -qE 'nginx|\.conf$' && echo "nginx=true" >> "$GITHUB_OUTPUT" || true
+      - name: Set up JDK 17
+        if: steps.changes.outputs.java == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Build management jar
+        if: steps.changes.outputs.java == 'true'
+        run: |
+          set -euo pipefail
+          mvn -B -DskipTests -f tfhers-web-management/pom.xml package
+          JAR=$(find ./tfhers-web-management/target -name 'tfhers-web-management-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -1)
+          test -n "$JAR"
+          echo "JAR=$JAR" >> "$GITHUB_ENV"
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+      - name: Known hosts
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ssh-keyscan -p "${PORT:-22}" -H "$HOST" >> ~/.ssh/known_hosts
+      - name: Deploy
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+          DO_JAVA: ${{ steps.changes.outputs.java }}
+          DO_ADMIN: ${{ steps.changes.outputs.admin_static }}
+          DO_FRONT: ${{ steps.changes.outputs.frontend_static }}
+          DO_NGINX: ${{ steps.changes.outputs.nginx }}
+        run: |
+          set -euo pipefail
+          PORT="${PORT:-22}"
+          BACKEND=/opt/tfhers/backend
+          FRONTEND=/opt/tfhers/frontend/www
+          ADMIN_STATIC=tfhers-web-management/src/main/resources/static
+          APP_STATIC=tfhers-web-app/src/main/resources/static
+          SSH=(ssh -p "$PORT" -o StrictHostKeyChecking=yes "$USER@$HOST")
+          RSYNC=(rsync -az -e "ssh -p $PORT -o StrictHostKeyChecking=yes")
+          if [ "$DO_ADMIN" = "true" ] && [ -d "$ADMIN_STATIC" ]; then
+            "${RSYNC[@]}" --delete "$ADMIN_STATIC"/ "$USER@$HOST:$BACKEND/www/"
+          fi
+          if [ "$DO_FRONT" = "true" ] && [ -d "$APP_STATIC" ]; then
+            "${RSYNC[@]}" --delete "$APP_STATIC"/ "$USER@$HOST:$FRONTEND/"
+          fi
+          if [ "$DO_JAVA" = "true" ]; then
+            scp -P "$PORT" "$JAR" "$USER@$HOST:$BACKEND/tfhers-web-management-0.0.1-SNAPSHOT.jar.new"
+            "${SSH[@]}" "set -euo pipefail; cd $BACKEND; cp -a tfhers-web-management-0.0.1-SNAPSHOT.jar tfhers-web-management-0.0.1-SNAPSHOT.jar.bak 2>/dev/null || true; mv -f tfhers-web-management-0.0.1-SNAPSHOT.jar.new tfhers-web-management-0.0.1-SNAPSHOT.jar; systemctl restart tfhers-management; systemctl --no-pager --full status tfhers-management | head -20"
+          fi
+          if [ "$DO_NGINX" = "true" ]; then
+            "${SSH[@]}" "nginx -t && systemctl reload nginx"
+          fi

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.GameAchievementSchemaMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.pojo.GameAchievementSchema">
+        <id column="id" property="id"/>
+        <result column="app_id" property="appId"/>
+        <result column="api_name" property="apiName"/>
+        <result column="display_name" property="displayName"/>
+        <result column="description" property="description"/>
+        <result column="icon_url" property="iconUrl"/>
+        <result column="icon_gray_url" property="iconGrayUrl"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectByAppId" resultMap="BaseResultMap">
+        SELECT id, app_id, api_name, display_name, description, icon_url, icon_gray_url, created_at, updated_at
+        FROM game_achievement_schema
+        WHERE app_id = #{appId}
+        ORDER BY api_name ASC
+    </select>
+
+    <select id="countByAppId" resultType="int">
+        SELECT COUNT(*)
+        FROM game_achievement_schema
+        WHERE app_id = #{appId}
+    </select>
+
+    <insert id="upsertBatch">
+        INSERT INTO game_achievement_schema (
+            app_id, api_name, display_name, description, icon_url, icon_gray_url
+        )
+        VALUES
+        <foreach collection="list" item="x" separator=",">
+            (#{x.appId}, #{x.apiName}, #{x.displayName}, #{x.description}, #{x.iconUrl}, #{x.iconGrayUrl})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            display_name = VALUES(display_name),
+            description = VALUES(description),
+            icon_url = VALUES(icon_url),
+            icon_gray_url = VALUES(icon_gray_url),
+            updated_at = NOW()
+    </insert>
+
+</mapper>
+

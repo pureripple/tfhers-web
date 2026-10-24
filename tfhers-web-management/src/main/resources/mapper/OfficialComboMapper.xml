@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.OfficialComboMapper">
+
+    <resultMap id="OfficialComboResultMap" type="com.example.pojo.OfficialCombo">
+        <id column="id" property="id"/>
+        <result column="character_id" property="characterId"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="video_url" property="videoUrl"/>
+        <result column="order_index" property="orderIndex"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findById" resultMap="OfficialComboResultMap">
+        SELECT id, character_id, title, description,
+               video_url, order_index, created_at, updated_at
+        FROM official_combos
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByCharacterId" resultMap="OfficialComboResultMap">
+        SELECT id, character_id, title, description,
+               video_url, order_index, created_at, updated_at
+        FROM official_combos
+        WHERE character_id = #{characterId}
+        ORDER BY order_index ASC, id ASC
+    </select>
+
+    <insert id="insert" parameterType="com.example.pojo.OfficialCombo" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO official_combos
+        (character_id, title, description, video_url, order_index)
+        VALUES
+        (#{characterId}, #{title}, #{description}, #{videoUrl}, #{orderIndex})
+    </insert>
+
+    <update id="update" parameterType="com.example.pojo.OfficialCombo">
+        UPDATE official_combos
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="videoUrl != null">video_url = #{videoUrl},</if>
+            <if test="orderIndex != null">order_index = #{orderIndex},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM official_combos WHERE id = #{id}
+    </delete>
+
+</mapper>
+

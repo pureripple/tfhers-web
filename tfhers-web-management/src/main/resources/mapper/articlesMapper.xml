@@ -69,4 +69,17 @@
         UPDATE articles SET is_pinned = #{pinned} WHERE id = #{id}
     </update>
 
+
+    <select id="selectByAuthorId" resultType="com.example.pojo.articles">
+        SELECT a.id, a.title, a.content, a.cover_url, a.summary, a.author, a.author_id, a.author_admin_id,
+               a.view_count, a.is_pinned, a.created_at, a.updated_at,
+               COALESCE(NULLIF(TRIM(u.avatar_url), ''), NULLIF(TRIM(au.avatar_url), '')) AS author_avatar_url
+        FROM articles a
+        LEFT JOIN users u ON a.author_id = u.id
+        LEFT JOIN admin_users au ON a.author_admin_id = au.id
+        WHERE a.author_id = #{authorId}
+        ORDER BY a.created_at DESC
+    </select>
+
 </mapper>
+

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.TournamentRegistrationMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.pojo.TournamentRegistration">
+        <id column="id" property="id"/>
+        <result column="tournament_id" property="tournamentId"/>
+        <result column="user_id" property="userId"/>
+        <result column="seed" property="seed"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="nickname" property="nickname"/>
+        <result column="username" property="username"/>
+        <result column="avatar_url" property="avatarUrl"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.example.pojo.TournamentRegistration" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tournament_registrations
+        (tournament_id, user_id, seed, status, created_at, updated_at)
+        VALUES
+        (#{tournamentId}, #{userId}, #{seed}, #{status}, NOW(), NOW())
+    </insert>
+
+    <select id="findByTournamentAndUser" resultMap="BaseResultMap">
+        SELECT r.id, r.tournament_id, r.user_id, r.seed, r.status, r.created_at, r.updated_at,
+               u.nickname, u.username, u.avatar_url
+        FROM tournament_registrations r
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.tournament_id = #{tournamentId} AND r.user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <select id="listActiveByTournament" resultMap="BaseResultMap">
+        SELECT r.id, r.tournament_id, r.user_id, r.seed, r.status, r.created_at, r.updated_at,
+               u.nickname, u.username, u.avatar_url
+        FROM tournament_registrations r
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.tournament_id = #{tournamentId} AND r.status = 'registered'
+        ORDER BY COALESCE(r.seed, 9999) ASC, r.created_at ASC
+    </select>
+
+    <select id="countActiveByTournament" resultType="int">
+        SELECT COUNT(1) FROM tournament_registrations
+        WHERE tournament_id = #{tournamentId} AND status = 'registered'
+    </select>
+
+    <update id="updateStatus">
+        UPDATE tournament_registrations SET status = #{status}, updated_at = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="updateSeed">
+        UPDATE tournament_registrations SET seed = #{seed}, updated_at = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="withdraw">
+        UPDATE tournament_registrations
+        SET status = 'withdrawn', updated_at = NOW()
+        WHERE tournament_id = #{tournamentId} AND user_id = #{userId} AND status = 'registered'
+    </update>
+</mapper>

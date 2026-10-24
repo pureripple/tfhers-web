@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.MoveMapper">
+
+    <resultMap id="MoveResultMap" type="com.example.pojo.Move">
+        <id column="id" property="id"/>
+        <result column="character_id" property="characterId"/>
+        <result column="name_zh" property="nameZh"/>
+        <result column="name_en" property="nameEn"/>
+        <result column="input_command" property="inputCommand"/>
+        <result column="description" property="description"/>
+        <result column="motion_image_url" property="motionImageUrl"/>
+        <result column="order_index" property="orderIndex"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findByCharacterId" resultMap="MoveResultMap">
+        SELECT id, character_id, name_zh, name_en, input_command,
+               description, motion_image_url, order_index, created_at, updated_at
+        FROM moves
+        WHERE character_id = #{characterId}
+        ORDER BY order_index ASC, id ASC
+    </select>
+
+    <select id="findById" resultMap="MoveResultMap">
+        SELECT id, character_id, name_zh, name_en, input_command,
+               description, motion_image_url, order_index, created_at, updated_at
+        FROM moves
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.example.pojo.Move" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO moves
+        (character_id, name_zh, name_en, input_command,
+         description, motion_image_url, order_index)
+        VALUES
+        (#{characterId}, #{nameZh}, #{nameEn}, #{inputCommand},
+         #{description}, #{motionImageUrl}, #{orderIndex})
+    </insert>
+
+    <update id="update" parameterType="com.example.pojo.Move">
+        UPDATE moves
+        <set>
+            <if test="nameZh != null">name_zh = #{nameZh},</if>
+            <if test="nameEn != null">name_en = #{nameEn},</if>
+            <if test="inputCommand != null">input_command = #{inputCommand},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="motionImageUrl != null">motion_image_url = #{motionImageUrl},</if>
+            <if test="orderIndex != null">order_index = #{orderIndex},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM moves WHERE id = #{id}
+    </delete>
+
+</mapper>
+

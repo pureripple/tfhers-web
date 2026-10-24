@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.ComboMapper">
+
+    <resultMap id="ComboResultMap" type="com.example.pojo.Combo">
+        <id column="id" property="id"/>
+        <result column="character_id" property="characterId"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="damage_total" property="damageTotal"/>
+        <result column="video_url" property="videoUrl"/>
+        <result column="combo_file_url" property="comboFileUrl"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="author_name" property="authorName"/>
+        <result column="author_avatar" property="authorAvatar"/>
+        <result column="character_name" property="characterName"/>
+    </resultMap>
+
+    <select id="findById" resultMap="ComboResultMap">
+        SELECT id, character_id, title, description, damage_total,
+               video_url, combo_file_url, created_by, status, created_at, updated_at
+        FROM combos
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByCharacterId" resultMap="ComboResultMap">
+        SELECT id, character_id, title, description, damage_total,
+               video_url, combo_file_url, created_by, status, created_at, updated_at
+        FROM combos
+        WHERE character_id = #{characterId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByCharacterIdAndStatus" resultMap="ComboResultMap">
+        SELECT id, character_id, title, description, damage_total,
+               video_url, combo_file_url, created_by, status, created_at, updated_at
+        FROM combos
+        WHERE character_id = #{characterId}
+          AND status = #{status}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findByCharacterIdAndStatusWithAuthor" resultMap="ComboResultMap">
+        SELECT c.id, c.character_id, c.title, c.description, c.damage_total,
+               c.video_url, c.combo_file_url, c.created_by, c.status, c.created_at, c.updated_at,
+               u.nickname AS author_name, u.avatar_url AS author_avatar
+        FROM combos c
+        LEFT JOIN users u ON c.created_by = u.id
+        WHERE c.character_id = #{characterId}
+          AND c.status = #{status}
+        ORDER BY c.created_at DESC
+    </select>
+
+    <select id="findByStatus" resultMap="ComboResultMap">
+        SELECT id, character_id, title, description, damage_total,
+               video_url, combo_file_url, created_by, status, created_at, updated_at
+        FROM combos
+        <if test="status != null and status != ''">
+        WHERE status = #{status}
+        </if>
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.example.pojo.Combo" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO combos
+        (character_id, title, description, damage_total, video_url, combo_file_url, created_by, status)
+        VALUES
+        (#{characterId}, #{title}, #{description}, #{damageTotal}, #{videoUrl}, #{comboFileUrl}, #{createdBy}, #{status})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE combos
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM combos WHERE id = #{id}
+    </delete>
+
+
+    <select id="findByCreatedBy" resultMap="ComboResultMap">
+        SELECT c.id, c.character_id, c.title, c.description, c.damage_total,
+               c.video_url, c.combo_file_url, c.created_by, c.status, c.created_at, c.updated_at,
+               COALESCE(NULLIF(TRIM(ch.name_zh), ''), ch.name_en) AS character_name
+        FROM combos c
+        LEFT JOIN characters ch ON c.character_id = ch.id
+        WHERE c.created_by = #{userId}
+        ORDER BY c.created_at DESC
+    </select>
+
+</mapper>
+
+

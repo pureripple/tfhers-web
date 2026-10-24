@@ -11,6 +11,10 @@
         <result column="email" property="email"/>
         <result column="phone" property="phone"/>
         <result column="avatar_url" property="avatarUrl"/>
+        <result column="signature" property="signature"/>
+        <result column="gender" property="gender"/>
+        <result column="birthday" property="birthday"/>
+        <result column="cover_url" property="coverUrl"/>
         <result column="steam_id" property="steamId"/>
         <result column="steam_persona_name" property="steamPersonaName"/>
         <result column="steam_avatar_url" property="steamAvatarUrl"/>
@@ -20,6 +24,7 @@
         <result column="steam_achievements_total" property="steamAchievementsTotal"/>
         <result column="steam_achievements_count" property="steamAchievementsCount"/>
         <result column="steam_achievements_updated_at" property="steamAchievementsUpdatedAt"/>
+        <result column="steam_level" property="steamLevel"/>
         <result column="role" property="role"/>
         <result column="status" property="status"/>
         <result column="last_login_time" property="lastLoginTime"/>
@@ -30,10 +35,11 @@
 
     <!-- 根据ID查找用户 -->
     <select id="findById" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url,
+        SELECT id, username, nickname, password, email, phone, avatar_url, signature, gender, birthday, cover_url,
                steam_id, steam_persona_name, steam_avatar_url,
                steam_playtime_minutes, steam_playtime_updated_at,
                steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               steam_level,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE id = #{id}
@@ -41,10 +47,11 @@
 
     <!-- 根据用户名查找用户 -->
     <select id="findByUsername" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url,
+        SELECT id, username, nickname, password, email, phone, avatar_url, signature, gender, birthday, cover_url,
                steam_id, steam_persona_name, steam_avatar_url,
                steam_playtime_minutes, steam_playtime_updated_at,
                steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               steam_level,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE username = #{username}
@@ -52,10 +59,11 @@
 
     <!-- 根据ID查找用户（别名方法） -->
     <select id="selectById" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url,
+        SELECT id, username, nickname, password, email, phone, avatar_url, signature, gender, birthday, cover_url,
                steam_id, steam_persona_name, steam_avatar_url,
                steam_playtime_minutes, steam_playtime_updated_at,
                steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               steam_level,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE id = #{id}
@@ -63,10 +71,11 @@
 
     <!-- 根据用户名查找用户（别名方法） -->
     <select id="selectByUsername" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url,
+        SELECT id, username, nickname, password, email, phone, avatar_url, signature, gender, birthday, cover_url,
                steam_id, steam_persona_name, steam_avatar_url,
                steam_playtime_minutes, steam_playtime_updated_at,
                steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               steam_level,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE username = #{username}
@@ -74,9 +83,10 @@
 
     <!-- 根据邮箱查找用户 -->
     <select id="selectByEmail" resultMap="UserResultMap">
-        SELECT id, username, nickname, password, email, phone, avatar_url,
+        SELECT id, username, nickname, password, email, phone, avatar_url, signature, gender, birthday, cover_url,
                steam_id, steam_persona_name, steam_avatar_url,
                steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               steam_level,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         WHERE email = #{email}
@@ -84,10 +94,11 @@
 
     <!-- 分页查询用户列表 -->
     <select id="findUsersWithPagination" resultMap="UserResultMap">
-        SELECT id, username, nickname, email, phone, avatar_url,
+        SELECT id, username, nickname, email, phone, avatar_url, signature, gender, birthday, cover_url,
                steam_id, steam_persona_name, steam_avatar_url,
                steam_playtime_minutes, steam_playtime_updated_at,
                steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               steam_level,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users 
         <where>
@@ -144,6 +155,11 @@
             <if test="email != null">email = #{email},</if>
             <if test="phone != null">phone = #{phone},</if>
             <if test="avatarUrl != null">avatar_url = #{avatarUrl},</if>
+            <if test="signature != null">signature = #{signature},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="birthday != null">birthday = #{birthday},</if>
+            <if test="clearBirthday != null and clearBirthday">birthday = NULL,</if>
+            <if test="coverUrl != null">cover_url = #{coverUrl},</if>
             <if test="steamId != null">steam_id = #{steamId},</if>
             <if test="steamPersonaName != null">steam_persona_name = #{steamPersonaName},</if>
             <if test="steamAvatarUrl != null">steam_avatar_url = #{steamAvatarUrl},</if>
@@ -153,6 +169,7 @@
             <if test="steamAchievementsTotal != null">steam_achievements_total = #{steamAchievementsTotal},</if>
             <if test="steamAchievementsCount != null">steam_achievements_count = #{steamAchievementsCount},</if>
             <if test="steamAchievementsUpdatedAt != null">steam_achievements_updated_at = #{steamAchievementsUpdatedAt},</if>
+            <if test="steamLevel != null">steam_level = #{steamLevel},</if>
             <if test="role != null">role = #{role},</if>
             <if test="status != null">status = #{status},</if>
             updated_at = NOW()
@@ -207,16 +224,18 @@
             steam_achievements_total = NULL,
             steam_achievements_count = NULL,
             steam_achievements_updated_at = NULL,
+            steam_level = NULL,
             updated_at = NOW()
         WHERE id = #{id}
     </update>
 
     <!-- 查询需要同步 Steam 时长的用户 -->
     <select id="findSteamUsersToSync" resultMap="UserResultMap">
-        SELECT id, username, nickname, email, phone, avatar_url,
+        SELECT id, username, nickname, email, phone, avatar_url, signature, gender, birthday, cover_url,
                steam_id, steam_persona_name, steam_avatar_url,
                steam_playtime_minutes, steam_playtime_updated_at,
                steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               steam_level,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users
         WHERE steam_id IS NOT NULL
@@ -228,10 +247,11 @@
 
     <!-- Steam 时长排行榜（不 SELECT password） -->
     <select id="selectSteamPlaytimeTopUsers" resultMap="UserResultMap">
-        SELECT id, username, nickname, email, phone, avatar_url,
+        SELECT id, username, nickname, email, phone, avatar_url, signature, gender, birthday, cover_url,
                steam_id, steam_persona_name, steam_avatar_url,
                steam_playtime_minutes, steam_playtime_updated_at,
                steam_achievements_json, steam_achievements_total, steam_achievements_count, steam_achievements_updated_at,
+               steam_level,
                role, status, last_login_time, last_login_ip, created_at, updated_at
         FROM users
         WHERE steam_id IS NOT NULL

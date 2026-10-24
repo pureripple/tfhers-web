@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -22,7 +23,16 @@ public class ArticlesController {
     @Autowired
     private RestTemplate restTemplate;
 
-    private static final String MANAGEMENT_API_BASE_URL = "http://localhost:8081/api/articles";
+    @Value("${tfhers.management.base-url:http://localhost:8081}")
+    private String managementBaseUrl;
+
+    private String managementArticlesBase() {
+        String base = managementBaseUrl == null ? "" : managementBaseUrl.trim();
+        if (base.endsWith("/")) {
+            base = base.substring(0, base.length() - 1);
+        }
+        return base + "/api/articles";
+    }
 
     /** Map.of 不允许 null 值，统一用 HashMap（含 data: null） */
     private static Map<String, Object> apiJson(int code, String msg) {
@@ -67,13 +77,83 @@ public class ArticlesController {
         return "请求失败（HTTP " + status + "）";
     }
 
+
+    /**
+     * 我的资讯列表（转发管理端，需登录）
+     */
+    @GetMapping("/mine")
+    public ResponseEntity<Map<String, Object>> getMyArticles(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            String url = managementArticlesBase() + "/mine";
+            HttpHeaders headers = new HttpHeaders();
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                headers.set("Authorization", authHeader);
+            }
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity,
+                    new ParameterizedTypeReference<Map<String, Object>>() {});
+            return ResponseEntity.ok(response.getBody());
+        } catch (HttpStatusCodeException e) {
+            try {
+                String raw = e.getResponseBodyAsString();
+                if (raw != null && raw.trim().startsWith("{")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> parsed = (Map<String, Object>) new ObjectMapper().readValue(raw, Map.class);
+                    ensureFrontendMsg(parsed, e.getStatusCode().value());
+                    return ResponseEntity.status(e.getStatusCode()).body(parsed);
+                }
+            } catch (Exception ignored) {}
+            return ResponseEntity.status(e.getStatusCode()).body(apiJson(e.getStatusCode().value(), statusExceptionFallbackMsg(e)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(apiJson(500,
+                    "获取我的资讯失败: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())));
+        }
+    }
+
+    /**
+     * 删除资讯（本人或管理员；转发管理端）
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteArticle(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            String url = managementArticlesBase() + "/" + id;
+            HttpHeaders headers = new HttpHeaders();
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                headers.set("Authorization", authHeader);
+            }
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url, HttpMethod.DELETE, entity,
+                    new ParameterizedTypeReference<Map<String, Object>>() {});
+            return ResponseEntity.ok(response.getBody());
+        } catch (HttpStatusCodeException e) {
+            try {
+                String raw = e.getResponseBodyAsString();
+                if (raw != null && raw.trim().startsWith("{")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> parsed = (Map<String, Object>) new ObjectMapper().readValue(raw, Map.class);
+                    ensureFrontendMsg(parsed, e.getStatusCode().value());
+                    return ResponseEntity.status(e.getStatusCode()).body(parsed);
+                }
+            } catch (Exception ignored) {}
+            return ResponseEntity.status(e.getStatusCode()).body(apiJson(e.getStatusCode().value(), statusExceptionFallbackMsg(e)));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(apiJson(500,
+                    "删除资讯失败: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())));
+        }
+    }
+
     /**
      * 获取所有文章列表
      */
     @GetMapping("/all")
     public ResponseEntity<Map<String, Object>> getAllArticles(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
-            String url = MANAGEMENT_API_BASE_URL + "/all";
+            String url = managementArticlesBase() + "/all";
             
             // 创建请求头
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
@@ -105,7 +185,7 @@ public class ArticlesController {
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
-            String url = MANAGEMENT_API_BASE_URL + "/" + id;
+            String url = managementArticlesBase() + "/" + id;
             HttpHeaders headers = new HttpHeaders();
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 headers.set("Authorization", authHeader);
@@ -130,7 +210,7 @@ public class ArticlesController {
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
-            String url = MANAGEMENT_API_BASE_URL + "/" + id + "/like";
+            String url = managementArticlesBase() + "/" + id + "/like";
             HttpHeaders headers = new HttpHeaders();
             headers.set("Content-Type", "application/json");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -154,7 +234,7 @@ public class ArticlesController {
     @GetMapping("/{id}/comments")
     public ResponseEntity<Map<String, Object>> getComments(@PathVariable Long id) {
         try {
-            String url = MANAGEMENT_API_BASE_URL + "/" + id + "/comments";
+            String url = managementArticlesBase() + "/" + id + "/comments";
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 url, HttpMethod.GET, null,
                 new ParameterizedTypeReference<Map<String, Object>>() {}
@@ -175,7 +255,7 @@ public class ArticlesController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, Object> body) {
         try {
-            String url = MANAGEMENT_API_BASE_URL + "/" + id + "/comments";
+            String url = managementArticlesBase() + "/" + id + "/comments";
             HttpHeaders headers = new HttpHeaders();
             headers.set("Content-Type", "application/json");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -217,7 +297,7 @@ public class ArticlesController {
             if (body == null) {
                 body = new HashMap<>();
             }
-            String url = MANAGEMENT_API_BASE_URL + "/" + id + "/report";
+            String url = managementArticlesBase() + "/" + id + "/report";
             HttpHeaders headers = new HttpHeaders();
             headers.set("Content-Type", "application/json");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -263,7 +343,7 @@ public class ArticlesController {
             if (body == null) {
                 body = new HashMap<>();
             }
-            String url = MANAGEMENT_API_BASE_URL + "/comments/" + commentId + "/report";
+            String url = managementArticlesBase() + "/comments/" + commentId + "/report";
             HttpHeaders headers = new HttpHeaders();
             headers.set("Content-Type", "application/json");
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -302,7 +382,7 @@ public class ArticlesController {
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchArticles(@RequestParam String keyword) {
         try {
-            String url = MANAGEMENT_API_BASE_URL + "/search?keyword=" + keyword;
+            String url = managementArticlesBase() + "/search?keyword=" + keyword;
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 url, 
                 HttpMethod.GET, 

@@ -1,3 +1,26 @@
+/* Aligned with admin index.css / app tokens */
+:root {
+    --sidebar-width: 220px;
+    --app-topbar-height: 56px;
+    --bg-primary: #08080b;
+    --bg-secondary: #111116;
+    --bg-tertiary: #18181f;
+    --bg-elevated: #1e1e27;
+    --text-primary: #f3f3f6;
+    --text-secondary: #a5a5b0;
+    --text-muted: #6e6e7a;
+    --accent-primary: #ff7a7a;
+    --accent-secondary: #5fd9cc;
+    --border-color: rgba(255, 255, 255, 0.075);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+    --shadow-sm: 0 2px 16px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 16px 48px rgba(0, 0, 0, 0.42);
+}
+
 /* 个人设置页面样式 */
 
 /* 重置和基础样式 */
@@ -51,7 +74,7 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 260px;
+    width: var(--sidebar-width, 220px);
     height: 100vh;
     background: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
@@ -104,7 +127,7 @@ body {
 /* 主内容区 */
 .main-content {
     flex: 1;
-    margin-left: 260px;
+    margin-left: var(--sidebar-width, 220px);
     background-color: var(--bg-primary);
     min-height: 100vh;
 }
@@ -526,4 +549,59 @@ body {
         flex: 1;
         min-width: 120px;
     }
+}
+
+
+/* Match app / admin index active nav accent bar */
+.nav-link {
+    position: relative;
+    border-radius: 12px;
+}
+.nav-item.active .nav-link,
+.nav-link.active {
+    color: var(--text-primary, #f3f3f6);
+    background: rgba(255, 122, 122, 0.12);
+    box-shadow: 0 0 0 1px rgba(255, 122, 122, 0.22) inset;
+}
+.nav-item.active .nav-link::before,
+.nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: linear-gradient(180deg, var(--accent-primary, #ff7a7a), var(--accent-secondary, #5fd9cc));
+}
+.sidebar {
+    background: rgba(14, 14, 18, 0.92) !important;
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    border-right: 1px solid var(--border-color, rgba(255,255,255,0.075));
+    width: var(--sidebar-width, 220px) !important;
+}
+.main-content {
+    margin-left: var(--sidebar-width, 220px) !important;
+}
+.top-header {
+    height: var(--app-topbar-height, 56px) !important;
+    background: rgba(14, 14, 18, 0.82) !important;
+    backdrop-filter: blur(18px) saturate(1.15);
+}
+
+
+/* ==== App-shell alignment (admin) — neutralize legacy sidebar/top-header ==== */
+html.tfhers-admin .sidebar,
+html.tfhers-admin .top-header {
+    display: none !important;
+}
+html.tfhers-admin .main-content {
+    margin-left: var(--sidebar-width) !important;
+    margin-top: var(--nav-height, var(--app-topbar-height, 56px));
+    min-height: calc(100vh - var(--nav-height, var(--app-topbar-height, 56px)));
+    background: transparent;
+}
+html.tfhers-admin .sidebar-nav {
+    padding: 12px 10px;
 }

@@ -6,7 +6,7 @@
     <title>管理员登录 - 蹄斗助手后台管理系统</title>
     <link rel="stylesheet" href="css/fonts-local.css">
     <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
-    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/index.css?v=20261023">
     <style>
         body {
             display: flex;
@@ -17,13 +17,13 @@
         }
         
         .login-container {
-            background: rgba(17, 17, 22, 0.88);
+            background: var(--bg-secondary, #111116);
             padding: 50px 40px;
-            border-radius: 20px;
+            border-radius: var(--radius-xl, 28px);
             box-shadow: var(--shadow-md);
             width: 100%;
             max-width: 420px;
-            border: 1px solid var(--border-strong);
+            border: 1px solid var(--border-color);
             position: relative;
             z-index: 2;
             backdrop-filter: blur(18px) saturate(1.1);
@@ -227,7 +227,7 @@
         }
     </style>
 </head>
-<body>
+<body class="admin-login-page">
     <div class="login-container">
         <div class="login-header">
             <div class="logo">
@@ -299,7 +299,7 @@
                     
                     // 延迟1秒后跳转到系统主页
                     setTimeout(() => {
-                        window.location.href = '/index.html';
+                        window.location.href = 'index.html';
                     }, 1000);
                 } else {
                     showMessage(result.msg || '登录失败', 'error');

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="tfhers-admin">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户管理 - TFhers管理后台</title>
     <link rel="stylesheet" href="css/fonts-local.css">
     <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
-    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/index.css?v=20261024a">
     <style>
         /* 用户管理页局部样式（弹窗等全局样式见 css/index.css） */
         .user-management-content {
@@ -265,106 +265,92 @@
 <body>
     <div class="container">
         <!-- 侧边栏 -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <img src="images/logo.png" alt="蹄斗助手" style="height: 34px; width: auto; display: block;">
-                    <span>蹄斗助手</span>
-                </div>
-                <div class="admin-title">后台管理</div>
-            </div>
-            
-            <nav class="sidebar-nav">
-                <ul class="nav-list">
-                    <li class="nav-item">
-                        <a href="index.html#articles" class="nav-link">
-                            <i class="fas fa-newspaper"></i>
-                            <span>资讯管理</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="index.html#characters" class="nav-link">
-                            <i class="fas fa-users"></i>
-                            <span>角色管理</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="index.html#user-combos" class="nav-link">
-                            <i class="fas fa-user-check"></i>
-                            <span>用户连段审核</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="index.html#reports" class="nav-link">
-                            <i class="fas fa-flag"></i>
-                            <span>举报审核</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="index.html#comment-review" class="nav-link">
-                            <i class="fas fa-comments"></i>
-                            <span>评论审核</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="index.html#statistics" class="nav-link">
-                            <i class="fas fa-chart-line"></i>
-                            <span>数据统计</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="index.html#games" class="nav-link">
-                            <i class="fas fa-gamepad"></i>
-                            <span>游戏管理</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="ai-chat.html" class="nav-link">
-                            <i class="fas fa-robot"></i>
-                            <span>AI 助手</span>
-                        </a>
-                    </li>
-                    <li class="nav-item active">
-                        <a href="user-management.html?v=1" class="nav-link">
-                            <i class="fas fa-user-cog"></i>
-                            <span>用户管理</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="profile.html?v=1" class="nav-link">
-                            <i class="fas fa-user-circle"></i>
-                            <span>个人设置</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </aside>
+            <aside class="app-sidebar" id="appSidebar" aria-label="管理导航">
+        <div class="sidebar-top">
+            <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="收起侧栏" title="收起/展开">
+                <i class="fas fa-bars"></i>
+            </button>
+            <span class="sidebar-brand">tfhers管理端</span>
+        </div>
+        <nav class="sidebar-nav" id="navMenu">
+            <a href="index.html#articles" class="nav-link">
+                <i class="fas fa-newspaper"></i><span>资讯管理</span>
+            </a>
+            <a href="index.html#characters" class="nav-link">
+                <i class="fas fa-users"></i><span>角色管理</span>
+            </a>
+            <a href="index.html#user-combos" class="nav-link">
+                <i class="fas fa-user-check"></i><span>用户连段审核</span>
+            </a>
+            <a href="index.html#reports" class="nav-link">
+                <i class="fas fa-flag"></i><span>举报处理</span>
+            </a>
+            <a href="index.html#feedback" class="nav-link">
+                <i class="fas fa-comment-dots"></i><span>问题反馈</span>
+            </a>
+            <a href="index.html#comment-review" class="nav-link">
+                <i class="fas fa-comments"></i><span>评论审核</span>
+            </a>
+            <a href="index.html#statistics" class="nav-link">
+                <i class="fas fa-chart-line"></i><span>数据统计</span>
+            </a>
+            <a href="index.html#games" class="nav-link">
+                <i class="fas fa-gamepad"></i><span>游戏管理</span>
+            </a>
+            <a href="index.html#tournaments" class="nav-link">
+                <i class="fas fa-trophy"></i><span>赛事管理</span>
+            </a>
+            <a href="ai-chat.html" class="nav-link nav-link-ai">
+                <i class="fas fa-robot"></i><span>AI 助手</span>
+            </a>
+            <a href="user-management.html?v=1" class="nav-link active">
+                <i class="fas fa-user-cog"></i><span>用户管理</span>
+            </a>
+            <a href="profile.html?v=1" class="nav-link">
+                <i class="fas fa-user-circle"></i><span>个人设置</span>
+            </a>
+        </nav>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden aria-hidden="true"></div>
+    <div class="sidebar-float-cluster" id="sidebarFloatCluster">
+        <button type="button" class="sidebar-float-toggle" id="sidebarFloatToggle" aria-label="展开侧栏" title="展开/收起">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="sidebar-float-brand">tfhers管理端</span>
+    </div>
 
-        <!-- 主内容区 -->
-        <div class="main-content">
-            <!-- 顶部导航栏 -->
-            <header class="top-header">
-                <div class="header-left">
-                    <h1 class="page-title">用户管理</h1>
-                </div>
-                <div class="header-right">
-                    <div class="user-menu" id="userMenu">
-                        <div class="user-info" id="userInfo">
-                            <img src="images/CSel3_LargePortTianhuo.png" alt="头像" class="user-avatar" id="userAvatar">
-                            <span class="user-name" id="userName">管理员</span>
-                            <i class="fas fa-chevron-down"></i>
+    <header class="app-topbar" id="appTopbar">
+        <div class="app-topbar-inner">
+            <h1 class="page-title" id="pageTitle">用户管理</h1>
+            <div class="app-top-actions" id="appTopActions">
+                <div class="top-avatar-wrap" id="topAvatarWrap">
+                    <button type="button" class="top-avatar-btn" id="topAvatarBtn" title="账户" aria-label="账户" aria-haspopup="true" aria-expanded="false">
+                        <img id="userAvatar" src="images/CSel3_LargePortTianhuo.png" alt="">
+                    </button>
+                    <div class="top-account-panel" id="topAccountPanel" hidden role="menu" aria-label="账户面板">
+                        <div class="tap-head">
+                            <img id="tapAvatar" class="tap-avatar" src="images/CSel3_LargePortTianhuo.png" alt="">
+                            <div class="tap-names">
+                                <div class="tap-nickname" id="tapNickname">管理员</div>
+                                <div class="tap-username" id="tapUsername">@admin</div>
+                            </div>
                         </div>
-                        <div class="user-dropdown" id="userDropdown">
-                            <a href="#" class="dropdown-item" onclick="logout()">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span>退出登录</span>
+                        <div class="tap-actions">
+                            <a href="profile.html?v=1" class="tap-action-btn">
+                                <i class="fas fa-user-circle"></i><span>个人资料</span>
                             </a>
+                            <button type="button" class="tap-action-btn" id="tapLogoutBtn">
+                                <i class="fas fa-sign-out-alt"></i><span>退出登录</span>
+                            </button>
                         </div>
                     </div>
                 </div>
-            </header>
+            </div>
+        </div>
+    </header>
 
-            <!-- 用户管理内容 -->
+    <main class="main-content">
+<!-- 用户管理内容 -->
             <div class="user-management-content">
                 <!-- 页面头部 -->
                 <div class="page-header">
@@ -528,5 +514,100 @@
     </div>
 
     <script src="js/user-management.js"></script>
+</main>
+<script>
+(function () {
+    function isMobileSidebar() {
+        try { return window.matchMedia('(max-width: 768px)').matches; }
+        catch (e) { return window.innerWidth <= 768; }
+    }
+    function updateChrome() {
+        var collapsed = document.documentElement.classList.contains('sidebar-collapsed');
+        var floatBtn = document.getElementById('sidebarFloatToggle');
+        if (floatBtn) {
+            floatBtn.setAttribute('aria-label', collapsed ? '展开侧栏' : '收起侧栏');
+        }
+    }
+    function onToggle(e) {
+        if (e) e.preventDefault();
+        if (isMobileSidebar()) {
+            var open = !document.documentElement.classList.contains('sidebar-open');
+            document.documentElement.classList.toggle('sidebar-open', open);
+            document.body.classList.toggle('sidebar-open', open);
+            var bd = document.getElementById('sidebarBackdrop');
+            if (bd) { bd.hidden = !open; bd.setAttribute('aria-hidden', open ? 'false' : 'true'); }
+            return;
+        }
+        var collapsed = !document.documentElement.classList.contains('sidebar-collapsed');
+        document.documentElement.classList.toggle('sidebar-collapsed', collapsed);
+        document.body.classList.toggle('sidebar-collapsed', collapsed);
+        try { localStorage.setItem('tfhers_admin_sidebar_collapsed', collapsed ? '1' : '0'); } catch (err) {}
+        updateChrome();
+    }
+    function closeMenu() {
+        document.documentElement.classList.remove('sidebar-open');
+        document.body.classList.remove('sidebar-open');
+        var bd = document.getElementById('sidebarBackdrop');
+        if (bd) { bd.hidden = true; bd.setAttribute('aria-hidden', 'true'); }
+    }
+    try {
+        if (localStorage.getItem('tfhers_admin_sidebar_collapsed') === '1') {
+            document.documentElement.classList.add('sidebar-collapsed');
+            document.body.classList.add('sidebar-collapsed');
+        }
+    } catch (e) {}
+    updateChrome();
+    var t1 = document.getElementById('sidebarToggle');
+    var t2 = document.getElementById('sidebarFloatToggle');
+    var bd = document.getElementById('sidebarBackdrop');
+    if (t1) t1.addEventListener('click', onToggle);
+    if (t2) t2.addEventListener('click', onToggle);
+    if (bd) bd.addEventListener('click', closeMenu);
+
+    var wrap = document.getElementById('topAvatarWrap');
+    var btn = document.getElementById('topAvatarBtn');
+    var panel = document.getElementById('topAccountPanel');
+    function closePanel() {
+        if (!wrap) return;
+        wrap.classList.remove('is-open');
+        if (panel) panel.hidden = true;
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    if (btn && wrap && panel) {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (wrap.classList.contains('is-open')) closePanel();
+            else { wrap.classList.add('is-open'); panel.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
+        });
+        panel.addEventListener('click', function (e) { e.stopPropagation(); });
+        document.addEventListener('click', closePanel);
+    }
+    var logoutBtn = document.getElementById('tapLogoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function () {
+            try {
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('user');
+            } catch (e) {}
+            location.href = 'admin-login.html';
+        });
+    }
+    try {
+        var raw = localStorage.getItem('user');
+        if (raw) {
+            var u = JSON.parse(raw);
+            var name = u.realName || u.username || '管理员';
+            var uname = u.username || 'admin';
+            var av = u.avatarUrl || 'images/CSel3_LargePortTianhuo.png';
+            var el;
+            el = document.getElementById('tapNickname'); if (el) el.textContent = name;
+            el = document.getElementById('tapUsername'); if (el) el.textContent = '@' + uname;
+            el = document.getElementById('userAvatar'); if (el) el.src = av;
+            el = document.getElementById('tapAvatar'); if (el) el.src = av;
+        }
+    } catch (e) {}
+})();
+</script>
+
 </body>
 </html>

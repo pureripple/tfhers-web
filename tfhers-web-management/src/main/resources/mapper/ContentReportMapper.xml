@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.mapper.ContentReportMapper">
+
+    <insert id="insert" parameterType="com.example.pojo.ContentReport" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO content_report
+        (user_id, target_type, target_id, reason, content, evidence_url, status, created_at, updated_at)
+        VALUES
+        (#{userId}, #{targetType}, #{targetId}, #{reason}, #{content}, #{evidenceUrl}, 0, NOW(), NOW())
+    </insert>
+
+    <select id="countOpenReport" resultType="int">
+        SELECT COUNT(1)
+        FROM content_report
+        WHERE user_id = #{userId}
+          AND target_type = #{targetType}
+          AND target_id = #{targetId}
+          AND status IN (0, 1)
+    </select>
+
+    <resultMap id="BaseResultMap" type="com.example.pojo.ContentReport">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="target_type" property="targetType"/>
+        <result column="target_id" property="targetId"/>
+        <result column="reason" property="reason"/>
+        <result column="content" property="content"/>
+        <result column="evidence_url" property="evidenceUrl"/>
+        <result column="status" property="status"/>
+        <result column="admin_remark" property="adminRemark"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, target_type, target_id, reason, content, evidence_url,
+        status, admin_remark, created_at, updated_at
+    </sql>
+
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM content_report
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="targetType != null and targetType != ''">
+                AND target_type = #{targetType}
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countByFilter" resultType="int">
+        SELECT COUNT(1)
+        FROM content_report
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="targetType != null and targetType != ''">
+                AND target_type = #{targetType}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateStatus">
+        UPDATE content_report
+        SET status = #{status},
+            admin_remark = #{adminRemark},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteByTarget">
+        DELETE FROM content_report
+        WHERE target_type = #{targetType} AND target_id = #{targetId}
+    </delete>
+
+</mapper>
+

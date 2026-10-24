@@ -53,4 +53,11 @@ public interface articlesService {
      * 仅更新置顶状态（管理端列表快捷切换）
      */
     results updateArticlePinned(long id, boolean pinned);
+
+    /** 当前登录用户自己的资讯列表 */
+    results getArticlesByAuthorId(long authorId);
+
+    /** 删除资讯：本人作者或管理员可删 */
+    results deleteArticleByIdForUser(long id, Long userId);
 }
+

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.RatingHistoryMapper">
+
+    <insert id="insert" parameterType="com.example.pojo.RatingHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rating_history
+        (user_id, match_id, tournament_id, rating_before, rating_after, delta,
+         opponent_id, opponent_rating, result, created_at)
+        VALUES
+        (#{userId}, #{matchId}, #{tournamentId}, #{ratingBefore}, #{ratingAfter}, #{delta},
+         #{opponentId}, #{opponentRating}, #{result}, NOW())
+    </insert>
+
+    <select id="countByUserAndMatch" resultType="int">
+        SELECT COUNT(*) FROM rating_history
+        WHERE user_id = #{userId} AND match_id = #{matchId}
+    </select>
+
+    <select id="countByMatch" resultType="int">
+        SELECT COUNT(*) FROM rating_history WHERE match_id = #{matchId}
+    </select>
+</mapper>

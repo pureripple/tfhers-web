@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.TournamentMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.pojo.Tournament">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="max_slots" property="maxSlots"/>
+        <result column="registration_opens_at" property="registrationOpensAt"/>
+        <result column="registration_closes_at" property="registrationClosesAt"/>
+        <result column="starts_at" property="startsAt"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="registration_count" property="registrationCount"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        t.id, t.title, t.description, t.status, t.max_slots, t.registration_opens_at, t.registration_closes_at,
+        t.starts_at, t.created_by, t.created_at, t.updated_at
+    </sql>
+
+    <insert id="insert" parameterType="com.example.pojo.Tournament" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tournaments
+        (title, description, status, max_slots, registration_opens_at, registration_closes_at, starts_at, created_by, created_at, updated_at)
+        VALUES
+        (#{title}, #{description}, #{status}, #{maxSlots}, #{registrationOpensAt}, #{registrationClosesAt}, #{startsAt}, #{createdBy}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.example.pojo.Tournament">
+        UPDATE tournaments
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="maxSlots != null">max_slots = #{maxSlots},</if>
+            <if test="registrationOpensAt != null">registration_opens_at = #{registrationOpensAt},</if>
+            <if test="registrationClosesAt != null">registration_closes_at = #{registrationClosesAt},</if>
+            <if test="startsAt != null">starts_at = #{startsAt},</if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>,
+               (SELECT COUNT(1) FROM tournament_registrations r
+                 WHERE r.tournament_id = t.id AND r.status = 'registered') AS registration_count
+        FROM tournaments t
+        WHERE t.id = #{id}
+    </select>
+
+    <select id="listPublic" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>,
+               (SELECT COUNT(1) FROM tournament_registrations r
+                 WHERE r.tournament_id = t.id AND r.status = 'registered') AS registration_count
+        FROM tournaments t
+        WHERE t.status IN ('registration', 'closed', 'ongoing', 'finished')
+        ORDER BY
+          CASE t.status
+            WHEN 'ongoing' THEN 1
+            WHEN 'registration' THEN 2
+            WHEN 'closed' THEN 3
+            WHEN 'finished' THEN 4
+            ELSE 5
+          END,
+          t.created_at DESC
+    </select>
+
+    <select id="listAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>,
+               (SELECT COUNT(1) FROM tournament_registrations r
+                 WHERE r.tournament_id = t.id AND r.status = 'registered') AS registration_count
+        FROM tournaments t
+        ORDER BY t.created_at DESC
+    </select>
+
+    <select id="countRegistrations" resultType="int">
+        SELECT COUNT(1) FROM tournament_registrations
+        WHERE tournament_id = #{tournamentId} AND status = 'registered'
+    </select>
+</mapper>

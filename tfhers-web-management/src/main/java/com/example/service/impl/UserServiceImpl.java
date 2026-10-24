@@ -1,6 +1,8 @@
 package com.example.service.impl;
 
 import com.example.mapper.UserMapper;
+import com.example.mapper.UserRatingMapper;
+import com.example.util.EloUtil;
 import com.example.pojo.User;
 import com.example.pojo.results;
 import com.example.service.UserService;
@@ -21,6 +23,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private UserRatingMapper userRatingMapper;
 
     @Autowired
     private OssUtil ossUtil;
@@ -46,8 +51,8 @@ public class UserServiceImpl implements UserService {
             }
 
             // 暂时不加密密码（测试用）
-            // String encodedPassword = passwordEncoder.encode(user.getPassword());
-            // user.setPassword(encodedPassword);
+            String encodedPassword = passwordEncoder.encode(user.getPassword());
+            user.setPassword(encodedPassword);
 
             // 设置默认值
             if (user.getRole() == null || user.getRole().isEmpty()) {
@@ -57,12 +62,17 @@ public class UserServiceImpl implements UserService {
                 user.setStatus(1);
             }
             if (user.getAvatarUrl() == null || user.getAvatarUrl().isEmpty()) {
-                user.setAvatarUrl("/images/default-avatar.png");
+                user.setAvatarUrl("/images/CSel3_LargePortTianhuo.png");
             }
 
             // 插入用户
             int result = userMapper.insertUser(user);
             if (result > 0) {
+                try {
+                    if (user.getId() != null) {
+                        userRatingMapper.insertDefault(user.getId(), EloUtil.DEFAULT_RATING);
+                    }
+                } catch (Exception ignore) { }
                 // 清除密码后返回
                 user.setPassword(null);
                 return new results(200, "注册成功", user);
@@ -84,7 +94,7 @@ public class UserServiceImpl implements UserService {
             }
 
             // 暂时使用明文密码验证（测试用）
-            if (!password.equals(user.getPassword())) {
+            if (!matchesStoredPassword(password, user.getPassword())) {
                 return new results(400, "用户名或密码错误", null);
             }
 
@@ -131,8 +141,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public results uploadAvatar(Long userId, MultipartFile file) {
         try {
+            User existing = userMapper.findById(userId);
+            if (existing == null) {
+                existing = userMapper.selectById(userId);
+            }
+            if (existing != null && existing.getAvatarUrl() != null && !existing.getAvatarUrl().isBlank()) {
+                ossUtil.deleteByUrlIfOwned(existing.getAvatarUrl());
+            }
             // 上传文件到OSS
-            String avatarUrl = ossUtil.uploadFile(file, "avatars/");
+            String avatarUrl = ossUtil.uploadFile(file, "avatars");
             if (avatarUrl == null) {
                 return new results(500, "头像上传失败", null);
             }
@@ -174,7 +191,7 @@ public class UserServiceImpl implements UserService {
             }
 
             // 直接上传头像，返回URL
-            String avatarUrl = ossUtil.uploadFile(file, "avatars/");
+            String avatarUrl = ossUtil.uploadFile(file, "avatars");
             if (avatarUrl == null) {
                 return new results(500, "头像上传失败", null);
             }
@@ -246,8 +263,8 @@ public class UserServiceImpl implements UserService {
             }
 
             // 暂时不加密密码（测试用）
-            // String encodedPassword = passwordEncoder.encode(user.getPassword());
-            // user.setPassword(encodedPassword);
+            String encodedPassword = passwordEncoder.encode(user.getPassword());
+            user.setPassword(encodedPassword);
 
             // 设置默认值
             if (user.getRole() == null) {
@@ -288,8 +305,8 @@ public class UserServiceImpl implements UserService {
     public boolean resetUserPassword(Long id, String newPassword) {
         try {
             // 暂时不加密密码（测试用）
-            // String encodedPassword = passwordEncoder.encode(newPassword);
-            int result = userMapper.resetUserPassword(id, newPassword);
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            int result = userMapper.resetUserPassword(id, encodedPassword);
             return result > 0;
         } catch (Exception e) {
             return false;
@@ -344,6 +361,199 @@ public class UserServiceImpl implements UserService {
             }
         } catch (Exception e) {
             return new results(500, "解除 Steam 绑定失败: " + e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 兼容历史明文密码与 BCrypt 哈希
+     */
+    private boolean matchesStoredPassword(String rawPassword, String storedPassword) {
+        if (rawPassword == null || storedPassword == null) {
+            return false;
+        }
+        if (storedPassword.startsWith("$2a$")
+                || storedPassword.startsWith("$2b$")
+                || storedPassword.startsWith("$2y$")) {
+            return passwordEncoder.matches(rawPassword, storedPassword);
+        }
+        return rawPassword.equals(storedPassword);
+    }
+
+    @Override
+    public results updateCommunityProfile(Long userId, String nickname, String email, String phone, String signature,
+                                            String gender, String birthday, String coverUrl) {
+        try {
+            if (userId == null) {
+                return new results(401, "用户未登录", null);
+            }
+            User existing = userMapper.selectById(userId);
+            if (existing == null) {
+                return new results(404, "用户不存在", null);
+            }
+            if (nickname == null || nickname.trim().isEmpty()) {
+                return new results(400, "昵称不能为空", null);
+            }
+            nickname = nickname.trim();
+            if (nickname.length() > 100) {
+                return new results(400, "昵称长度不能超过100个字符", null);
+            }
+
+            String emailVal = email == null ? null : email.trim();
+            if (emailVal != null && emailVal.isEmpty()) {
+                emailVal = "";
+            }
+            if (emailVal != null && !emailVal.isEmpty()) {
+                if (emailVal.length() > 100) {
+                    return new results(400, "邮箱长度不能超过100个字符", null);
+                }
+                User byEmail = userMapper.selectByEmail(emailVal);
+                if (byEmail != null && !byEmail.getId().equals(userId)) {
+                    return new results(400, "邮箱已被其他账号使用", null);
+                }
+            }
+
+            String phoneVal = phone == null ? null : phone.trim();
+            if (phoneVal != null && phoneVal.length() > 20) {
+                return new results(400, "手机号长度不能超过20个字符", null);
+            }
+
+            String sigVal = signature == null ? "" : signature.trim();
+            if (sigVal.length() > 200) {
+                return new results(400, "个性签名不能超过200个字符", null);
+            }
+
+            User patch = new User();
+            patch.setId(userId);
+            patch.setNickname(nickname);
+            if (emailVal != null) {
+                patch.setEmail(emailVal);
+            }
+            if (phoneVal != null) {
+                patch.setPhone(phoneVal);
+            }
+            patch.setSignature(sigVal);
+
+            String genderVal = gender == null ? null : gender.trim();
+            if (genderVal != null) {
+                if (genderVal.isEmpty()) {
+                    genderVal = "保密";
+                }
+                if (!("保密".equals(genderVal) || "男".equals(genderVal) || "女".equals(genderVal))) {
+                    return new results(400, "性别取值无效", null);
+                }
+                patch.setGender(genderVal);
+            }
+
+            // birthday: null = 不改；"" / "clear" = 清空；否则 yyyy-MM-dd
+            if (birthday != null) {
+                String b = birthday.trim();
+                if (b.isEmpty() || "clear".equalsIgnoreCase(b)) {
+                    patch.setClearBirthday(true);
+                } else {
+                    try {
+                        patch.setBirthday(java.time.LocalDate.parse(b));
+                    } catch (Exception ex) {
+                        return new results(400, "生日格式应为 yyyy-MM-dd", null);
+                    }
+                }
+            }
+
+            if (coverUrl != null) {
+                patch.setCoverUrl(coverUrl.trim());
+            }
+
+            int updated = userMapper.updateUser(patch);
+            if (updated <= 0) {
+                return new results(500, "更新失败", null);
+            }
+            User fresh = userMapper.selectById(userId);
+            if (fresh != null) {
+                fresh.setPassword(null);
+            }
+            return new results(200, "个人资料更新成功", fresh);
+        } catch (Exception e) {
+            return new results(500, "更新失败: " + e.getMessage(), null);
+        }
+    }
+
+    @Override
+    public results uploadCover(Long userId, org.springframework.web.multipart.MultipartFile file) {
+        try {
+            if (userId == null) {
+                return new results(401, "用户未登录", null);
+            }
+            if (file == null || file.isEmpty()) {
+                return new results(400, "请选择封面图片", null);
+            }
+            String ct = file.getContentType();
+            if (ct == null || !(ct.startsWith("image/"))) {
+                return new results(400, "封面必须是图片文件", null);
+            }
+            if (file.getSize() > 8L * 1024 * 1024) {
+                return new results(400, "封面图片不能超过 8MB", null);
+            }
+            User existing = userMapper.selectById(userId);
+            if (existing == null) {
+                return new results(404, "用户不存在", null);
+            }
+            if (existing.getCoverUrl() != null && !existing.getCoverUrl().isBlank()) {
+                ossUtil.deleteByUrlIfOwned(existing.getCoverUrl());
+            }
+            String coverUrl = ossUtil.uploadFile(file, "covers");
+            if (coverUrl == null) {
+                return new results(500, "封面上传失败", null);
+            }
+            User patch = new User();
+            patch.setId(userId);
+            patch.setCoverUrl(coverUrl);
+            int updated = userMapper.updateUser(patch);
+            if (updated <= 0) {
+                return new results(500, "保存封面失败", null);
+            }
+            return new results(200, "封面上传成功", coverUrl);
+        } catch (Exception e) {
+            return new results(500, "封面上传失败: " + e.getMessage(), null);
+        }
+    }
+
+    @Override
+    public results changePassword(Long userId, String oldPassword, String newPassword) {
+        try {
+            if (userId == null) {
+                return new results(401, "用户未登录", null);
+            }
+            if (oldPassword == null || oldPassword.isEmpty()) {
+                return new results(400, "请输入当前密码", null);
+            }
+            if (newPassword == null || newPassword.isEmpty()) {
+                return new results(400, "请输入新密码", null);
+            }
+            if (newPassword.length() < 6) {
+                return new results(400, "新密码长度不能少于6位", null);
+            }
+            if (newPassword.length() > 64) {
+                return new results(400, "新密码长度不能超过64位", null);
+            }
+            if (oldPassword.equals(newPassword)) {
+                return new results(400, "新密码不能与当前密码相同", null);
+            }
+
+            User user = userMapper.selectById(userId);
+            if (user == null) {
+                return new results(404, "用户不存在", null);
+            }
+            if (!matchesStoredPassword(oldPassword, user.getPassword())) {
+                return new results(400, "当前密码不正确", null);
+            }
+
+            String encoded = passwordEncoder.encode(newPassword);
+            int updated = userMapper.resetUserPassword(userId, encoded);
+            if (updated > 0) {
+                return new results(200, "密码修改成功", null);
+            }
+            return new results(500, "密码修改失败", null);
+        } catch (Exception e) {
+            return new results(500, "密码修改失败: " + e.getMessage(), null);
         }
     }
 }

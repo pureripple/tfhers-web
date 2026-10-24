@@ -23,7 +23,7 @@ public class JwtUtil {
     private String secret;
     
     // JWT过期时间（从配置文件读取）
-    @Value("3600000")
+    @Value("${jwt.expiration:604800000}")
     private long expirationTime;
 
     //getter方法

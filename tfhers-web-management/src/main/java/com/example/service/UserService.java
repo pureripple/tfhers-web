@@ -121,4 +121,29 @@ public interface UserService {
      * @return 结果
      */
     results unbindSteam(Long userId);
+
+    /**
+     * 社区用户更新个人资料（昵称/邮箱/手机/签名）
+     * @param userId 当前登录用户 ID
+     * @param nickname 昵称
+     * @param email 邮箱
+     * @param phone 手机
+     * @param signature 个性签名
+     * @return 更新结果（含脱敏后的用户信息）
+     */
+    results updateCommunityProfile(Long userId, String nickname, String email, String phone, String signature,
+                                 String gender, String birthday, String coverUrl);
+
+    /** 上传个人主页背景封面（JWT 用户本人） */
+    results uploadCover(Long userId, org.springframework.web.multipart.MultipartFile file);
+
+    /**
+     * 社区用户修改密码（校验旧密码；新密码使用 BCrypt 存储）
+     * @param userId 当前登录用户 ID
+     * @param oldPassword 当前密码
+     * @param newPassword 新密码
+     * @return 修改结果
+     */
+    results changePassword(Long userId, String oldPassword, String newPassword);
+
 }
