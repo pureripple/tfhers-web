@@ -676,6 +676,67 @@ function resolveArticleAuthorAvatarUrl(raw) {
     return s;
 }
 
+/** 默认头像（真实存在的本地资源） */
+const DEFAULT_USER_AVATAR_URL = '/images/CSel3_LargePortTianhuo.png';
+/** 默认封面图（真实 JPEG；无封面时尽量不要请求，优先用占位 UI） */
+const DEFAULT_ARTICLE_COVER_URL = '/images/default-article.jpg';
+
+/**
+ * 规范化资讯封面 URL：空 / null / undefined 视为无封面，返回 ''（不要去请求坏地址）。
+ */
+function resolveArticleCoverUrl(raw) {
+    if (raw == null) return '';
+    const s = String(raw).trim();
+    if (!s || s === 'null' || s === 'undefined') return '';
+    return s;
+}
+
+/**
+ * 图片加载失败：只处理一次，绝不死循环重试。
+ * mode:
+ *  - 'hide'（默认）：清 src 并隐藏
+ *  - 'placeholder-sibling'：隐藏自身，显示下一个兄弟（占位块）
+ *  - 'remove'：移除节点
+ *  - 'fallback'：若当前不是 fallbackUrl，则换一次；再失败则 hide
+ */
+window.__tfhersImgFail = function (el, fallbackUrl, mode) {
+    if (!el || el.dataset.imgFailed === '1') return;
+    try { el.onerror = null; } catch (_) {}
+    const curAttr = el.getAttribute('src') || '';
+    const curSrc = el.src || '';
+    const fb = fallbackUrl || '';
+    const alreadyFallback = !!(fb && (
+        curAttr === fb
+        || curSrc === fb
+        || (curAttr && curAttr.indexOf(fb) >= 0)
+        || (curSrc && fb && curSrc.indexOf(fb.replace(/^\//, '')) >= 0)
+    ));
+
+    if (mode === 'placeholder-sibling') {
+        el.dataset.imgFailed = '1';
+        el.style.display = 'none';
+        try { el.removeAttribute('src'); } catch (_) {}
+        const sib = el.nextElementSibling;
+        if (sib) sib.style.display = 'flex';
+        return;
+    }
+    if (mode === 'remove') {
+        el.dataset.imgFailed = '1';
+        try { el.remove(); } catch (_) { el.style.display = 'none'; }
+        return;
+    }
+    if (mode === 'fallback' && fb && !alreadyFallback && el.dataset.imgFallbackTried !== '1') {
+        el.dataset.imgFallbackTried = '1';
+        el.onerror = function () { window.__tfhersImgFail(el, '', 'hide'); };
+        el.src = fb;
+        return;
+    }
+    el.dataset.imgFailed = '1';
+    el.style.display = 'none';
+    try { el.removeAttribute('src'); } catch (_) {}
+};
+
+
 function filterArticlesByQuery(query, source) {
     const list = Array.isArray(source) ? source : AppState.articles;
     const q = (query || '').trim().toLowerCase();
@@ -728,23 +789,8 @@ function renderArticleGrid(articles, searchQuery) {
     if (!elements.articlesGrid) return;
     const q = (searchQuery || '').trim();
     if (articles.length === 0) {
-        elements.articlesGrid.innerHTML = q
-            ? `
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-search"></i>
-                </div>
-                <h3 class="empty-title">未找到相关资讯</h3>
-                <p class="empty-desc">试试其他关键词，或点击清除搜索</p>
-            </div>`
-            : `
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-newspaper"></i>
-                </div>
-                <h3 class="empty-title">暂无文章</h3>
-                <p class="empty-desc">还没有发布任何文章</p>
-            </div>`;
+        // empty list: blank, no icon/copy
+        elements.articlesGrid.innerHTML = '';
         return;
     }
 
@@ -760,14 +806,23 @@ function renderArticleGrid(articles, searchQuery) {
         return `
         <div class="article-card article-card--glass" onclick="showArticle(${article.id})">
             <div class="article-card-media">
-                <img src="${article.cover_url || '/images/default-article.jpg'}" alt="" class="article-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                ${(() => {
+                    const cover = resolveArticleCoverUrl(article.cover_url || article.coverUrl);
+                    if (!cover) {
+                        return `<div class="article-cover-placeholder" style="display: flex;">
+                    <i class="fas fa-image"></i>
+                    <span>暂无图片</span>
+                </div>`;
+                    }
+                    return `<img src="${cover.replace(/"/g, '&quot;')}" alt="" class="article-cover" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'','placeholder-sibling')">
                 <div class="article-cover-placeholder" style="display: none;">
                     <i class="fas fa-image"></i>
                     <span>暂无图片</span>
-                </div>
+                </div>`;
+                })()}
                 <div class="article-card-glass">
                     <div class="article-card-author">
-                        <img src="${avatarUrl}" alt="" class="article-author-avatar" width="40" height="40" loading="lazy" onerror="this.onerror=null;this.src='/images/CSel3_LargePortTianhuo.png'">
+                        <img src="${avatarUrl}" alt="" class="article-author-avatar" width="40" height="40" loading="lazy" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                         <div class="article-card-author-meta">
                             <span class="article-author-name">${authorName}</span>
                             ${timeHtml}
@@ -811,17 +866,20 @@ function renderPinnedNews(articles) {
         .slice(0, 3);
     const esc = (v) => String(v == null ? '' : v).replace(/</g, '&lt;').replace(/>/g, '&gt;');
     if (list.length === 0) {
-        el.innerHTML = '<div class="pinned-news-empty">暂无置顶内容<br><span style="font-size:0.82em;opacity:0.85">管理员可在后台将资讯设为置顶（最多展示 3 条）</span></div>';
+        el.innerHTML = '';
         return;
     }
     el.innerHTML = list.map((a) => {
         const title = esc(a.title || '未命名');
         const author = esc(a.author || '匿名');
-        const cover = a.cover_url || a.coverUrl || '/images/default-article.jpg';
+        const cover = resolveArticleCoverUrl(a.cover_url || a.coverUrl);
         const timeLabel = formatArticlePublishTime(getArticleCreatedAt(a));
         const metaLine = timeLabel ? `${author} · ${timeLabel}` : author;
+        const thumbHtml = cover
+            ? `<img class="pinned-news-thumb" src="${String(cover).replace(/"/g, '&quot;')}" alt="" loading="lazy" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'','hide')">`
+            : `<div class="pinned-news-thumb pinned-news-thumb--empty" aria-hidden="true"><i class="fas fa-image"></i></div>`;
         return `<div class="pinned-news-item" role="button" tabindex="0" onclick="showArticle(${a.id})">
-            <img class="pinned-news-thumb" src="${cover}" alt="" loading="lazy" onerror="this.src='/images/default-article.jpg'">
+            ${thumbHtml}
             <div class="pinned-news-text">
                 <div class="pinned-news-item-title">${title}</div>
                 <div class="pinned-news-item-meta">${metaLine}</div>
@@ -881,14 +939,17 @@ function renderHotNews(articles) {
         const avatar = resolveArticleAuthorAvatarUrl(a.author_avatar_url || a.authorAvatarUrl);
         const author = esc(a.author || '匿名');
         const title = esc(a.title || '未命名资讯');
-        const cover = a.cover_url || '/images/default-article.jpg';
+        const cover = resolveArticleCoverUrl(a.cover_url || a.coverUrl);
         const view = Number(a && (a.view_count ?? a.viewCount ?? 0)) || 0;
         const timeLabel = formatArticlePublishTime(getArticleCreatedAt(a));
         const timePart = timeLabel ? ` · ${timeLabel}` : '';
+        const coverHtml = cover
+            ? `<img src="${String(cover).replace(/"/g, '&quot;')}" alt="" class="hot-news-cover" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'','hide')">`
+            : `<div class="hot-news-cover hot-news-cover--empty" aria-hidden="true"></div>`;
         return `<div class="hot-news-item ${idx === idxToShow ? 'active' : ''}" data-idx="${idx}" role="group" aria-roledescription="slide" aria-label="${idx + 1} / ${top.length}" onclick="showArticle(${a.id})">
-            <img src="${cover}" alt="" class="hot-news-cover" onerror="this.src='/images/default-article.jpg'">
+            ${coverHtml}
             <div class="hot-news-overlay">
-                <img src="${avatar}" alt="" class="hot-news-author-avatar" onerror="this.onerror=null;this.src='/images/CSel3_LargePortTianhuo.png'">
+                <img src="${avatar}" alt="" class="hot-news-author-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                 <div class="hot-news-meta">
                     <div class="hot-news-author">${author} · ${view} 阅读${timePart}</div>
                     <div class="hot-news-title">${title}</div>
@@ -946,7 +1007,7 @@ function renderCharacters(characters) {
     elements.charactersGrid.innerHTML = characters.map(character => `
         <div class="character-card" onclick="showCharacter(${character.id})">
             <div class="character-avatar-container">
-                <img src="${character.avatarUrl || '/images/CSel3_LargePortTianhuo.png'}" alt="${character.nameZh || character.nameEn}" class="character-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <img src="${character.avatarUrl || '/images/CSel3_LargePortTianhuo.png'}" alt="${character.nameZh || character.nameEn}" class="character-avatar" onerror="this.onerror=null;this.dataset.imgFailed='1';this.style.display='none'; if(this.nextElementSibling)this.nextElementSibling.style.display='flex';">
                 <div class="character-avatar-placeholder" style="display: none;">
                     <i class="fas fa-user"></i>
                 </div>
@@ -983,7 +1044,7 @@ async function showCharacter(characterId) {
 
         if (characterContent) {
             const movesListHtml = moves.length === 0 && !character.moveListImageUrl
-                ? '<p class="moves-empty">暂无招式数据</p>'
+                ? '<p class="moves-empty">暂无出招表</p>'
                 : moves.map(move => `
                                 <div class="move-item">
                                     <h4 class="move-name">${move.nameZh || move.nameEn || '未命名招式'}</h4>
@@ -1013,7 +1074,7 @@ async function showCharacter(characterId) {
                                     <div class="user-combo-main">
                                         <div class="user-combo-author">
                                         <div class="user-combo-avatar-wrap">
-                                            <img src="${authorAvatar}" alt="" class="user-combo-avatar" onerror="this.onerror=null;this.src='/images/CSel3_LargePortTianhuo.png'">
+                                            <img src="${authorAvatar}" alt="" class="user-combo-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                                         </div>
                                             <span class="user-combo-author-name">${escHtml(authorName)}</span>
                                         </div>
@@ -1042,7 +1103,7 @@ async function showCharacter(characterId) {
                                 <div class="character-dark-card character-card-bio">
                                     <div class="character-bio-row">
                                         <div class="character-bio-avatar">
-                                            <img src="${character.avatarUrl || '/images/CSel3_LargePortTianhuo.png'}" alt="${character.nameZh || character.nameEn}" onerror="this.style.opacity='0.3';">
+                                            <img src="${character.avatarUrl || '/images/CSel3_LargePortTianhuo.png'}" alt="${character.nameZh || character.nameEn}" onerror="this.onerror=null;this.dataset.imgFailed='1';this.style.opacity='0.3';">
                                         </div>
                                         <div class="character-bio-meta">
                                             <div class="character-name-zh">${character.nameZh || '—'}</div>
@@ -1267,8 +1328,8 @@ async function showArticle(articleId) {
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
-            const coverUrl = article.cover_url || article.coverUrl || '/images/default-article.jpg';
-            const authorAvatarUrl = article.author_avatar_url || article.authorAvatarUrl || '/images/CSel3_LargePortTianhuo.png';
+            const coverUrl = resolveArticleCoverUrl(article.cover_url || article.coverUrl);
+            const authorAvatarUrl = resolveArticleAuthorAvatarUrl(article.author_avatar_url || article.authorAvatarUrl);
             const authorName = article.author || '匿名';
             const createdRaw = getArticleCreatedAt(article);
             const timeLabel = formatArticlePublishTime(createdRaw);
@@ -1307,12 +1368,12 @@ async function showArticle(articleId) {
                     </aside>
                     <div class="article-modal-pane article-modal-pane--article" aria-label="资讯正文">
                         <div class="article-detail">
-                            <div class="article-detail-cover-wrap">
-                                <div class="article-detail-cover-bg" style="background-image:url('${String(coverUrl).replace(/'/g, "%27")}')" aria-hidden="true"></div>
-                                <img src="${coverUrl}" alt="${escHtml(article.title)}" class="article-detail-cover-img" onerror="this.src='/images/default-article.jpg'">
+                            <div class="article-detail-cover-wrap${coverUrl ? '' : ' article-detail-cover-wrap--empty'}">
+                                ${coverUrl ? `<div class="article-detail-cover-bg" style="background-image:url('${String(coverUrl).replace(/'/g, "%27")}')" aria-hidden="true"></div>
+                                <img src="${String(coverUrl).replace(/"/g, '&quot;')}" alt="${escHtml(article.title)}" class="article-detail-cover-img" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'','hide')">` : `<div class="article-detail-cover-bg article-detail-cover-bg--empty" aria-hidden="true"></div>`}
                                 <div class="article-detail-glassbar">
                                     <div class="article-detail-author">
-                                        <img src="${authorAvatarUrl}" alt="" class="article-detail-author-avatar" onerror="this.onerror=null;this.src='/images/CSel3_LargePortTianhuo.png'">
+                                        <img src="${authorAvatarUrl}" alt="" class="article-detail-author-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                                         <div class="article-detail-author-text">
                                             <div class="article-detail-author-name">${escHtml(authorName)}</div>
                                             ${timeMetaHtml}
@@ -1719,7 +1780,7 @@ function formatCommentContentHtml(rawContent, escHtml, escAttr) {
         const textPart = raw.slice(last, m.index);
         contentHtml += escHtml(textPart).replace(/\n/g, '<br>');
         const imgUrl = m[1];
-        contentHtml += `<img class="comment-image" src="${escAttr(imgUrl)}" alt="" loading="lazy" onerror="this.style.display='none';">`;
+        contentHtml += `<img class="comment-image" src="${escAttr(imgUrl)}" alt="" loading="lazy" onerror="this.onerror=null;this.dataset.imgFailed='1';this.style.display='none';">`;
         last = m.index + m[0].length;
     }
     contentHtml += escHtml(raw.slice(last)).replace(/\n/g, '<br>');
@@ -1755,7 +1816,7 @@ function renderRootComment(c) {
     return `
         <div class="comment-item comment-item--root" data-comment-id="${c.id}">
             <div class="comment-avatar-wrap">
-                <img src="${avatar}" alt="" class="comment-avatar" onerror="this.onerror=null;this.src='/images/CSel3_LargePortTianhuo.png'">
+                <img src="${avatar}" alt="" class="comment-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
             </div>
             <div class="comment-body">
                 <span class="comment-author">${author}</span>
@@ -1785,7 +1846,7 @@ function renderReplyComment(r, rootId, escHtml, escAttr) {
     return `
         <div class="comment-item comment-item--reply" data-comment-id="${r.id}">
             <div class="comment-avatar-wrap comment-avatar-wrap--sm">
-                <img src="${avatar}" alt="" class="comment-avatar" onerror="this.onerror=null;this.src='/images/CSel3_LargePortTianhuo.png'">
+                <img src="${avatar}" alt="" class="comment-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
             </div>
             <div class="comment-body">
                 <span class="comment-author">${author}</span>
@@ -5215,11 +5276,15 @@ async function loadMyPublishedContent() {
             const summary = (a.summary || '').toString().replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const created = (a.createdAt || a.created_at || '').toString().replace('T', ' ').slice(0, 16);
             const views = a.viewCount != null ? a.viewCount : (a.view_count != null ? a.view_count : 0);
-            const cover = (a.cover_url || a.coverUrl || '/images/default-article.jpg').toString().replace(/"/g, '&quot;');
+            const coverRaw = resolveArticleCoverUrl(a.cover_url || a.coverUrl);
+            const cover = coverRaw.replace(/"/g, '&quot;');
+            const coverHtml = cover
+                ? '<img src="' + cover + '" alt="" loading="lazy" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,\'\',\'hide\')">'
+                : '<div class="profile-work-cover-fallback" aria-hidden="true"><i class="fas fa-image"></i></div>';
             const metaBits = [];
             if (created) metaBits.push(created);
             metaBits.push(views + ' ' + T.reads);
-            return '<article class="profile-work-card" role="button" tabindex="0" data-id="' + id + '" onclick="showArticle(' + id + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();showArticle(' + id + ');}"><div class="profile-work-cover"><img src="' + cover + '" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'/images/default-article.jpg\'"></div><div class="profile-work-body"><h3 class="profile-work-title">' + title + '</h3>' + (summary ? '<p class="profile-work-summary">' + summary + '</p>' : '') + '<p class="profile-work-meta">' + metaBits.join(' \u00b7 ') + '</p></div></article>';
+            return '<article class="profile-work-card" role="button" tabindex="0" data-id="' + id + '" onclick="showArticle(' + id + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();showArticle(' + id + ');}"><div class="profile-work-cover">' + coverHtml + '</div><div class="profile-work-body"><h3 class="profile-work-title">' + title + '</h3>' + (summary ? '<p class="profile-work-summary">' + summary + '</p>' : '') + '<p class="profile-work-meta">' + metaBits.join(' \u00b7 ') + '</p></div></article>';
         }).join('');
         setOne(showcaseArtEl, showcaseArtHtml);
         let showcaseComboHtml;
@@ -5239,7 +5304,7 @@ async function loadMyPublishedContent() {
             const metaBits = [];
             if (ch) metaBits.push(ch);
             if (created) metaBits.push(created);
-            const coverHtml = cover ? '<img src="' + cover + '" alt="" loading="lazy" onerror="this.remove()">' : '<div class="profile-work-cover-fallback" aria-hidden="true"><span>' + T.comboLabel + '</span></div>';
+            const coverHtml = cover ? '<img src="' + cover + '" alt="" loading="lazy" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,\'\',\'remove\')">' : '<div class="profile-work-cover-fallback" aria-hidden="true"><span>' + T.comboLabel + '</span></div>';
             return '<article class="profile-work-card profile-work-card--combo" role="button" tabindex="0" data-id="' + id + '"' + clickAttr + '><div class="profile-work-cover">' + coverHtml + (video ? '<span class="profile-work-play" aria-hidden="true"></span>' : '') + '</div><div class="profile-work-body"><h3 class="profile-work-title">' + title + '</h3>' + (metaBits.length ? '<p class="profile-work-meta">' + metaBits.join(' \u00b7 ') + '</p>' : '') + '</div></article>';
         }).join('');
         setOne(showcaseComboEl, showcaseComboHtml);

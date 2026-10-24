@@ -82,4 +82,9 @@
         SELECT COUNT(1) FROM tournament_registrations
         WHERE tournament_id = #{tournamentId} AND status = 'registered'
     </select>
+
+    <delete id="deleteById">
+        DELETE FROM tournaments WHERE id = #{id}
+    </delete>
+
 </mapper>

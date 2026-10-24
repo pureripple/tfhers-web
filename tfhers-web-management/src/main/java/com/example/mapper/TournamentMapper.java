@@ -14,4 +14,5 @@ public interface TournamentMapper {
     List<Tournament> listPublic();
     List<Tournament> listAll();
     int countRegistrations(@Param("tournamentId") Long tournamentId);
+    int deleteById(@Param("id") Long id);
 }

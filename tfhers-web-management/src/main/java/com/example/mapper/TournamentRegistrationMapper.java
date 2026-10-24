@@ -15,4 +15,5 @@ public interface TournamentRegistrationMapper {
     int updateStatus(@Param("id") Long id, @Param("status") String status);
     int updateSeed(@Param("id") Long id, @Param("seed") Integer seed);
     int withdraw(@Param("tournamentId") Long tournamentId, @Param("userId") Long userId);
+    int deleteByTournament(@Param("tournamentId") Long tournamentId);
 }

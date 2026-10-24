@@ -163,7 +163,7 @@
         ? regs.map(function (r) {
             const name = r.nickname || r.username || ('用户' + r.userId);
             const av = r.avatarUrl || defaultAvatar();
-            return '<span class="tournament-reg-chip"><img src="' + esc(av) + '" alt="" onerror="this.onerror=null;this.src=\'' + defaultAvatar() + '\'"><span>' + esc(name) + '</span></span>';
+            return '<span class="tournament-reg-chip"><img src="' + esc(av) + '" alt="" onerror="this.onerror=null;if(this.dataset.imgFailed)return;this.dataset.imgFailed=\'1\';var __f=\'' + defaultAvatar() + '\';if(((this.getAttribute(\'src\')||\'\').indexOf(\'Tianhuo\')>=0)){this.style.visibility=\'hidden\';}else{this.src=__f;}"><span>' + esc(name) + '</span></span>';
           }).join('')
         : '<span style="color:rgba(255,255,255,0.45)">暂无报名</span>';
 
@@ -235,12 +235,12 @@
     return (
       '<div class="bracket-match" data-match-id="' + m.id + '">' +
         '<div class="bracket-slot' + c1 + '">' +
-          (m.player1UserId ? '<img class="bracket-avatar" src="' + esc(a1) + '" alt="" onerror="this.onerror=null;this.src=\'' + defaultAvatar() + '\'">' : '<span class="bracket-avatar"></span>') +
+          (m.player1UserId ? '<img class="bracket-avatar" src="' + esc(a1) + '" alt="" onerror="this.onerror=null;if(this.dataset.imgFailed)return;this.dataset.imgFailed=\'1\';var __f=\'' + defaultAvatar() + '\';if(((this.getAttribute(\'src\')||\'\').indexOf(\'Tianhuo\')>=0)){this.style.visibility=\'hidden\';}else{this.src=__f;}">' : '<span class="bracket-avatar"></span>') +
           '<span class="bracket-name">' + esc(n1) + '</span>' +
           '<span class="bracket-score">' + esc(s1) + '</span>' +
         '</div>' +
         '<div class="bracket-slot' + c2 + '">' +
-          (m.player2UserId ? '<img class="bracket-avatar" src="' + esc(a2) + '" alt="" onerror="this.onerror=null;this.src=\'' + defaultAvatar() + '\'">' : '<span class="bracket-avatar"></span>') +
+          (m.player2UserId ? '<img class="bracket-avatar" src="' + esc(a2) + '" alt="" onerror="this.onerror=null;if(this.dataset.imgFailed)return;this.dataset.imgFailed=\'1\';var __f=\'' + defaultAvatar() + '\';if(((this.getAttribute(\'src\')||\'\').indexOf(\'Tianhuo\')>=0)){this.style.visibility=\'hidden\';}else{this.src=__f;}">' : '<span class="bracket-avatar"></span>') +
           '<span class="bracket-name">' + esc(n2) + '</span>' +
           '<span class="bracket-score">' + esc(s2) + '</span>' +
         '</div>' +

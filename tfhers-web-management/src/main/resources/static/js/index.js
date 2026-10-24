@@ -1112,7 +1112,7 @@ function renderArticles() {
                     <div class="article-title-cell">
                         <div class="article-cover" style="width: 40px; height: 40px; margin-right: 8px; border-radius: 4px; overflow: hidden; float: left;">
                             ${article.cover_url ? 
-                                `<img src="${article.cover_url}" alt="封面" style="width: 100%; height: 100%; object-fit: cover;">` : 
+                                `<img src="${article.cover_url}" alt="封面" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.removeAttribute('src');this.style.display='none';">` : 
                                 `<div style="width: 100%; height: 100%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 12px;">无封面</div>`
                             }
                         </div>
@@ -3148,12 +3148,31 @@ async function openAdminTournament(id) {
                 '<label>状态 <select id="adminTournamentStatus">' + statusOptions + '</select></label>' +
                 '<button class="btn btn-secondary" type="button" onclick="updateTournamentStatus(' + id + ')">更新状态</button>' +
                 '<button class="btn btn-primary" type="button" onclick="generateTournamentBracket(' + id + ')">生成/重置对阵（随机签）</button>' +
+                '<button class="btn btn-danger" type="button" onclick="deleteTournament(' + id + ')">删除比赛</button>' +
               '</div>' +
               '<div><strong>报名选手（' + regs.length + '）</strong>' + regsHtml + '</div>' +
               matchesHtml +
             '</div>';
     } catch (e) {
         detailEl.innerHTML = '<div style="color:#ff8a80">加载失败：' + escHtml(e.message || e) + '</div>';
+    }
+}
+
+
+async function deleteTournament(id) {
+    if (!confirm('确定删除这场比赛？将同时删除报名与对阵数据，且不可恢复。')) return;
+    try {
+        const resp = await fetch('/api/admin/tournaments/' + id, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + AppState.token }
+        });
+        const data = await resp.json();
+        alert((data && data.msg) || (data && data.code === 200 ? '已删除' : '删除失败'));
+        if (data && data.code === 200) {
+            loadAdminTournaments();
+        }
+    } catch (e) {
+        alert('删除失败：' + (e.message || e));
     }
 }
 

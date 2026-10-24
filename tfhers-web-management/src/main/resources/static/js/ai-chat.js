@@ -49,22 +49,72 @@ class AIChat {
     }
 
     setupSidebarToggle() {
-        const btn = document.getElementById('sidebarToggle');
-        const sidebar = document.querySelector('.sidebar');
-        if (btn && sidebar) {
-            btn.addEventListener('click', () => sidebar.classList.toggle('open'));
-        }
+        const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+        const syncFloat = () => {
+            const collapsed = document.documentElement.classList.contains('sidebar-collapsed');
+            const floatBtn = document.getElementById('sidebarFloatToggle');
+            if (floatBtn) floatBtn.setAttribute('aria-label', collapsed ? '展开侧栏' : '收起侧栏');
+        };
+        const toggle = () => {
+            if (isMobile()) {
+                const open = !document.documentElement.classList.contains('sidebar-open');
+                document.documentElement.classList.toggle('sidebar-open', open);
+                document.body.classList.toggle('sidebar-open', open);
+                const bd = document.getElementById('sidebarBackdrop');
+                if (bd) {
+                    bd.hidden = !open;
+                    bd.setAttribute('aria-hidden', open ? 'false' : 'true');
+                }
+            } else {
+                const collapsed = !document.documentElement.classList.contains('sidebar-collapsed');
+                document.documentElement.classList.toggle('sidebar-collapsed', collapsed);
+                document.body.classList.toggle('sidebar-collapsed', collapsed);
+                try { localStorage.setItem('tfhers_admin_sidebar_collapsed', collapsed ? '1' : '0'); } catch (e) {}
+                syncFloat();
+            }
+        };
+        const closeMobile = () => {
+            document.documentElement.classList.remove('sidebar-open');
+            document.body.classList.remove('sidebar-open');
+            const bd = document.getElementById('sidebarBackdrop');
+            if (bd) {
+                bd.hidden = true;
+                bd.setAttribute('aria-hidden', 'true');
+            }
+        };
+        try {
+            if (localStorage.getItem('tfhers_admin_sidebar_collapsed') === '1') {
+                document.documentElement.classList.add('sidebar-collapsed');
+                document.body.classList.add('sidebar-collapsed');
+            }
+        } catch (e) {}
+        syncFloat();
+        const t1 = document.getElementById('sidebarToggle');
+        const t2 = document.getElementById('sidebarFloatToggle');
+        const bd = document.getElementById('sidebarBackdrop');
+        if (t1) t1.addEventListener('click', toggle);
+        if (t2) t2.addEventListener('click', toggle);
+        if (bd) bd.addEventListener('click', closeMobile);
     }
 
     initUserMenu() {
-        const userInfo = document.getElementById('userInfo');
-        const userDropdown = document.getElementById('userDropdown');
-        if (!userInfo || !userDropdown) return;
-        userInfo.addEventListener('click', (e) => {
+        const btn = document.getElementById('topAvatarBtn');
+        const panel = document.getElementById('topAccountPanel');
+        const wrap = document.getElementById('topAvatarWrap');
+        if (!btn || !panel) return;
+        const close = () => {
+            panel.hidden = true;
+            btn.setAttribute('aria-expanded', 'false');
+        };
+        btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            userDropdown.classList.toggle('show');
+            const open = panel.hidden;
+            panel.hidden = !open;
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
-        document.addEventListener('click', () => userDropdown.classList.remove('show'));
+        document.addEventListener('click', (e) => {
+            if (wrap && !wrap.contains(e.target)) close();
+        });
     }
 
     async loadAdminUser() {
@@ -79,18 +129,25 @@ class AIChat {
             if (d.avatarUrl) {
                 this.adminAvatarUrl = d.avatarUrl;
             }
+            const displayName = d.realName || d.username || '管理员';
             const nameEl = document.getElementById('userName');
             const avatarEl = document.getElementById('userAvatar');
-            if (nameEl) {
-                nameEl.textContent = d.realName || d.username || '管理员';
-            }
-            if (avatarEl) {
-                avatarEl.src = this.adminAvatarUrl;
-                avatarEl.onerror = () => {
-                    avatarEl.onerror = null;
-                    avatarEl.src = ADMIN_USER_AVATAR_FALLBACK;
+            const tapNick = document.getElementById('tapNickname');
+            const tapUser = document.getElementById('tapUsername');
+            const tapAvatar = document.getElementById('tapAvatar');
+            if (nameEl) nameEl.textContent = displayName;
+            if (tapNick) tapNick.textContent = displayName;
+            if (tapUser) tapUser.textContent = '@' + (d.username || 'admin');
+            const applyAvatar = (el) => {
+                if (!el) return;
+                el.src = this.adminAvatarUrl;
+                el.onerror = () => {
+                    el.onerror = null;
+                    el.src = ADMIN_USER_AVATAR_FALLBACK;
                 };
-            }
+            };
+            applyAvatar(avatarEl);
+            applyAvatar(tapAvatar);
         } catch (e) {
             console.warn('加载管理员信息失败', e);
         }

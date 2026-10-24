@@ -20,7 +20,7 @@
 ## 默认图片
 - `CSel3_LargePortTianhuo.png` - 默认用户头像（天火立绘）
 - `default-character.jpg` - 默认角色图片
-- `default-article.jpg` - 默认文章封面
+- `default-article.jpg` - 默认文章封面（真实 JPEG 占位图；无封面资讯应走 UI 占位，避免无效请求）
 
 ## 导航图标
 - `tabbar01.png` - 首页图标

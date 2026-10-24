@@ -1,4 +1,4 @@
-/* 蹄斗族群助手 - 暗色主题主样式文件 */
+﻿/* 蹄斗族群助手 - 暗色主题主样式文件 */
 
 /* 重置和基础样式 */
 * {
@@ -128,7 +128,8 @@ html.tfhers-authed body::after {
 html.tfhers-authed {
     --nav-height: var(--app-topbar-height);
     --sidebar-width: var(--sidebar-width-expanded);
-    transition: --sidebar-width 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+    /* Match management: snap --sidebar-width; .main-content / .app-topbar / .app-sidebar
+       element transitions animate margin-left, left, and transform. */
 }
 
 /* Fully hidden when collapsed: content uses full width */
@@ -680,17 +681,15 @@ html.tfhers-authed .app-top-actions[hidden] {
     -webkit-backdrop-filter: blur(20px) saturate(1.2);
     border-right: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
-    transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.34s ease, visibility 0.34s;
+    transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.34s ease;
     overflow: hidden;
     transform: translateX(0);
     visibility: visible;
-    will-change: transform;
 }
 
-/* Desktop collapsed: entire sidebar off-screen */
+/* Desktop collapsed: slide off-screen; keep visibility so transform is seen */
 html.tfhers-authed.sidebar-collapsed .app-sidebar {
     transform: translateX(-100%);
-    visibility: hidden;
     pointer-events: none;
     box-shadow: none;
 }
@@ -6229,4 +6228,22 @@ html.theme-light .settings-toggle-row input[type="checkbox"] {
     justify-content: center;
     gap: 10px;
     margin-top: 12px;
+}
+
+/* tfhers img fail-safe empty covers */
+.pinned-news-thumb--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+}
+.pinned-news-thumb--empty i { font-size: 1rem; opacity: 0.7; }
+.hot-news-cover--empty,
+.article-detail-cover-bg--empty {
+    background: linear-gradient(135deg, rgba(40, 46, 62, 0.95), rgba(24, 28, 40, 0.98));
+}
+.article-detail-cover-wrap--empty .article-detail-cover-bg--empty {
+    position: absolute;
+    inset: 0;
 }

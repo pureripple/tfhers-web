@@ -62,7 +62,7 @@
         return (
           '<div class="ranking-row' + topCls + '">' +
             '<div class="ranking-rank">' + (rank <= 3 ? '<i class="fas fa-crown"></i> ' : '') + rank + '</div>' +
-            '<img class="ranking-avatar" src="' + esc(avatar) + '" alt="" onerror="this.onerror=null;this.src=\'' + defaultAvatar() + '\'">' +
+            '<img class="ranking-avatar" src="' + esc(avatar) + '" alt="" onerror="this.onerror=null;if(this.dataset.imgFailed)return;this.dataset.imgFailed=\'1\';var __f=\'' + defaultAvatar() + '\';if(((this.getAttribute(\'src\')||\'\').indexOf(\'Tianhuo\')>=0)){this.style.visibility=\'hidden\';}else{this.src=__f;}">' +
             '<div class="ranking-info">' +
               '<div class="ranking-name">' + esc(name) + '</div>' +
               '<div class="ranking-meta">战绩 ' + wins + '胜 / ' + losses + '负 · 共 ' + played + ' 场</div>' +

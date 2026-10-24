@@ -510,4 +510,19 @@ public class TournamentServiceImpl implements TournamentService {
         }
         matchMapper.update(next);
     }
+
+    @Override
+    @Transactional
+    public results delete(Long id, Long adminId) {
+        Tournament existing = tournamentMapper.findById(id);
+        if (existing == null) {
+            return results.error("比赛不存在");
+        }
+        // FK: matches -> registrations -> tournament
+        matchMapper.deleteByTournament(id);
+        registrationMapper.deleteByTournament(id);
+        tournamentMapper.deleteById(id);
+        return results.success("比赛已删除", null);
+    }
+
 }

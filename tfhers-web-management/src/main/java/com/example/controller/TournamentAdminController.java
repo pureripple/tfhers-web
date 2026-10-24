@@ -158,4 +158,18 @@ public class TournamentAdminController {
             return results.error("录入比分失败：" + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{id}")
+    public results delete(@PathVariable Long id, HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return results.error(401, "未授权");
+        }
+        try {
+            return tournamentService.delete(id, adminId(request));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("删除失败：" + e.getMessage());
+        }
+    }
+
 }

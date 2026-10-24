@@ -21,4 +21,5 @@ public interface TournamentService {
     List<TournamentRegistration> listRegistrations(Long tournamentId);
     results generateBracket(Long tournamentId, boolean shuffle, Long adminId);
     results enterResult(Long matchId, Integer score1, Integer score2, Long adminId);
+    results delete(Long id, Long adminId);
 }

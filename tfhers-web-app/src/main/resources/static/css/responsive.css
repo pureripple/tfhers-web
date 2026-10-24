@@ -1,4 +1,4 @@
-/* 响应式设计 - 移动端适配 */
+﻿/* 响应式设计 - 移动端适配 */
 
 /* 平板设备 (768px - 1024px) */
 @media screen and (max-width: 1024px) {
@@ -527,18 +527,17 @@
     }
 }
 
-/* 减少动画（用户偏好） */
+/* Reduced motion: do NOT globally zero all transitions.
+   A prior star-selector transition-duration override killed sidebar
+   collapse/expand when OS reduce-motion / MinAnimate=0 was on,
+   while management (no such rule) still animated. Decorative page
+   animations are already gated in main.css. */
 @media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-    
     .spinner {
         animation: none;
     }
 }
+
 
 
 /* ===== Left sidebar overrides (after top-nav redesign) ===== */
@@ -565,15 +564,11 @@
     .mobile-topbar {
         display: none !important;
     }
-    html.tfhers-authed:not(.sidebar-collapsed) .main-content {
-        margin-top: var(--app-topbar-height, 56px) !important;
-        margin-left: var(--sidebar-width-expanded) !important;
-    }
-    html.tfhers-authed.sidebar-collapsed .main-content {
-        margin-top: var(--app-topbar-height, 56px) !important;
-        margin-left: 0 !important;
-    }
+    /* Desktop margin-left/top: use main.css --sidebar-width / --nav-height so
+       collapse/expand can animate (same pattern as management). Do not
+       !important-snap between 220px and 0 here — that made the app jump. */
 }
+
 
 
 /* Settings page mobile */

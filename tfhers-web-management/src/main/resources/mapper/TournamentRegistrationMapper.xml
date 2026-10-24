@@ -59,4 +59,9 @@
         SET status = 'withdrawn', updated_at = NOW()
         WHERE tournament_id = #{tournamentId} AND user_id = #{userId} AND status = 'registered'
     </update>
+
+    <delete id="deleteByTournament">
+        DELETE FROM tournament_registrations WHERE tournament_id = #{tournamentId}
+    </delete>
+
 </mapper>
