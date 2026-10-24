@@ -1,4 +1,4 @@
-/* 比赛页：左侧列表 / 右侧详情（对阵图） */
+﻿/* 比赛页：左侧列表 / 右侧详情（对阵图） */
 (function () {
   const STATUS_LABEL = {
     draft: '草稿',
@@ -400,7 +400,7 @@ window.registerTournament = async function registerTournament(id) {
     if (!listEl) return;
     if (typeof AppState !== 'undefined' && AppState.viewingProfileUserId != null
         && !(typeof isViewingOwnProfile === 'function' && isViewingOwnProfile(AppState.viewingProfileUserId))) {
-      listEl.innerHTML = '<div class="profile-works-empty">\u6682\u4e0d\u5c55\u793a\u4ed6\u4eba\u7684\u8d5b\u4e8b\u8bb0\u5f55</div>';
+      listEl.innerHTML = '<div class="profile-works-empty">\u8be5\u7528\u6237\u8fd8\u6ca1\u6709\u53c2\u52a0\u8fc7\u8d5b\u4e8b</div>';
       if (countEl) countEl.textContent = '0';
       return;
     }
