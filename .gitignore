@@ -25,6 +25,7 @@ node_modules/
 # SQL dumps at repo root (keep curated migrations under database/)
 *.sql
 !tfhers-web-management/database/**/*.sql
+!tfhers-web-management/src/main/resources/db/migration/**/*.sql
 _localhost*.sql
 
 # Runtime logs

@@ -1,4 +1,5 @@
-﻿# 问题反馈功能 — 手动部署说明
+> **更新：** 表结构已改由 Flyway 管理（见 [flyway.md](./flyway.md)）。下次部署含 Flyway 的 jar 并 restart 后，会自动 baseline + 执行 `V2__create_user_feedback`（`IF NOT EXISTS`）。下列手工步骤仅作历史说明。
+# 问题反馈功能 — 手动部署说明
 
 ## 1. 数据库（先做）
 
