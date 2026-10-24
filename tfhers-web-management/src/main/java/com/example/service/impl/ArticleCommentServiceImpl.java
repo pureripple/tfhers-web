@@ -17,6 +17,7 @@ import java.util.Map;
 public class ArticleCommentServiceImpl implements ArticleCommentService {
 
     private static final String MSG_PENDING_REVIEW = "评论已提交审核，管理员通过后将公开显示";
+    private static final String MSG_PUBLISHED = "评论发表成功";
 
     @Autowired
     private ArticleCommentMapper articleCommentMapper;
@@ -24,7 +25,7 @@ public class ArticleCommentServiceImpl implements ArticleCommentService {
     @Autowired(required = false)
     private AliyunCommentModerationService aliyunCommentModerationService;
 
-    /** 审核后发布：写入待审状态 */
+    /** 写入待审状态（中风险） */
     private results insertPendingComment(long articleId, long userId, String trimmed, Long parentId) {
         ArticleComment pending = new ArticleComment();
         pending.setArticleId(articleId);
@@ -36,9 +37,21 @@ public class ArticleCommentServiceImpl implements ArticleCommentService {
         return results.success(MSG_PENDING_REVIEW, pending);
     }
 
+    /** 低/无风险：直接通过并公开展示 */
+    private results insertApprovedComment(long articleId, long userId, String trimmed, Long parentId) {
+        ArticleComment approved = new ArticleComment();
+        approved.setArticleId(articleId);
+        approved.setUserId(userId);
+        approved.setContent(trimmed);
+        approved.setParentId(parentId);
+        approved.setStatus(1);
+        articleCommentMapper.insert(approved);
+        return results.success(MSG_PUBLISHED, approved);
+    }
+
     /**
      * Bilibili 风格：一级评论 + 该楼下全部回复扁平列表（含 3 级及以上），
-     * 回复带 replyToAuthorName 指向被回复用户。
+     * 回复的 replyToAuthorName 指向被回复用户。
      */
     @Override
     public List<ArticleComment> getCommentTree(long articleId) {
@@ -77,7 +90,6 @@ public class ArticleCommentServiceImpl implements ArticleCommentService {
 
             ArticleComment parent = byId.get(c.getParentId());
             if (parent != null) {
-                // 回复一级评论时也标出指向；更深层级同样标出被回复人
                 c.setReplyToAuthorName(parent.getAuthorName());
                 c.setReplyToUserId(parent.getUserId());
             }
@@ -87,7 +99,7 @@ public class ArticleCommentServiceImpl implements ArticleCommentService {
         return roots;
     }
 
-    /** 沿 parentId 向上找到一级评论 id */
+    /** 从 parentId 向上找到一级评论 id */
     private Long findRootId(ArticleComment comment, Map<Long, ArticleComment> byId) {
         ArticleComment cur = comment;
         int guard = 0;
@@ -116,29 +128,37 @@ public class ArticleCommentServiceImpl implements ArticleCommentService {
             if (aliyunCommentModerationService != null) {
                 AliyunCommentModerationService.ModerationDecision decision =
                         aliyunCommentModerationService.moderateComment(trimmed, userId, articleId);
-                if (!decision.pass) {
-                    if ("high".equalsIgnoreCase(decision.riskLevel)) {
-                        return results.error(400, "评论含有违规内容，已拒绝发布");
-                    }
-                    if ("medium".equalsIgnoreCase(decision.riskLevel)) {
-                        return insertPendingComment(articleId, userId, trimmed, parentId);
-                    }
-                    if ("unknown".equalsIgnoreCase(decision.riskLevel)) {
-                        String detail = decision.rawReasonJson;
-                        if (detail != null) {
-                            detail = detail.replaceAll("\\s+", " ").trim();
-                            if (!detail.isEmpty()) {
-                                if (detail.length() > 120) detail = detail.substring(0, 120) + "...";
-                                return results.error(400, "评论审核服务暂不可用，请稍后再试（" + detail + "）");
-                            }
-                        }
-                        return results.error(400, "评论审核服务暂不可用，请稍后再试");
-                    }
-                    return results.error(400, "评论含有违规内容");
+                String level = decision.riskLevel != null ? decision.riskLevel.trim() : "";
+
+                // 高风险：直接拒绝
+                if ("high".equalsIgnoreCase(level)) {
+                    return results.error(400, "评论含有违规内容，已拒绝发布");
                 }
+                // 中风险：待人工审核
+                if ("medium".equalsIgnoreCase(level)) {
+                    return insertPendingComment(articleId, userId, trimmed, parentId);
+                }
+                // 审核服务异常（unknown 且未通过）：按 fail-open=false 时拦截
+                if ("unknown".equalsIgnoreCase(level) && !decision.pass) {
+                    String detail = decision.rawReasonJson;
+                    if (detail != null) {
+                        detail = detail.replaceAll("\\s+", " ").trim();
+                        if (!detail.isEmpty()) {
+                            if (detail.length() > 120) detail = detail.substring(0, 120) + "...";
+                            return results.error(400, "评论审核服务暂不可用，请稍后再试（" + detail + "）");
+                        }
+                    }
+                    return results.error(400, "评论审核服务暂不可用，请稍后再试");
+                }
+                // 低风险 / 无风险（pass=true，含 low）：直接公开展示
+                if (decision.pass || "low".equalsIgnoreCase(level)) {
+                    return insertApprovedComment(articleId, userId, trimmed, parentId);
+                }
+                return results.error(400, "评论含有违规内容");
             }
 
-            return insertPendingComment(articleId, userId, trimmed, parentId);
+            // 未接入审核服务：视为无风险，直接放行
+            return insertApprovedComment(articleId, userId, trimmed, parentId);
         } catch (Exception e) {
             return results.error("发表失败: " + e.getMessage());
         }

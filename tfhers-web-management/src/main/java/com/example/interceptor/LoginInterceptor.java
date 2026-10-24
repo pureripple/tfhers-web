@@ -94,6 +94,12 @@ public class LoginInterceptor implements HandlerInterceptor {
         if (path.equals("/api/user/register") || path.equals("/api/user/login")) {
             return true;
         }
+
+        // 用户公开主页（按 ID）
+        if ("GET".equals(m) && path.matches("^/api/user/\d+/public$")) {
+            return true;
+        }
+
         // Steam 绑定回调不走登录拦截（通过回调里的 token 参数验证）
         if (path.equals("/api/user/steam/callback")) {
             return true;
@@ -147,6 +153,9 @@ public class LoginInterceptor implements HandlerInterceptor {
 
         // 用户连段：提交/我的列表/删除需登录
         if (path.startsWith("/api/combos")) {
+            if ("GET".equals(m) && path.matches("^/api/combos/by-user/\d+$")) {
+                return true;
+            }
             return false;
         }
 

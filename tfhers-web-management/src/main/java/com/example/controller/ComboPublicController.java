@@ -29,6 +29,25 @@ public class ComboPublicController {
     /**
      * 我的连段列表（需登录）
      */
+
+    /**
+     * 某用户已通过审核的公开连段（无需登录）
+     */
+    @GetMapping(value = "/by-user/{userId}", produces = "application/json")
+    public results combosByUser(@PathVariable Long userId) {
+        if (userId == null || userId <= 0) {
+            return results.error(400, "无效的用户 ID");
+        }
+        List<Combo> list = comboService.listByUserId(userId);
+        if (list == null) {
+            list = java.util.Collections.emptyList();
+        }
+        List<Combo> approved = list.stream()
+                .filter(c -> c != null && "approved".equalsIgnoreCase(c.getStatus()))
+                .toList();
+        return results.success("获取成功", approved);
+    }
+
     @GetMapping(value = "/mine", produces = "application/json")
     public results myCombos(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");

@@ -250,6 +250,62 @@ public class UserController {
         }
     }
 
+    /**
+     * 公开主页：按用户 ID 返回可公开字段（无需登录）。
+     * 不含邮箱、手机、密码、Steam 绑定等隐私信息。
+     */
+    @GetMapping("/{id}/public")
+    public ResponseEntity<Map<String, Object>> getPublicProfile(@PathVariable("id") Long id) {
+        try {
+            if (id == null || id <= 0) {
+                return ResponseEntity.ok(Map.of(
+                    "code", 400,
+                    "msg", "无效的用户 ID",
+                    "data", null
+                ));
+            }
+            results result = userService.getUserById(id);
+            if (result.getCode() != 200 || result.getData() == null) {
+                return ResponseEntity.ok(Map.of(
+                    "code", 404,
+                    "msg", "用户不存在",
+                    "data", null
+                ));
+            }
+            User user = (User) result.getData();
+            if (user.getStatus() != null && user.getStatus() == 0) {
+                return ResponseEntity.ok(Map.of(
+                    "code", 404,
+                    "msg", "用户不存在",
+                    "data", null
+                ));
+            }
+            Map<String, Object> data = new HashMap<>();
+            data.put("id", user.getId());
+            data.put("username", user.getUsername());
+            data.put("nickname", user.getNickname());
+            data.put("avatarUrl", user.getAvatarUrl());
+            data.put("signature", user.getSignature());
+            data.put("gender", user.getGender());
+            data.put("birthday", user.getBirthday());
+            data.put("coverUrl", user.getCoverUrl());
+            data.put("role", user.getRole());
+            data.put("isAdmin", user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole()));
+            data.put("createdAt", user.getCreatedAt());
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", 200);
+            response.put("msg", "获取成功");
+            response.put("data", data);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                "code", 500,
+                "msg", "获取用户信息失败: " + e.getMessage(),
+                "data", null
+            ));
+        }
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<Map<String, Object>> getProfile(@RequestHeader("Authorization") String token) {
         try {

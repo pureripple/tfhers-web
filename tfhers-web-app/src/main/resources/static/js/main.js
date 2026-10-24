@@ -82,7 +82,9 @@ const AppState = {
     hotNewsTimerId: null,
     hotNewsIndex: 0,
     modalBodyScrollLocked: false,
-    modalBodyScrollPrevOverflow: ''
+    modalBodyScrollPrevOverflow: '',
+    /** 正在查看的他人主页用户 ID；null 表示自己的主页 */
+    viewingProfileUserId: null
 };
 
 /** 是否社区管理员（users.role=ADMIN 或接口 isAdmin/authorIsAdmin） */
@@ -107,6 +109,151 @@ if (typeof window !== 'undefined') {
     window.isAdminUser = isAdminUser;
     window.adminNameClass = adminNameClass;
 }
+
+
+/** 解析对象上的社区用户 ID；仅 admin_users 作者（author_admin_id）时返回 null */
+function resolveCommunityUserId(obj, explicitId) {
+    if (explicitId != null && explicitId !== '') {
+        const n = Number(explicitId);
+        return Number.isFinite(n) && n > 0 ? n : null;
+    }
+    if (!obj) return null;
+    const raw = obj.userId != null ? obj.userId
+        : (obj.authorId != null ? obj.authorId
+            : (obj.author_id != null ? obj.author_id
+                : (obj.createdBy != null ? obj.createdBy
+                    : (obj.hostUserId != null ? obj.hostUserId : null))));
+    if (raw == null || raw === '') return null;
+    // 纯后台管理员发的资讯：只有 author_admin_id，没有社区 author_id
+    if ((obj.authorId == null && obj.author_id == null && obj.userId == null && obj.createdBy == null)
+        && (obj.authorAdminId != null || obj.author_admin_id != null)) {
+        return null;
+    }
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function escapePlayerNameText(v) {
+    return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+/**
+ * 可点击玩家昵称 HTML。无 userId 时退化为普通 span。
+ * extraClass 可含 user-name--admin 等。
+ */
+function playerNameHtml(userId, displayName, extraClass) {
+    const name = escapePlayerNameText(displayName == null || displayName === '' ? '\u73a9\u5bb6' : displayName);
+    const cls = String(extraClass || '').trim();
+    const id = resolveCommunityUserId(null, userId);
+    if (id == null) {
+        return '<span class="' + cls + '">' + name + '</span>';
+    }
+    return '<a href="#profile/' + id + '" class="player-name-link' + (cls ? ' ' + cls : '')
+        + '" data-user-id="' + id + '" title="查看主页">' + name + '</a>';
+}
+
+function getSelfUserId() {
+    if (!AppState.user) return null;
+    const raw = AppState.user.id != null ? AppState.user.id
+        : (AppState.user.userId != null ? AppState.user.userId : null);
+    if (raw == null || raw === '') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function isViewingOwnProfile(userId) {
+    const selfId = getSelfUserId();
+    if (selfId == null || userId == null) return false;
+    return String(selfId) === String(userId);
+}
+
+function getProfileUserIdFromHash() {
+    try {
+        const raw = (location.hash || '').replace(/^#/, '').trim();
+        const m = raw.match(/^profile\/(\d+)$/);
+        if (m) return Number(m[1]);
+    } catch (e) { /* ignore */ }
+    return null;
+}
+
+function setProfileEditActionsVisible(own) {
+    const editBtn = document.getElementById('editProfileBtn');
+    if (editBtn) editBtn.style.display = own ? '' : 'none';
+}
+
+/**
+ * 打开玩家主页。可从点击事件调用；会 stopPropagation，避免点进房间/资讯卡片。
+ * @returns {boolean} 恒为 false，便于 inline onclick="return openPlayerProfile(...)"
+ */
+function openPlayerProfile(evOrUserId, maybeUserId) {
+    let ev = null;
+    let userId = maybeUserId;
+    if (maybeUserId == null && (typeof evOrUserId === 'number' || typeof evOrUserId === 'string')) {
+        userId = evOrUserId;
+    } else {
+        ev = evOrUserId;
+        if (userId == null && ev && ev.currentTarget) {
+            userId = ev.currentTarget.getAttribute('data-user-id');
+        }
+    }
+    if (ev && typeof ev.preventDefault === 'function') {
+        ev.preventDefault();
+        ev.stopPropagation();
+    }
+    const id = resolveCommunityUserId(null, userId);
+    if (id == null) return false;
+
+    if (isViewingOwnProfile(id)) {
+        AppState.viewingProfileUserId = null;
+        const want = 'profile';
+        if ((location.hash || '').replace(/^#/, '') !== want) {
+            location.hash = want;
+        } else if (typeof showPage === 'function') {
+            showPage('profile');
+        }
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+        return false;
+    }
+
+    AppState.viewingProfileUserId = id;
+    const want = 'profile/' + id;
+    if ((location.hash || '').replace(/^#/, '') !== want) {
+        location.hash = want;
+    } else if (typeof showPage === 'function') {
+        showPage('profile');
+    }
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+    return false;
+}
+
+function initPlayerNameLinkDelegation() {
+    if (typeof document === 'undefined' || document.documentElement.dataset.playerNameDelegate === '1') return;
+    document.documentElement.dataset.playerNameDelegate = '1';
+    document.addEventListener('click', function (e) {
+        const a = e.target && e.target.closest ? e.target.closest('a.player-name-link') : null;
+        if (!a) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openPlayerProfile(null, a.getAttribute('data-user-id'));
+    }, true);
+}
+
+if (typeof window !== 'undefined') {
+    window.resolveCommunityUserId = resolveCommunityUserId;
+    window.playerNameHtml = playerNameHtml;
+    window.openPlayerProfile = openPlayerProfile;
+    window.getProfileUserIdFromHash = getProfileUserIdFromHash;
+}
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPlayerNameLinkDelegation);
+    else initPlayerNameLinkDelegation();
+}
+
+
 
 
 
@@ -191,12 +338,16 @@ function setupEventListeners() {
                 return;
             }
             e.preventDefault();
-            showPage(page);
+            if (page === 'profile') {
+                AppState.viewingProfileUserId = null;
+            }
             const path = location.pathname || '/';
             const params = new URLSearchParams(location.search || '');
             params.delete('tab');
             const q = params.toString();
-            history.replaceState(null, '', (q ? path + '?' + q : path) + '#' + page);
+            const hashTarget = page === 'profile' ? 'profile' : page;
+            history.replaceState(null, '', (q ? path + '?' + q : path) + '#' + hashTarget);
+            showPage(page);
             closeNavMenu();
         });
     });
@@ -421,7 +572,8 @@ function closeNavMenu() {
 function getPageIdFromHash() {
     const raw = (location.hash || '').replace(/^#/, '').trim();
     if (raw === 'my') return 'profile';
-    if (raw === 'news' || raw === 'characters' || raw === 'tournaments' || raw === 'lobby' || raw === 'rankings' || raw === 'ai-chat' || raw === 'data' || raw === 'settings' || raw === 'profile' || raw === 'manuscripts') return raw;
+    if (raw === 'profile' || /^profile\/\d+$/.test(raw)) return 'profile';
+    if (raw === 'news' || raw === 'characters' || raw === 'tournaments' || raw === 'lobby' || raw === 'rankings' || raw === 'ai-chat' || raw === 'data' || raw === 'settings' || raw === 'manuscripts') return raw;
     return 'news';
 }
 
@@ -520,18 +672,35 @@ function showPage(pageId) {
             showPage('profile');
             return;
         case 'profile':
-            if (!AppState.isLoggedIn || !AppState.user || !AppState.user.token) {
-                showAppToast('请先登录', 'error');
-                showLoginModal();
-                showPage('news');
+            {
+                const hashUid = (typeof getProfileUserIdFromHash === 'function') ? getProfileUserIdFromHash() : null;
+                if (hashUid != null) {
+                    AppState.viewingProfileUserId = hashUid;
+                } else {
+                    AppState.viewingProfileUserId = null;
+                }
+                const viewId = AppState.viewingProfileUserId;
+                const viewingOther = viewId != null && !isViewingOwnProfile(viewId);
+                if (viewingOther) {
+                    if (typeof initProfileHomeTabs === 'function') initProfileHomeTabs();
+                    if (typeof loadOtherProfilePage === 'function') loadOtherProfilePage(viewId);
+                    break;
+                }
+                AppState.viewingProfileUserId = null;
+                if (!AppState.isLoggedIn || !AppState.user || !AppState.user.token) {
+                    showAppToast('请先登录', 'error');
+                    showLoginModal();
+                    showPage('news');
+                    break;
+                }
+                setProfileEditActionsVisible(true);
+                if (typeof fillProfilePage === 'function') fillProfilePage();
+                if (typeof refreshProfilePageFromServer === 'function') refreshProfilePageFromServer();
+                if (typeof initProfileHomeTabs === 'function') initProfileHomeTabs();
+                if (typeof loadMyPublishedContent === 'function') loadMyPublishedContent();
+                if (typeof loadMyTournamentHistory === 'function') loadMyTournamentHistory();
                 break;
             }
-            if (typeof fillProfilePage === 'function') fillProfilePage();
-            if (typeof refreshProfilePageFromServer === 'function') refreshProfilePageFromServer();
-            if (typeof initProfileHomeTabs === 'function') initProfileHomeTabs();
-            if (typeof loadMyPublishedContent === 'function') loadMyPublishedContent();
-            if (typeof loadMyTournamentHistory === 'function') loadMyTournamentHistory();
-            break;
         case 'settings':
             if (!AppState.isLoggedIn || !AppState.user || !AppState.user.token) {
                 showAppToast('请先登录', 'error');
@@ -850,7 +1019,7 @@ function renderArticleGrid(articles, searchQuery) {
                     <div class="article-card-author">
                         <img src="${avatarUrl}" alt="" class="article-author-avatar" width="40" height="40" loading="lazy" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                         <div class="article-card-author-meta">
-                            <span class="article-author-name${adminNameClass(article)}">${authorName}</span>
+                            ${playerNameHtml(article.author_id != null ? article.author_id : article.authorId, authorName, 'article-author-name' + adminNameClass(article))}
                             ${timeHtml}
                         </div>
                     </div>
@@ -977,7 +1146,7 @@ function renderHotNews(articles) {
             <div class="hot-news-overlay">
                 <img src="${avatar}" alt="" class="hot-news-author-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                 <div class="hot-news-meta">
-                    <div class="hot-news-author${adminNameClass(a)}">${author} · ${view} 阅读${timePart}</div>
+                    <div class="hot-news-author-line">${playerNameHtml(a.author_id != null ? a.author_id : a.authorId, a.author || '\u533f\u540d', 'hot-news-author' + adminNameClass(a))} · ${view} 阅读${timePart}</div>
                     <div class="hot-news-title">${title}</div>
                 </div>
             </div>
@@ -1102,7 +1271,7 @@ async function showCharacter(characterId) {
                                         <div class="user-combo-avatar-wrap">
                                             <img src="${authorAvatar}" alt="" class="user-combo-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                                         </div>
-                                            <span class="user-combo-author-name${adminNameClass(combo)}">${escHtml(authorName)}</span>
+                                            ${playerNameHtml(combo.createdBy != null ? combo.createdBy : combo.created_by, authorName, 'user-combo-author-name' + adminNameClass(combo))}
                                         </div>
                                         <div class="user-combo-headline">${escHtml(headline)}</div>
                                     </div>
@@ -1401,7 +1570,7 @@ async function showArticle(articleId) {
                                     <div class="article-detail-author">
                                         <img src="${authorAvatarUrl}" alt="" class="article-detail-author-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                                         <div class="article-detail-author-text">
-                                            <div class="article-detail-author-name${adminNameClass(article)}">${escHtml(authorName)}</div>
+                                            ${playerNameHtml(article.author_id != null ? article.author_id : article.authorId, authorName, 'article-detail-author-name' + adminNameClass(article))}
                                             ${timeMetaHtml}
                                         </div>
                                     </div>
@@ -1846,7 +2015,7 @@ function renderRootComment(c) {
                 <img src="${avatar}" alt="" class="comment-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
             </div>
             <div class="comment-body">
-                <span class="comment-author${authorAdminCls}">${author}</span>
+                ${playerNameHtml(c.userId, c.authorName || '\u7528\u6237', 'comment-author' + authorAdminCls)}
                 <span class="comment-time">${time}</span>
                 <p class="comment-content">${contentHtml}</p>
                 <div class="comment-actions">
@@ -1877,7 +2046,7 @@ function renderReplyComment(r, rootId, escHtml, escAttr) {
                 <img src="${avatar}" alt="" class="comment-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
             </div>
             <div class="comment-body">
-                <span class="comment-author${authorAdminCls}">${author}</span>
+                ${playerNameHtml(r.userId, r.authorName || '\u7528\u6237', 'comment-author' + authorAdminCls)}
                 ${directedHtml}
                 <span class="comment-time">${time}</span>
                 <p class="comment-content">${contentHtml}</p>
@@ -2481,7 +2650,7 @@ async function syncUserSteamFromServer() {
 
         applySteamPanelUI();
     } catch (e) {
-        console.warn('同步用户资料失败', e);
+        console.warn('loadOtherProfilePage failed', e);
     }
 }
 
@@ -4317,6 +4486,110 @@ function updateProfileHomeTabCounts(articleCount, comboCount) {
 }
 
 /** ---------- 个人信息页 / 编辑资料 ---------- */
+
+async function loadOtherProfilePage(userId) {
+    const id = resolveCommunityUserId(null, userId);
+    if (id == null) return;
+    setProfileEditActionsVisible(false);
+    const nick = document.getElementById('profileNickname');
+    const uname = document.getElementById('profileUsername');
+    const bio = document.getElementById('profileBio');
+    if (nick) nick.textContent = '...';
+    if (uname) uname.textContent = '';
+    if (bio) bio.textContent = '';
+    try {
+        const r = await fetch(`${AppState.managementApiUrl}/api/user/${id}/public`);
+        const result = await r.json();
+        if (!result || result.code !== 200 || !result.data) {
+            if (typeof showAppToast === 'function') {
+                showAppToast((result && result.msg) || '\u7528\u6237\u4e0d\u5b58\u5728', 'error');
+            }
+            AppState.viewingProfileUserId = null;
+            location.hash = 'news';
+            return;
+        }
+        fillProfilePage(result.data);
+        setProfileEditActionsVisible(false);
+        await loadOtherProfileWorks(id);
+    } catch (e) {
+        console.warn('加载用户主页失败', e);
+        if (typeof showAppToast === 'function') showAppToast('\u52a0\u8f7d\u4e3b\u9875\u5931\u8d25', 'error');
+    }
+}
+
+async function loadOtherProfileWorks(userId) {
+    const showcaseArtEl = document.getElementById('profileArticlesList');
+    const showcaseComboEl = document.getElementById('profileCombosList');
+    const tourEl = document.getElementById('profileTournamentsList');
+    const T = window.__profileHomeText || {};
+    const loading = T.loading || '\u52a0\u8f7d\u4e2d\u2026';
+    if (showcaseArtEl) showcaseArtEl.innerHTML = '<div class="profile-works-empty">' + loading + '</div>';
+    if (showcaseComboEl) showcaseComboEl.innerHTML = '<div class="profile-works-empty">' + loading + '</div>';
+    if (tourEl) tourEl.innerHTML = '<div class="profile-works-empty">\u6682\u4e0d\u5c55\u793a\u4ed6\u4eba\u7684\u8d5b\u4e8b\u8bb0\u5f55</div>';
+    const countEl = document.getElementById('phTournamentTabCount');
+    if (countEl) countEl.textContent = '0';
+
+    let articles = [];
+    try {
+        if (Array.isArray(AppState.articles) && AppState.articles.length) {
+            articles = AppState.articles.filter(a => {
+                const aid = a && (a.author_id != null ? a.author_id : a.authorId);
+                return aid != null && String(aid) === String(userId);
+            });
+        } else {
+            const resp = await fetch(`${AppState.managementApiUrl}/api/articles/all`);
+            const data = await resp.json().catch(() => null);
+            const all = (data && data.code === 200 && Array.isArray(data.data)) ? data.data : [];
+            articles = all.filter(a => {
+                const aid = a && (a.author_id != null ? a.author_id : a.authorId);
+                return aid != null && String(aid) === String(userId);
+            });
+        }
+    } catch (e) { articles = []; }
+
+    let combos = [];
+    try {
+        const resp = await fetch(`${AppState.managementApiUrl}/api/combos/by-user/${userId}`);
+        const data = await resp.json().catch(() => null);
+        combos = (data && data.code === 200 && Array.isArray(data.data)) ? data.data : [];
+    } catch (e) { combos = []; }
+
+    if (typeof updateProfileHomeTabCounts === 'function') updateProfileHomeTabCounts(articles.length, combos.length);
+
+    if (showcaseArtEl) {
+        if (!articles.length) {
+            showcaseArtEl.innerHTML = '<div class="profile-works-empty"><div class="profile-works-empty-title">'
+                + (T.emptyArtTitle || '\u8fd8\u6ca1\u6709\u8d44\u8baf\u4f5c\u54c1') + '</div></div>';
+        } else {
+            showcaseArtEl.innerHTML = articles.map(a => {
+                const id = a.id;
+                const title = escapePlayerNameText(a.title || T.noTitle || '\u65e0\u6807\u9898');
+                const cover = (typeof resolveArticleCoverUrl === 'function')
+                    ? resolveArticleCoverUrl(a.cover_url || a.coverUrl) : (a.coverUrl || '');
+                const summary = escapePlayerNameText(a.summary || '');
+                const coverHtml = cover
+                    ? `<div class="profile-work-cover"><img src="${String(cover).replace(/"/g, '&quot;')}" alt=""></div>`
+                    : `<div class="profile-work-cover"><div class="profile-work-cover-fallback"><i class="fas fa-newspaper"></i></div></div>`;
+                return `<button type="button" class="profile-work-card" onclick="showArticle(${id})">${coverHtml}<div class="profile-work-body"><div class="profile-work-title">${title}</div><div class="profile-work-summary">${summary}</div></div></button>`;
+            }).join('');
+        }
+    }
+
+    if (showcaseComboEl) {
+        if (!combos.length) {
+            showcaseComboEl.innerHTML = '<div class="profile-works-empty"><div class="profile-works-empty-title">'
+                + (T.emptyComboTitle || '\u8fd8\u6ca1\u6709\u8fde\u6bb5\u4f5c\u54c1') + '</div></div>';
+        } else {
+            showcaseComboEl.innerHTML = combos.map(c => {
+                const title = escapePlayerNameText(c.title || T.unnamedCombo || '\u672a\u547d\u540d\u8fde\u6bb5');
+                const charName = escapePlayerNameText(c.characterName || ((T.charPrefix || '\u89d2\u8272#') + (c.characterId || '')));
+                return `<div class="profile-work-card" style="cursor:default"><div class="profile-work-cover"><div class="profile-work-cover-fallback"><i class="fas fa-fist-raised"></i></div></div><div class="profile-work-body"><div class="profile-work-title">${title}</div><div class="profile-work-meta">${charName}</div></div></div>`;
+            }).join('');
+        }
+    }
+}
+
+
 function openProfilePage() {
     closeTopAccountPanel();
     if (!AppState.isLoggedIn || !AppState.user || !AppState.user.token) {
@@ -4324,7 +4597,13 @@ function openProfilePage() {
         showLoginModal();
         return;
     }
-    showPage('profile');
+    AppState.viewingProfileUserId = null;
+    const want = 'profile';
+    if ((location.hash || '').replace(/^#/, '') !== want) {
+        location.hash = want;
+    } else {
+        showPage('profile');
+    }
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
 }
 

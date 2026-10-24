@@ -177,7 +177,7 @@
             const checked = r.checkedIn === 1 || r.checkedIn === true;
             const chipExtra = checked ? ' tournament-reg-chip--checked' : '';
             const tag = checked ? '<i class="fas fa-check-circle tournament-reg-check" title="已签到"></i>' : '';
-            return '<span class="tournament-reg-chip' + chipExtra + '"><img src="' + esc(av) + '" alt="" onerror="this.onerror=null;if(this.dataset.imgFailed)return;this.dataset.imgFailed=\'1\';var __f=\'' + defaultAvatar() + '\';if(((this.getAttribute(\'src\')||\'\').indexOf(\'Tianhuo\')>=0)){this.style.visibility=\'hidden\';}else{this.src=__f;}">' + tag + '<span class="' + ((typeof adminNameClass === 'function' ? adminNameClass(r).trim() : '')) + '">' + esc(name) + '</span></span>';
+            return '<span class="tournament-reg-chip' + chipExtra + '"><img src="' + esc(av) + '" alt="" onerror="this.onerror=null;if(this.dataset.imgFailed)return;this.dataset.imgFailed=\'1\';var __f=\'' + defaultAvatar() + '\';if(((this.getAttribute(\'src\')||\'\').indexOf(\'Tianhuo\')>=0)){this.style.visibility=\'hidden\';}else{this.src=__f;}">' + tag + (typeof playerNameHtml === 'function' ? playerNameHtml(r.userId, name, (typeof adminNameClass === 'function' ? adminNameClass(r).trim() : '')) : ('<span class="' + ((typeof adminNameClass === 'function' ? adminNameClass(r).trim() : '')) + '">' + esc(name) + '</span>')) + '</span>';
           }).join('')
         : '<span style="color:rgba(255,255,255,0.45)">暂无报名</span>';
 
@@ -307,12 +307,12 @@
       '<div class="bracket-match" data-match-id="' + m.id + '">' +
         '<div class="bracket-slot' + c1 + '">' +
           (m.player1UserId ? '<img class="bracket-avatar" src="' + esc(a1) + '" alt="" onerror="this.onerror=null;if(this.dataset.imgFailed)return;this.dataset.imgFailed=\'1\';var __f=\'' + defaultAvatar() + '\';if(((this.getAttribute(\'src\')||\'\').indexOf(\'Tianhuo\')>=0)){this.style.visibility=\'hidden\';}else{this.src=__f;}">' : '<span class="bracket-avatar"></span>') +
-          '<span class="bracket-name' + ((typeof adminNameClass === 'function' ? adminNameClass({ isAdmin: m.player1IsAdmin }) : '')) + '">' + esc(n1) + '</span>' +
+          (typeof playerNameHtml === 'function' ? playerNameHtml(m.player1UserId, n1, 'bracket-name' + (typeof adminNameClass === 'function' ? adminNameClass({ isAdmin: m.player1IsAdmin }) : '')) : ('<span class="bracket-name' + ((typeof adminNameClass === 'function' ? adminNameClass({ isAdmin: m.player1IsAdmin }) : '')) + '">' + esc(n1) + '</span>')) +
           '<span class="bracket-score">' + esc(s1) + '</span>' +
         '</div>' +
         '<div class="bracket-slot' + c2 + '">' +
           (m.player2UserId ? '<img class="bracket-avatar" src="' + esc(a2) + '" alt="" onerror="this.onerror=null;if(this.dataset.imgFailed)return;this.dataset.imgFailed=\'1\';var __f=\'' + defaultAvatar() + '\';if(((this.getAttribute(\'src\')||\'\').indexOf(\'Tianhuo\')>=0)){this.style.visibility=\'hidden\';}else{this.src=__f;}">' : '<span class="bracket-avatar"></span>') +
-          '<span class="bracket-name' + ((typeof adminNameClass === 'function' ? adminNameClass({ isAdmin: m.player2IsAdmin }) : '')) + '">' + esc(n2) + '</span>' +
+          (typeof playerNameHtml === 'function' ? playerNameHtml(m.player2UserId, n2, 'bracket-name' + (typeof adminNameClass === 'function' ? adminNameClass({ isAdmin: m.player2IsAdmin }) : '')) : ('<span class="bracket-name' + ((typeof adminNameClass === 'function' ? adminNameClass({ isAdmin: m.player2IsAdmin }) : '')) + '">' + esc(n2) + '</span>')) +
           '<span class="bracket-score">' + esc(s2) + '</span>' +
         '</div>' +
       '</div>'
@@ -398,6 +398,12 @@ window.registerTournament = async function registerTournament(id) {
     const listEl = document.getElementById('profileTournamentsList');
     const countEl = document.getElementById('phTournamentTabCount');
     if (!listEl) return;
+    if (typeof AppState !== 'undefined' && AppState.viewingProfileUserId != null
+        && !(typeof isViewingOwnProfile === 'function' && isViewingOwnProfile(AppState.viewingProfileUserId))) {
+      listEl.innerHTML = '<div class="profile-works-empty">\u6682\u4e0d\u5c55\u793a\u4ed6\u4eba\u7684\u8d5b\u4e8b\u8bb0\u5f55</div>';
+      if (countEl) countEl.textContent = '0';
+      return;
+    }
     const loggedIn = typeof AppState !== 'undefined' && AppState.isLoggedIn && AppState.user && AppState.user.token;
     if (!loggedIn) {
       listEl.innerHTML = '<div class="profile-works-empty">登录后查看参赛记录</div>';
