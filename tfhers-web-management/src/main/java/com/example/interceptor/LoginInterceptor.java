@@ -96,7 +96,7 @@ public class LoginInterceptor implements HandlerInterceptor {
         }
 
         // 用户公开主页（按 ID）
-        if ("GET".equals(m) && path.matches("^/api/user/\d+/public$")) {
+        if ("GET".equals(m) && path.matches("^/api/user/\\d+/public$")) {
             return true;
         }
 
@@ -153,7 +153,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 
         // 用户连段：提交/我的列表/删除需登录
         if (path.startsWith("/api/combos")) {
-            if ("GET".equals(m) && path.matches("^/api/combos/by-user/\d+$")) {
+            if ("GET".equals(m) && path.matches("^/api/combos/by-user/\\d+$")) {
                 return true;
             }
             return false;
