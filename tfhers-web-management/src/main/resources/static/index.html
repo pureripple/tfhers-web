@@ -6,7 +6,26 @@
     <title>蹄斗族群助手 - 后台管理系统</title>
     <link rel="stylesheet" href="css/fonts-local.css">
     <link rel="stylesheet" href="vendor/font-awesome/css/all.min.css">
-    <link rel="stylesheet" href="css/index.css?v=20261024e">
+    <link rel="stylesheet" href="css/index.css?v=20261024f">
+    <style id="admin-boot-css"></style>
+    <script>
+    (function () {
+        var VALID = ['articles', 'characters', 'user-combos', 'reports', 'feedback', 'comment-review', 'statistics', 'games', 'tournaments'];
+        var h = (location.hash || '').replace(/^#/, '');
+        var id = (h && VALID.indexOf(h) >= 0) ? h : 'articles';
+        window.__ADMIN_BOOT_PAGE__ = id;
+        var el = document.getElementById('admin-boot-css');
+        if (el) {
+            el.textContent = '.page{display:none!important}#' + id + '.page{display:block!important}';
+        }
+        var titles = {
+            articles: '资讯管理', characters: '角色管理', 'user-combos': '用户连段审核',
+            reports: '举报处理', feedback: '问题反馈', 'comment-review': '评论审核',
+            statistics: '数据统计', games: '游戏管理', tournaments: '赛事管理'
+        };
+        window.__ADMIN_BOOT_TITLE__ = titles[id] || '后台管理';
+    })();
+    </script>
 </head>
 <body>
 
@@ -18,7 +37,7 @@
             <span class="sidebar-brand">tfhers管理端</span>
         </div>
         <nav class="sidebar-nav" id="navMenu">
-            <a href="#articles" class="nav-link active" data-page="articles">
+            <a href="#articles" class="nav-link" data-page="articles">
                 <i class="fas fa-newspaper"></i><span>资讯管理</span>
             </a>
             <a href="#characters" class="nav-link" data-page="characters">
@@ -55,6 +74,7 @@
                 <i class="fas fa-user-circle"></i><span>个人设置</span>
             </a>
         </nav>
+        <script>/*ADMIN_BOOT_NAV*/(function(){var id=window.__ADMIN_BOOT_PAGE__;if(!id)return;document.querySelectorAll('#navMenu .nav-link[data-page]').forEach(function(a){a.classList.toggle('active',a.getAttribute('data-page')===id);});})();</script>
     </aside>
     <div class="sidebar-backdrop" id="sidebarBackdrop" hidden aria-hidden="true"></div>
     <div class="sidebar-float-cluster" id="sidebarFloatCluster">
@@ -66,7 +86,7 @@
 
     <header class="app-topbar" id="appTopbar">
         <div class="app-topbar-inner">
-            <h1 class="page-title" id="pageTitle">资讯管理</h1>
+            <h1 class="page-title" id="pageTitle"></h1><script>if(window.__ADMIN_BOOT_TITLE__)document.getElementById("pageTitle").textContent=window.__ADMIN_BOOT_TITLE__;</script>
             <div class="app-top-actions" id="appTopActions">
                 <div class="top-avatar-wrap" id="topAvatarWrap">
                     <button type="button" class="top-avatar-btn" id="topAvatarBtn" title="账户" aria-label="账户" aria-haspopup="true" aria-expanded="false">
@@ -99,7 +119,7 @@
         <!-- 页面内容 -->
         <div class="page-content">
             <!-- 资讯管理页面 -->
-            <section id="articles" class="page active">
+            <section id="articles" class="page">
                 <!-- 操作栏 -->
                 <div class="action-bar">
                     <div class="search-box">
@@ -881,6 +901,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js" crossorigin="anonymous"></script>
-    <script src="js/index.js?v=20261024e"></script>
+    <script src="js/index.js?v=20261024f"></script>
 </body>
 </html>

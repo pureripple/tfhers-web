@@ -166,12 +166,13 @@ const elements = {
 function initApp() {
     checkLoginStatus();
     setupEventListeners();
-    loadArticles();
     // 从 URL hash 恢复页面（从用户管理/个人设置点「系统设置」等链接进来时直接显示对应页）
     const hash = window.location.hash.replace(/^#/, '');
-    const validPages = ['articles', 'characters', 'user-combos', 'reports', 'feedback', 'comment-review', 'statistics', 'games'];
-    const pageId = hash && validPages.includes(hash) ? hash : 'articles';
+    const validPages = ['articles', 'characters', 'user-combos', 'reports', 'feedback', 'comment-review', 'statistics', 'games', 'tournaments'];
+    const pageId = (window.__ADMIN_BOOT_PAGE__ && validPages.includes(window.__ADMIN_BOOT_PAGE__)) ? window.__ADMIN_BOOT_PAGE__ : (hash && validPages.includes(hash) ? hash : 'articles');
     showPage(pageId);
+    var bootCss = document.getElementById('admin-boot-css');
+    if (bootCss) bootCss.remove();
 
     window.addEventListener('hashchange', () => {
         const h = window.location.hash.replace(/^#/, '');
