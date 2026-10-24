@@ -123,6 +123,26 @@ public class TournamentAdminController {
         }
     }
 
+    /** 管理员代选手签到 body: { "userId": 123 } */
+    @PostMapping("/{id}/check-in")
+    public results adminCheckIn(@PathVariable Long id,
+                                @RequestBody Map<String, Object> body,
+                                HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return results.error(401, "未授权");
+        }
+        try {
+            if (body == null || body.get("userId") == null) {
+                return results.error("请指定 userId");
+            }
+            Long targetUserId = Long.valueOf(body.get("userId").toString());
+            return tournamentService.adminCheckIn(id, targetUserId, adminId(request));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("代签到失败：" + e.getMessage());
+        }
+    }
+
     @PostMapping("/{id}/generate-bracket")
     public results generateBracket(@PathVariable Long id,
                                    @RequestBody(required = false) Map<String, Object> body,

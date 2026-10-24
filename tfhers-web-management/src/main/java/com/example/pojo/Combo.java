@@ -20,6 +20,8 @@ public class Combo {
     private String authorName;
     /** 发布者头像 URL（查询时 join users 填充） */
     private String authorAvatar;
+    /** 展示用：社区 users.role=ADMIN */
+    private Boolean isAdmin;
     /** 角色中文名（我的连段列表 join 填充） */
     private String characterName;
     private LocalDateTime updatedAt;
@@ -138,6 +140,9 @@ public class Combo {
     public void setCharacterName(String characterName) {
         this.characterName = characterName;
     }
+
+    public Boolean getIsAdmin() { return isAdmin; }
+    public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
 }
 
 

@@ -26,7 +26,13 @@ public interface UserFeedbackMapper {
 
     int updateStatus(@Param("id") Long id,
                      @Param("status") Integer status,
-                     @Param("adminReply") String adminReply);
+                     @Param("adminReply") String adminReply,
+                     @Param("refreshReply") boolean refreshReply);
 
     UserFeedback selectById(@Param("id") Long id);
+
+    int countUnreadByUserId(@Param("userId") Long userId);
+
+    int markAllReadByUserId(@Param("userId") Long userId);
 }
+

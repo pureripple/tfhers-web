@@ -16,6 +16,8 @@ public class articles {
     private Long authorAdminId;
     /** 关联查询填充，非 articles 表字段 */
     private String authorAvatarUrl;
+    /** 展示用：社区 users.role=ADMIN */
+    private Boolean authorIsAdmin;
     private int viewCount;    // 驼峰命名
     /** 置顶：1 置顶，0 否 */
     private Integer isPinned;
@@ -160,4 +162,9 @@ public class articles {
     public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    @JsonProperty("author_is_admin")
+    public Boolean getAuthorIsAdmin() { return authorIsAdmin; }
+    @JsonProperty("author_is_admin")
+    public void setAuthorIsAdmin(Boolean authorIsAdmin) { this.authorIsAdmin = authorIsAdmin; }
 }

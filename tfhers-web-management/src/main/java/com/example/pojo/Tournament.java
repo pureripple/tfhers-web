@@ -8,6 +8,8 @@ public class Tournament {
     private String description;
     private String status;
     private Integer maxSlots;
+    /** single | double */
+    private String bracketType;
     private LocalDateTime registrationOpensAt;
     private LocalDateTime registrationClosesAt;
     private LocalDateTime startsAt;
@@ -29,6 +31,10 @@ public class Tournament {
     public void setStatus(String status) { this.status = status; }
     public Integer getMaxSlots() { return maxSlots; }
     public void setMaxSlots(Integer maxSlots) { this.maxSlots = maxSlots; }
+
+    public String getBracketType() { return bracketType; }
+    public void setBracketType(String bracketType) { this.bracketType = bracketType; }
+
     public LocalDateTime getRegistrationOpensAt() { return registrationOpensAt; }
     public void setRegistrationOpensAt(LocalDateTime registrationOpensAt) { this.registrationOpensAt = registrationOpensAt; }
     public LocalDateTime getRegistrationClosesAt() { return registrationClosesAt; }

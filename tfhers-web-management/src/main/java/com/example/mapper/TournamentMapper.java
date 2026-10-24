@@ -15,4 +15,7 @@ public interface TournamentMapper {
     List<Tournament> listAll();
     int countRegistrations(@Param("tournamentId") Long tournamentId);
     int deleteById(@Param("id") Long id);
+
+    /** registration 且报名截止时间已到 → closed，返回影响行数 */
+    int closeExpiredRegistrations();
 }

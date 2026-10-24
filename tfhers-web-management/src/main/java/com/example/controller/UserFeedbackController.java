@@ -63,4 +63,41 @@ public class UserFeedbackController {
             return results.error("获取失败：" + e.getMessage());
         }
     }
+
+    /**
+     * Unread admin-reply count for red-dot badge
+     */
+    @GetMapping("/unread-count")
+    public results unreadCount(HttpServletRequest request) {
+        try {
+            Long userId = (Long) request.getAttribute("userId");
+            if (userId == null) {
+                return results.error(401, "请先登录");
+            }
+            int count = userFeedbackService.countUnread(userId);
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("count", count);
+            return results.success("获取成功", data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("获取失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * Mark current user's replied feedback as read (clears red-dot)
+     */
+    @PostMapping("/mark-read")
+    public results markRead(HttpServletRequest request) {
+        try {
+            Long userId = (Long) request.getAttribute("userId");
+            if (userId == null) {
+                return results.error(401, "请先登录");
+            }
+            return userFeedbackService.markAllRead(userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("操作失败：" + e.getMessage());
+        }
+    }
 }

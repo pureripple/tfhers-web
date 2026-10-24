@@ -14,6 +14,7 @@
         <result column="username" property="username"/>
         <result column="avatar_url" property="avatarUrl"/>
         <result column="rating" property="rating"/>
+        <result column="is_admin" property="isAdmin"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.example.pojo.RoomMember" useGeneratedKeys="true" keyProperty="id">
@@ -41,7 +42,8 @@
                COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS nickname,
                u.username AS username,
                u.avatar_url AS avatar_url,
-               COALESCE(ur.rating, 1000) AS rating
+               COALESCE(ur.rating, 1000) AS rating,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS is_admin
         FROM room_members m
         LEFT JOIN users u ON m.user_id = u.id
         LEFT JOIN user_ratings ur ON m.user_id = ur.user_id

@@ -119,3 +119,10 @@ rooms:
     enabled: true
     timeout-seconds: 45
     sweep-interval-ms: 15000
+
+# 赛事：报名截止自动关报名（不自动生成对阵）
+tournaments:
+  registration-auto-close:
+    enabled: true
+    fixed-delay-ms: 60000
+    initial-delay-ms: 8000

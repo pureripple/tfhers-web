@@ -9,23 +9,39 @@
         <result column="user_id" property="userId"/>
         <result column="seed" property="seed"/>
         <result column="status" property="status"/>
+        <result column="checked_in" property="checkedIn"/>
+        <result column="checked_in_at" property="checkedInAt"/>
+        <result column="final_placement" property="finalPlacement"/>
+        <result column="wins" property="wins"/>
+        <result column="losses" property="losses"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="nickname" property="nickname"/>
         <result column="username" property="username"/>
         <result column="avatar_url" property="avatarUrl"/>
+        <result column="is_admin" property="isAdmin"/>
+        <result column="tournament_title" property="tournamentTitle"/>
+        <result column="tournament_status" property="tournamentStatus"/>
+        <result column="tournament_starts_at" property="tournamentStartsAt"/>
+        <result column="tournament_created_at" property="tournamentCreatedAt"/>
     </resultMap>
+
+    <sql id="Reg_Columns">
+        r.id, r.tournament_id, r.user_id, r.seed, r.status, r.checked_in, r.checked_in_at,
+        r.final_placement, r.wins, r.losses, r.created_at, r.updated_at
+    </sql>
 
     <insert id="insert" parameterType="com.example.pojo.TournamentRegistration" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO tournament_registrations
-        (tournament_id, user_id, seed, status, created_at, updated_at)
+        (tournament_id, user_id, seed, status, checked_in, checked_in_at, final_placement, wins, losses, created_at, updated_at)
         VALUES
-        (#{tournamentId}, #{userId}, #{seed}, #{status}, NOW(), NOW())
+        (#{tournamentId}, #{userId}, #{seed}, #{status}, 0, NULL, NULL, 0, 0, NOW(), NOW())
     </insert>
 
     <select id="findByTournamentAndUser" resultMap="BaseResultMap">
-        SELECT r.id, r.tournament_id, r.user_id, r.seed, r.status, r.created_at, r.updated_at,
-               u.nickname, u.username, u.avatar_url
+        SELECT <include refid="Reg_Columns"/>,
+               u.nickname, u.username, u.avatar_url,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS is_admin
         FROM tournament_registrations r
         LEFT JOIN users u ON u.id = r.user_id
         WHERE r.tournament_id = #{tournamentId} AND r.user_id = #{userId}
@@ -33,17 +49,42 @@
     </select>
 
     <select id="listActiveByTournament" resultMap="BaseResultMap">
-        SELECT r.id, r.tournament_id, r.user_id, r.seed, r.status, r.created_at, r.updated_at,
-               u.nickname, u.username, u.avatar_url
+        SELECT <include refid="Reg_Columns"/>,
+               u.nickname, u.username, u.avatar_url,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS is_admin
         FROM tournament_registrations r
         LEFT JOIN users u ON u.id = r.user_id
         WHERE r.tournament_id = #{tournamentId} AND r.status = 'registered'
-        ORDER BY COALESCE(r.seed, 9999) ASC, r.created_at ASC
+        ORDER BY
+          CASE WHEN r.final_placement IS NULL THEN 1 ELSE 0 END,
+          r.final_placement ASC,
+          COALESCE(r.seed, 9999) ASC,
+          r.created_at ASC
+    </select>
+
+    <select id="listHistoryByUser" resultMap="BaseResultMap">
+        SELECT <include refid="Reg_Columns"/>,
+               u.nickname, u.username, u.avatar_url,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS is_admin,
+               t.title AS tournament_title,
+               t.status AS tournament_status,
+               t.starts_at AS tournament_starts_at,
+               t.created_at AS tournament_created_at
+        FROM tournament_registrations r
+        INNER JOIN tournaments t ON t.id = r.tournament_id
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.user_id = #{userId} AND r.status = 'registered'
+        ORDER BY COALESCE(t.starts_at, t.created_at) DESC, r.id DESC
     </select>
 
     <select id="countActiveByTournament" resultType="int">
         SELECT COUNT(1) FROM tournament_registrations
         WHERE tournament_id = #{tournamentId} AND status = 'registered'
+    </select>
+
+    <select id="countCheckedInByTournament" resultType="int">
+        SELECT COUNT(1) FROM tournament_registrations
+        WHERE tournament_id = #{tournamentId} AND status = 'registered' AND checked_in = 1
     </select>
 
     <update id="updateStatus">
@@ -52,6 +93,27 @@
 
     <update id="updateSeed">
         UPDATE tournament_registrations SET seed = #{seed}, updated_at = NOW() WHERE id = #{id}
+    </update>
+
+    <update id="markCheckedIn">
+        UPDATE tournament_registrations
+        SET checked_in = 1, checked_in_at = NOW(), updated_at = NOW()
+        WHERE id = #{id} AND status = 'registered'
+    </update>
+
+    <update id="updateResultStats">
+        UPDATE tournament_registrations
+        SET final_placement = #{finalPlacement},
+            wins = #{wins},
+            losses = #{losses},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="clearResultStatsByTournament">
+        UPDATE tournament_registrations
+        SET final_placement = NULL, wins = 0, losses = 0, updated_at = NOW()
+        WHERE tournament_id = #{tournamentId}
     </update>
 
     <update id="withdraw">

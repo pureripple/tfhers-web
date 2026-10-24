@@ -9,6 +9,7 @@
         <result column="description" property="description"/>
         <result column="status" property="status"/>
         <result column="max_slots" property="maxSlots"/>
+        <result column="bracket_type" property="bracketType"/>
         <result column="registration_opens_at" property="registrationOpensAt"/>
         <result column="registration_closes_at" property="registrationClosesAt"/>
         <result column="starts_at" property="startsAt"/>
@@ -19,15 +20,15 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        t.id, t.title, t.description, t.status, t.max_slots, t.registration_opens_at, t.registration_closes_at,
+        t.id, t.title, t.description, t.status, t.max_slots, t.bracket_type, t.registration_opens_at, t.registration_closes_at,
         t.starts_at, t.created_by, t.created_at, t.updated_at
     </sql>
 
     <insert id="insert" parameterType="com.example.pojo.Tournament" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO tournaments
-        (title, description, status, max_slots, registration_opens_at, registration_closes_at, starts_at, created_by, created_at, updated_at)
+        (title, description, status, max_slots, bracket_type, registration_opens_at, registration_closes_at, starts_at, created_by, created_at, updated_at)
         VALUES
-        (#{title}, #{description}, #{status}, #{maxSlots}, #{registrationOpensAt}, #{registrationClosesAt}, #{startsAt}, #{createdBy}, NOW(), NOW())
+        (#{title}, #{description}, #{status}, #{maxSlots}, COALESCE(#{bracketType}, 'double'), #{registrationOpensAt}, #{registrationClosesAt}, #{startsAt}, #{createdBy}, NOW(), NOW())
     </insert>
 
     <update id="update" parameterType="com.example.pojo.Tournament">
@@ -37,6 +38,7 @@
             <if test="description != null">description = #{description},</if>
             <if test="status != null">status = #{status},</if>
             <if test="maxSlots != null">max_slots = #{maxSlots},</if>
+            <if test="bracketType != null">bracket_type = #{bracketType},</if>
             <if test="registrationOpensAt != null">registration_opens_at = #{registrationOpensAt},</if>
             <if test="registrationClosesAt != null">registration_closes_at = #{registrationClosesAt},</if>
             <if test="startsAt != null">starts_at = #{startsAt},</if>
@@ -86,5 +88,14 @@
     <delete id="deleteById">
         DELETE FROM tournaments WHERE id = #{id}
     </delete>
+
+
+    <update id="closeExpiredRegistrations">
+        UPDATE tournaments
+        SET status = 'closed', updated_at = NOW()
+        WHERE status = 'registration'
+          AND registration_closes_at IS NOT NULL
+          AND registration_closes_at &lt;= NOW()
+    </update>
 
 </mapper>

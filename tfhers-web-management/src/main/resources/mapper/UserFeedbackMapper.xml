@@ -17,13 +17,14 @@
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
         <result column="replied_at" property="repliedAt"/>
+        <result column="user_read_at" property="userReadAt"/>
         <result column="username" property="username"/>
         <result column="nickname" property="nickname"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         f.id, f.user_id, f.category, f.title, f.content, f.contact,
-        f.status, f.admin_reply, f.created_at, f.updated_at, f.replied_at
+        f.status, f.admin_reply, f.created_at, f.updated_at, f.replied_at, f.user_read_at
     </sql>
 
     <insert id="insert" parameterType="com.example.pojo.UserFeedback" useGeneratedKeys="true" keyProperty="id">
@@ -88,10 +89,31 @@
             admin_reply = #{adminReply},
             updated_at = NOW(),
             replied_at = CASE
-                WHEN #{adminReply} IS NOT NULL AND #{adminReply} != '' THEN NOW()
+                WHEN #{refreshReply} THEN NOW()
                 ELSE replied_at
+            END,
+            user_read_at = CASE
+                WHEN #{refreshReply} THEN NULL
+                ELSE user_read_at
             END
         WHERE id = #{id}
+    </update>
+
+    <select id="countUnreadByUserId" resultType="int">
+        SELECT COUNT(1)
+        FROM user_feedback
+        WHERE user_id = #{userId}
+          AND admin_reply IS NOT NULL
+          AND admin_reply != ''
+          AND (user_read_at IS NULL OR user_read_at &lt; replied_at)
+    </select>
+
+    <update id="markAllReadByUserId">
+        UPDATE user_feedback
+        SET user_read_at = NOW()
+        WHERE user_id = #{userId}
+          AND admin_reply IS NOT NULL
+          AND admin_reply != ''
     </update>
 
 </mapper>

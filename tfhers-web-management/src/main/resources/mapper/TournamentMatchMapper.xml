@@ -6,6 +6,7 @@
     <resultMap id="BaseResultMap" type="com.example.pojo.TournamentMatch">
         <id column="id" property="id"/>
         <result column="tournament_id" property="tournamentId"/>
+        <result column="bracket_side" property="bracketSide"/>
         <result column="round" property="round"/>
         <result column="match_index" property="matchIndex"/>
         <result column="player1_user_id" property="player1UserId"/>
@@ -15,6 +16,9 @@
         <result column="winner_id" property="winnerId"/>
         <result column="next_match_id" property="nextMatchId"/>
         <result column="next_slot" property="nextSlot"/>
+        <result column="loser_next_match_id" property="loserNextMatchId"/>
+        <result column="loser_next_slot" property="loserNextSlot"/>
+        <result column="is_reset_match" property="isResetMatch"/>
         <result column="status" property="status"/>
         <result column="rating_applied" property="ratingApplied"/>
         <result column="created_at" property="createdAt"/>
@@ -24,15 +28,18 @@
         <result column="player2_nickname" property="player2Nickname"/>
         <result column="player2_avatar_url" property="player2AvatarUrl"/>
         <result column="winner_nickname" property="winnerNickname"/>
+        <result column="player1_is_admin" property="player1IsAdmin"/>
+        <result column="player2_is_admin" property="player2IsAdmin"/>
+        <result column="winner_is_admin" property="winnerIsAdmin"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.example.pojo.TournamentMatch" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO tournament_matches
-        (tournament_id, round, match_index, player1_user_id, player2_user_id, score1, score2, winner_id,
-         next_match_id, next_slot, status, created_at, updated_at)
+        (tournament_id, bracket_side, round, match_index, player1_user_id, player2_user_id, score1, score2, winner_id,
+         next_match_id, next_slot, loser_next_match_id, loser_next_slot, is_reset_match, status, created_at, updated_at)
         VALUES
-        (#{tournamentId}, #{round}, #{matchIndex}, #{player1UserId}, #{player2UserId}, #{score1}, #{score2}, #{winnerId},
-         #{nextMatchId}, #{nextSlot}, #{status}, NOW(), NOW())
+        (#{tournamentId}, COALESCE(#{bracketSide}, 'single'), #{round}, #{matchIndex}, #{player1UserId}, #{player2UserId}, #{score1}, #{score2}, #{winnerId},
+         #{nextMatchId}, #{nextSlot}, #{loserNextMatchId}, #{loserNextSlot}, COALESCE(#{isResetMatch}, 0), #{status}, NOW(), NOW())
     </insert>
 
     <update id="update" parameterType="com.example.pojo.TournamentMatch">
@@ -44,6 +51,9 @@
             winner_id = #{winnerId},
             next_match_id = #{nextMatchId},
             next_slot = #{nextSlot},
+            loser_next_match_id = #{loserNextMatchId},
+            loser_next_slot = #{loserNextSlot},
+            is_reset_match = COALESCE(#{isResetMatch}, is_reset_match),
             status = #{status},
             rating_applied = COALESCE(#{ratingApplied}, rating_applied),
             updated_at = NOW()
@@ -53,6 +63,12 @@
     <update id="updateNextMatchId">
         UPDATE tournament_matches
         SET next_match_id = #{nextMatchId}, next_slot = #{nextSlot}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateLoserNextMatchId">
+        UPDATE tournament_matches
+        SET loser_next_match_id = #{loserNextMatchId}, loser_next_slot = #{loserNextSlot}, updated_at = NOW()
         WHERE id = #{id}
     </update>
 
@@ -71,7 +87,10 @@
         SELECT m.*,
                u1.nickname AS player1_nickname, u1.avatar_url AS player1_avatar_url,
                u2.nickname AS player2_nickname, u2.avatar_url AS player2_avatar_url,
-               uw.nickname AS winner_nickname
+               uw.nickname AS winner_nickname,
+               (CASE WHEN UPPER(COALESCE(u1.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS player1_is_admin,
+               (CASE WHEN UPPER(COALESCE(u2.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS player2_is_admin,
+               (CASE WHEN UPPER(COALESCE(uw.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS winner_is_admin
         FROM tournament_matches m
         LEFT JOIN users u1 ON u1.id = m.player1_user_id
         LEFT JOIN users u2 ON u2.id = m.player2_user_id
@@ -83,13 +102,16 @@
         SELECT m.*,
                u1.nickname AS player1_nickname, u1.avatar_url AS player1_avatar_url,
                u2.nickname AS player2_nickname, u2.avatar_url AS player2_avatar_url,
-               uw.nickname AS winner_nickname
+               uw.nickname AS winner_nickname,
+               (CASE WHEN UPPER(COALESCE(u1.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS player1_is_admin,
+               (CASE WHEN UPPER(COALESCE(u2.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS player2_is_admin,
+               (CASE WHEN UPPER(COALESCE(uw.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS winner_is_admin
         FROM tournament_matches m
         LEFT JOIN users u1 ON u1.id = m.player1_user_id
         LEFT JOIN users u2 ON u2.id = m.player2_user_id
         LEFT JOIN users uw ON uw.id = m.winner_id
         WHERE m.tournament_id = #{tournamentId}
-        ORDER BY m.round ASC, m.match_index ASC
+        ORDER BY FIELD(m.bracket_side, 'single', 'winners', 'losers', 'grand_final'), m.round ASC, m.match_index ASC
     </select>
 
     <delete id="deleteByTournament">

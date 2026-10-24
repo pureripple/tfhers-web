@@ -22,6 +22,8 @@ public class Room {
     private String hostAvatarUrl;
     private Boolean joinedByMe;
     private Boolean isHost;
+    /** 展示用：社区 users.role=ADMIN */
+    private Boolean hostIsAdmin;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -55,4 +57,7 @@ public class Room {
     public void setJoinedByMe(Boolean joinedByMe) { this.joinedByMe = joinedByMe; }
     public Boolean getIsHost() { return isHost; }
     public void setIsHost(Boolean isHost) { this.isHost = isHost; }
+
+    public Boolean getHostIsAdmin() { return hostIsAdmin; }
+    public void setHostIsAdmin(Boolean hostIsAdmin) { this.hostIsAdmin = hostIsAdmin; }
 }

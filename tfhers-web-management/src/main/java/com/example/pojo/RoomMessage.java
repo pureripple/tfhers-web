@@ -14,6 +14,8 @@ public class RoomMessage {
     // 展示附加
     private String nickname;
     private String avatarUrl;
+    /** 展示用：社区 users.role=ADMIN */
+    private Boolean isAdmin;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -31,4 +33,7 @@ public class RoomMessage {
     public void setNickname(String nickname) { this.nickname = nickname; }
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public Boolean getIsAdmin() { return isAdmin; }
+    public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
 }

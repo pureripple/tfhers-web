@@ -15,6 +15,8 @@ public class UserRating {
     private String nickname;
     private String avatarUrl;
     private String username;
+    /** 展示用：社区 users.role=ADMIN */
+    private Boolean isAdmin;
     private String tier;
     private Integer rank;
 
@@ -42,4 +44,7 @@ public class UserRating {
     public void setTier(String tier) { this.tier = tier; }
     public Integer getRank() { return rank; }
     public void setRank(Integer rank) { this.rank = rank; }
+
+    public Boolean getIsAdmin() { return isAdmin; }
+    public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
 }

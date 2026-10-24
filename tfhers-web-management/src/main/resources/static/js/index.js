@@ -3065,7 +3065,7 @@ async function loadAdminTournaments() {
                     '<span style="font-size:12px;opacity:.85">' + escHtml(TOURNAMENT_STATUS_LABEL[st] || st) + '</span>' +
                   '</div>' +
                   '<div style="margin-top:6px;font-size:13px;opacity:.7">' +
-                    '报名 ' + (t.registrationCount != null ? t.registrationCount : 0) + ' / ' + (t.maxSlots || 16) +
+                    '报名 ' + (t.registrationCount != null ? t.registrationCount : 0) + ' / ' + (t.maxSlots || 16) + (t.bracketType === 'single' ? ' · 单败' : ' · 双败') +
                   '</div>' +
                 '</div>'
             );
@@ -3100,10 +3100,23 @@ async function openAdminTournament(id) {
                     escHtml(TOURNAMENT_STATUS_LABEL[s] || s) + '</option>';
             }).join('');
 
+                const checkedInCount = regs.filter(function (r) { return r.checkedIn === 1 || r.checkedIn === true; }).length;
         const regsHtml = regs.length
             ? '<ul style="margin:8px 0 0;padding-left:18px">' + regs.map(function (r) {
-                return '<li>' + escHtml(r.nickname || r.username || ('用户' + r.userId)) +
-                    (r.seed != null ? '（签位 ' + r.seed + '）' : '') + '</li>';
+                const name = r.nickname || r.username || ('用户' + r.userId);
+                const rating = r.rating != null ? (' · Elo ' + r.rating) : '';
+                const seed = r.seed != null ? (' · 签位' + r.seed) : '';
+                const place = r.finalPlacement != null ? (' · 名次 #' + r.finalPlacement) : '';
+                const wl = (r.wins != null || r.losses != null) ? (' · ' + (r.wins || 0) + '胜' + (r.losses || 0) + '负') : '';
+                const checked = (r.checkedIn === 1 || r.checkedIn === true);
+                const mark = checked
+                    ? '<span style="color:#5fd9cc">已签到</span>'
+                    : '<span style="opacity:.55">未签到</span>';
+                const forceBtn = (!checked && r.userId)
+                    ? ' <button class="btn btn-secondary btn-sm" type="button" onclick="adminForceCheckIn(' + id + ',' + r.userId + ')">代签到</button>'
+                    : '';
+                return '<li style="margin:4px 0">' + escHtml(name) + escHtml(rating) + escHtml(seed) + escHtml(place) + escHtml(wl)
+                    + ' — ' + mark + forceBtn + '</li>';
             }).join('') + '</ul>'
             : '<div style="opacity:.6;margin-top:6px">暂无报名</div>';
 
@@ -3114,7 +3127,8 @@ async function openAdminTournament(id) {
                 bracket.matches.map(function (m) {
                     const n1 = m.player1Nickname || (m.player1UserId ? ('用户' + m.player1UserId) : '待定');
                     const n2 = m.player2Nickname || (m.player2UserId ? ('用户' + m.player2UserId) : '待定');
-                    const label = (m.roundLabel || ('R' + m.round)) + ' #' + ((m.matchIndex || 0) + 1);
+                    const sideTag = m.bracketSide === 'winners' ? '[胜]' : (m.bracketSide === 'losers' ? '[败]' : (m.bracketSide === 'grand_final' ? '[总决]' : ''));
+                    const label = (sideTag ? sideTag + ' ' : '') + (m.roundLabel || ('R' + m.round)) + ' #' + ((m.matchIndex || 0) + 1);
                     const done = m.status === 'completed' || m.status === 'bye';
                     const canEnter = m.player1UserId && m.player2UserId && !done;
                     return (
@@ -3141,17 +3155,31 @@ async function openAdminTournament(id) {
             matchesHtml = '<div style="margin-top:12px;opacity:.65">尚未生成对阵</div>';
         }
 
+        const timeLine = [
+            t.registrationOpensAt ? ('报名开始 ' + toDatetimeLocalValue(t.registrationOpensAt).replace('T', ' ')) : '',
+            t.registrationClosesAt ? ('报名截止 ' + toDatetimeLocalValue(t.registrationClosesAt).replace('T', ' ')) : '',
+            t.startsAt ? ('开赛 ' + toDatetimeLocalValue(t.startsAt).replace('T', ' ')) : ''
+        ].filter(Boolean).join(' · ') || '未设置报名/开赛时间';
+
+        window.__adminTournamentCurrent = t;
+
         detailEl.innerHTML =
             '<div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px">' +
               '<h3 style="margin:0 0 10px">' + escHtml(t.title || '') + ' <small style="opacity:.7">#' + t.id + '</small></h3>' +
-              '<p style="opacity:.8;white-space:pre-wrap">' + escHtml(t.description || '') + '</p>' +
+              '<div style="margin-bottom:10px"><strong>比赛规则</strong>' +
+                '<p style="opacity:.85;white-space:pre-wrap;margin:6px 0 0">' + escHtml(t.description || '暂无规则说明') + '</p></div>' +
+              '<div style="font-size:13px;opacity:.75;margin-bottom:12px">' + escHtml(timeLine) + '</div>' +
               '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0">' +
                 '<label>状态 <select id="adminTournamentStatus">' + statusOptions + '</select></label>' +
                 '<button class="btn btn-secondary" type="button" onclick="updateTournamentStatus(' + id + ')">更新状态</button>' +
+                '<button class="btn btn-secondary" type="button" onclick="openTournamentEditModal(window.__adminTournamentCurrent)">编辑信息</button>' +
+                '<span style="margin-right:10px;opacity:.9">赛制：' +
+                ((window.__adminTournamentCurrent && window.__adminTournamentCurrent.bracketType) === 'single' ? '单败' : '双败') +
+                '</span>' +
                 '<button class="btn btn-primary" type="button" onclick="generateTournamentBracket(' + id + ')">生成/重置对阵（随机签）</button>' +
                 '<button class="btn btn-danger" type="button" onclick="deleteTournament(' + id + ')">删除比赛</button>' +
               '</div>' +
-              '<div><strong>报名选手（' + regs.length + '）</strong>' + regsHtml + '</div>' +
+              '<div><strong>报名选手（' + regs.length + '，已签到 ' + checkedInCount + '）</strong>' + regsHtml + '</div>' +
               matchesHtml +
             '</div>';
     } catch (e) {
@@ -3177,38 +3205,110 @@ async function deleteTournament(id) {
     }
 }
 
-async function createTournamentPrompt() {
-    const title = prompt('比赛名称：');
-    if (!title || !title.trim()) return;
-    const description = prompt('比赛说明（可留空）：', '') || '';
-    const slotsRaw = prompt('名额（8 或 16，默认 16）：', '16');
-    let maxSlots = parseInt(slotsRaw || '16', 10);
+function toDatetimeLocalValue(v) {
+    if (v == null || v === '') return '';
+    let s = String(v).trim().replace(' ', 'T');
+    if (s.length >= 16) return s.slice(0, 16);
+    return s;
+}
+
+function fromDatetimeLocalValue(v) {
+    if (v == null || String(v).trim() === '') return null;
+    let s = String(v).trim();
+    if (s.length === 16) s = s + ':00';
+    return s;
+}
+
+function closeTournamentFormModal() {
+    const modal = document.getElementById('tournamentFormModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function openTournamentCreateModal() {
+    const modal = document.getElementById('tournamentFormModal');
+    if (!modal) return;
+    document.getElementById('tournamentFormModalTitle').textContent = '创建比赛';
+    document.getElementById('tournamentFormId').value = '';
+    document.getElementById('tournamentFormTitle').value = '';
+    document.getElementById('tournamentFormDescription').value = '';
+    document.getElementById('tournamentFormMaxSlots').value = '16';
+        document.getElementById('tournamentFormBracketType').value = 'double';
+    document.getElementById('tournamentFormOpensAt').value = '';
+    document.getElementById('tournamentFormClosesAt').value = '';
+    document.getElementById('tournamentFormStartsAt').value = '';
+    document.getElementById('tournamentFormStatus').value = 'registration';
+    document.getElementById('tournamentFormStatusGroup').style.display = '';
+    modal.style.display = 'flex';
+}
+
+function openTournamentEditModal(t) {
+    const modal = document.getElementById('tournamentFormModal');
+    if (!modal || !t) return;
+    document.getElementById('tournamentFormModalTitle').textContent = '编辑比赛';
+    document.getElementById('tournamentFormId').value = t.id != null ? String(t.id) : '';
+    document.getElementById('tournamentFormTitle').value = t.title || '';
+    document.getElementById('tournamentFormDescription').value = t.description || '';
+    document.getElementById('tournamentFormMaxSlots').value = (t.maxSlots === 8 || t.maxSlots === 16) ? String(t.maxSlots) : '16';
+    document.getElementById('tournamentFormBracketType').value = (t.bracketType === 'single') ? 'single' : 'double';
+    document.getElementById('tournamentFormOpensAt').value = toDatetimeLocalValue(t.registrationOpensAt);
+    document.getElementById('tournamentFormClosesAt').value = toDatetimeLocalValue(t.registrationClosesAt);
+    document.getElementById('tournamentFormStartsAt').value = toDatetimeLocalValue(t.startsAt);
+    document.getElementById('tournamentFormStatusGroup').style.display = 'none';
+    modal.style.display = 'flex';
+}
+
+async function submitTournamentForm() {
+    const idVal = (document.getElementById('tournamentFormId').value || '').trim();
+    const title = (document.getElementById('tournamentFormTitle').value || '').trim();
+    if (!title) {
+        alert('请填写比赛名称');
+        return;
+    }
+    const description = document.getElementById('tournamentFormDescription').value || '';
+    let maxSlots = parseInt(document.getElementById('tournamentFormMaxSlots').value, 10);
     if (maxSlots !== 8 && maxSlots !== 16) maxSlots = 16;
-    const openReg = confirm('创建后立即开放报名？\n确定=报名中，取消=草稿');
+    const body = {
+        title: title,
+        description: description,
+        maxSlots: maxSlots,
+        bracketType: document.getElementById('tournamentFormBracketType').value
+    };
+    const opens = fromDatetimeLocalValue(document.getElementById('tournamentFormOpensAt').value);
+    const closes = fromDatetimeLocalValue(document.getElementById('tournamentFormClosesAt').value);
+    const starts = fromDatetimeLocalValue(document.getElementById('tournamentFormStartsAt').value);
+    if (!idVal) {
+        body.status = document.getElementById('tournamentFormStatus').value || 'draft';
+        if (opens) body.registrationOpensAt = opens;
+        if (closes) body.registrationClosesAt = closes;
+        if (starts) body.startsAt = starts;
+    } else {
+        if (opens) body.registrationOpensAt = opens;
+        if (closes) body.registrationClosesAt = closes;
+        if (starts) body.startsAt = starts;
+    }
     try {
-        const resp = await fetch('/api/admin/tournaments', {
-            method: 'POST',
+        const url = idVal ? ('/api/admin/tournaments/' + idVal) : '/api/admin/tournaments';
+        const method = idVal ? 'PUT' : 'POST';
+        const resp = await fetch(url, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + AppState.token
             },
-            body: JSON.stringify({
-                title: title.trim(),
-                description: description,
-                maxSlots: maxSlots,
-                status: openReg ? 'registration' : 'draft'
-            })
+            body: JSON.stringify(body)
         });
         const data = await resp.json();
         if (data && data.code === 200) {
-            alert(data.msg || '创建成功');
+            alert(data.msg || '保存成功');
+            closeTournamentFormModal();
             loadAdminTournaments();
-            if (data.data && data.data.id) openAdminTournament(data.data.id);
+            const tid = idVal || (data.data && data.data.id);
+            if (tid) openAdminTournament(tid);
         } else {
-            alert((data && data.msg) || '创建失败');
+            alert((data && data.msg) || '保存失败');
         }
     } catch (e) {
-        alert('创建失败：' + (e.message || e));
+        alert('保存失败：' + (e.message || e));
     }
 }
 
@@ -3237,7 +3337,7 @@ async function updateTournamentStatus(id) {
 }
 
 async function generateTournamentBracket(id) {
-    if (!confirm('将清空并重新生成对阵图（随机签），确定？\n请先把状态改为「报名截止」或「进行中」。')) return;
+    if (!confirm('将按全部已报名选手（不论是否签到）用 Elo 分桶排签生成对阵图，确认？\n未到场/未签到由主办方事后处理。\n建议先把状态设为「报名截止」或「进行中」。')) return;
     try {
         const resp = await fetch('/api/admin/tournaments/' + id + '/generate-bracket', {
             method: 'POST',
@@ -3287,9 +3387,31 @@ async function submitMatchResult(matchId, tournamentId) {
     }
 }
 
+
+async function adminForceCheckIn(tournamentId, userId) {
+    if (!confirm('确认为该选手代签到？')) return;
+    try {
+        const resp = await fetch('/api/admin/tournaments/' + tournamentId + '/check-in', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + AppState.token
+            },
+            body: JSON.stringify({ userId: userId })
+        });
+        const data = await resp.json();
+        alert((data && data.msg) || (data && data.code === 200 ? '已签到' : '失败'));
+        if (data && data.code === 200) {
+            openAdminTournament(tournamentId);
+        }
+    } catch (e) {
+        alert('代签到失败：' + (e.message || e));
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const createBtn = document.getElementById('createTournamentBtn');
-    if (createBtn) createBtn.addEventListener('click', createTournamentPrompt);
+    if (createBtn) createBtn.addEventListener('click', openTournamentCreateModal);
     const refreshBtn = document.getElementById('refreshTournamentsBtn');
     if (refreshBtn) refreshBtn.addEventListener('click', loadAdminTournaments);
 });

@@ -23,6 +23,16 @@ public class UserFeedbackServiceImpl implements UserFeedbackService {
     @Autowired
     private UserFeedbackMapper userFeedbackMapper;
 
+
+    private static boolean isUnread(UserFeedback f) {
+        if (f == null) return false;
+        String reply = f.getAdminReply();
+        if (reply == null || reply.trim().isEmpty()) return false;
+        if (f.getUserReadAt() == null) return true;
+        if (f.getRepliedAt() == null) return true;
+        return f.getUserReadAt().isBefore(f.getRepliedAt());
+    }
+
     @Override
     public results submit(Long userId, String category, String title, String content, String contact) {
         if (userId == null || userId <= 0) {
@@ -77,6 +87,11 @@ public class UserFeedbackServiceImpl implements UserFeedbackService {
         if (size < 1 || size > 50) size = 10;
         int offset = (page - 1) * size;
         List<UserFeedback> list = userFeedbackMapper.selectByUserId(userId, offset, size);
+        if (list != null) {
+            for (UserFeedback item : list) {
+                item.setUnread(isUnread(item));
+            }
+        }
         int total = userFeedbackMapper.countByUserId(userId);
         Map<String, Object> data = new HashMap<>();
         data.put("list", list);
@@ -120,11 +135,31 @@ public class UserFeedbackServiceImpl implements UserFeedbackService {
         if (existing == null) {
             return results.error("反馈不存在");
         }
-        // 未传回复时保留原回复
+        // Only bump replied_at / clear user_read_at when admin actually sent a non-empty reply
+        boolean refreshReply = (adminReply != null);
         if (adminReply == null) {
             adminReply = existing.getAdminReply();
         }
-        int rows = userFeedbackMapper.updateStatus(id, status, adminReply);
+        int rows = userFeedbackMapper.updateStatus(id, status, adminReply, refreshReply);
         return rows > 0 ? results.success("更新成功", null) : results.error("更新失败");
+    }
+
+    @Override
+    public int countUnread(Long userId) {
+        if (userId == null || userId <= 0) {
+            return 0;
+        }
+        return userFeedbackMapper.countUnreadByUserId(userId);
+    }
+
+    @Override
+    public results markAllRead(Long userId) {
+        if (userId == null || userId <= 0) {
+            return results.error("请先登录");
+        }
+        userFeedbackMapper.markAllReadByUserId(userId);
+        Map<String, Object> data = new HashMap<>();
+        data.put("count", 0);
+        return results.success("已标记为已读", data);
     }
 }

@@ -12,6 +12,7 @@
         <result column="created_at" property="createdAt"/>
         <result column="nickname" property="nickname"/>
         <result column="avatar_url" property="avatarUrl"/>
+        <result column="is_admin" property="isAdmin"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.example.pojo.RoomMessage" useGeneratedKeys="true" keyProperty="id">
@@ -22,7 +23,8 @@
     <select id="listAfter" resultMap="BaseResultMap">
         SELECT msg.id, msg.room_id, msg.user_id, msg.content, msg.msg_type, msg.created_at,
                COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS nickname,
-               u.avatar_url AS avatar_url
+               u.avatar_url AS avatar_url,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS is_admin
         FROM room_messages msg
         LEFT JOIN users u ON msg.user_id = u.id
         WHERE msg.room_id = #{roomId}
@@ -35,7 +37,8 @@
         SELECT * FROM (
             SELECT msg.id, msg.room_id, msg.user_id, msg.content, msg.msg_type, msg.created_at,
                    COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS nickname,
-                   u.avatar_url AS avatar_url
+                   u.avatar_url AS avatar_url,
+                   (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS is_admin
             FROM room_messages msg
             LEFT JOIN users u ON msg.user_id = u.id
             WHERE msg.room_id = #{roomId}

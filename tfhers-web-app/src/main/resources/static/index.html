@@ -218,6 +218,7 @@
                     </button>
                     <button type="button" class="tap-action-btn" id="tapFeedbackBtn">
                         <i class="fas fa-comment-dots"></i><span>问题反馈</span>
+                        <span class="tap-unread-dot" id="feedbackUnreadDot" hidden></span>
                     </button>
                 </div>
                 <div class="tap-footer">
@@ -544,6 +545,9 @@
                             <button type="button" class="profile-home-tab" role="tab" aria-selected="false" data-ph-tab="combos" id="phTabCombos">
                                 连段 <span class="profile-home-tab-count" id="phComboTabCount">0</span>
                             </button>
+                            <button type="button" class="profile-home-tab" role="tab" aria-selected="false" data-ph-tab="tournaments" id="phTabTournaments">
+                                赛事 <span class="profile-home-tab-count" id="phTournamentTabCount">0</span>
+                            </button>
                         </div>
                         <div class="profile-home-panels">
                             <div class="profile-home-panel is-active" id="phPanelArticles" role="tabpanel" aria-labelledby="phTabArticles">
@@ -553,6 +557,11 @@
                             </div>
                             <div class="profile-home-panel" id="phPanelCombos" role="tabpanel" aria-labelledby="phTabCombos" hidden>
                                 <div id="profileCombosList" class="profile-works-list">
+                                    <div class="profile-works-empty">加载中…</div>
+                                </div>
+                            </div>
+                            <div class="profile-home-panel" id="phPanelTournaments" role="tabpanel" aria-labelledby="phTabTournaments" hidden>
+                                <div id="profileTournamentsList" class="profile-works-list">
                                     <div class="profile-works-empty">加载中…</div>
                                 </div>
                             </div>
@@ -915,7 +924,7 @@
             <div class="modal-body feedback-modal-body">
                 <div class="feedback-tabs" role="tablist">
                     <button type="button" class="feedback-tab active" id="feedbackTabSubmit" data-tab="submit">提交反馈</button>
-                    <button type="button" class="feedback-tab" id="feedbackTabMine" data-tab="mine">我的反馈</button>
+                    <button type="button" class="feedback-tab" id="feedbackTabMine" data-tab="mine">我的反馈<span class="feedback-tab-unread-dot" id="feedbackTabMineUnreadDot" hidden></span></button>
                 </div>
 
                 <div id="feedbackSubmitPane" class="feedback-pane">

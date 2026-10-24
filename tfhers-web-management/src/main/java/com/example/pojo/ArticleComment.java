@@ -22,6 +22,8 @@ public class ArticleComment {
     private LocalDateTime createdAt;
     private String authorName;
     private String authorAvatar;
+    /** 展示用：社区 users.role=ADMIN */
+    private Boolean isAdmin;
     /** 被回复用户昵称（楼中楼指向性回复） */
     private String replyToAuthorName;
     /** 被回复用户 ID */
@@ -91,4 +93,7 @@ public class ArticleComment {
 
     public List<ArticleComment> getReplies() { return replies; }
     public void setReplies(List<ArticleComment> replies) { this.replies = replies; }
+
+    public Boolean getIsAdmin() { return isAdmin; }
+    public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
 }

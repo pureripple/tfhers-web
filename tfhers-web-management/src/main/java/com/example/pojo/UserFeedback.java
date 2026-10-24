@@ -15,6 +15,9 @@ public class UserFeedback {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime repliedAt;
+    private LocalDateTime userReadAt;
+    /** computed: admin has reply and user has not read it yet */
+    private Boolean unread;
 
     /** ??????????/???????? */
     private String username;
@@ -63,6 +66,15 @@ public class UserFeedback {
     public LocalDateTime getRepliedAt() { return repliedAt; }
     @JsonProperty("repliedAt")
     public void setRepliedAt(LocalDateTime repliedAt) { this.repliedAt = repliedAt; }
+
+
+    @JsonProperty("user_read_at")
+    public LocalDateTime getUserReadAt() { return userReadAt; }
+    @JsonProperty("userReadAt")
+    public void setUserReadAt(LocalDateTime userReadAt) { this.userReadAt = userReadAt; }
+
+    public Boolean getUnread() { return unread; }
+    public void setUnread(Boolean unread) { this.unread = unread; }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }

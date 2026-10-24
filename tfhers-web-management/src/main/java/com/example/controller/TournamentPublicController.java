@@ -37,6 +37,24 @@ public class TournamentPublicController {
         }
     }
 
+    /** 当前登录用户的参赛履历（须声明在 /{id} 之前） */
+    @GetMapping("/my-history")
+    public results myHistory(HttpServletRequest request) {
+        try {
+            Long userId = (Long) request.getAttribute("userId");
+            if (userId == null) {
+                userId = resolveOptionalUserId(request);
+            }
+            if (userId == null) {
+                return results.error(401, "请先登录");
+            }
+            return results.success("获取成功", tournamentService.listMyHistory(userId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("获取参赛记录失败：" + e.getMessage());
+        }
+    }
+
     @GetMapping("/{id}")
     public results detail(@PathVariable Long id, HttpServletRequest request) {
         try {
@@ -91,6 +109,20 @@ public class TournamentPublicController {
         } catch (Exception e) {
             e.printStackTrace();
             return results.error("取消报名失败：" + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/check-in")
+    public results checkIn(@PathVariable Long id, HttpServletRequest request) {
+        try {
+            Long userId = (Long) request.getAttribute("userId");
+            if (userId == null) {
+                return results.error(401, "请先登录");
+            }
+            return tournamentService.checkIn(id, userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return results.error("签到失败：" + e.getMessage());
         }
     }
 

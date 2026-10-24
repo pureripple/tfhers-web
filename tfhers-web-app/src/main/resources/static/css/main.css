@@ -593,6 +593,7 @@ html.tfhers-authed .app-top-actions[hidden] {
 }
 
 .tap-action-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -6146,6 +6147,7 @@ html.theme-light .settings-toggle-row input[type="checkbox"] {
     border-radius: 8px;
     cursor: pointer;
     font-size: 14px;
+    position: relative;
 }
 .feedback-tab:hover {
     background: var(--bg-tertiary);
@@ -6230,6 +6232,46 @@ html.theme-light .settings-toggle-row input[type="checkbox"] {
     margin-top: 12px;
 }
 
+/* ===== feedback unread red-dot ===== */
+.tap-unread-dot {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff4d4f;
+    box-shadow: 0 0 0 2px var(--bg-secondary, #1a1a1a);
+    pointer-events: none;
+}
+.feedback-tab-unread-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 6px;
+    vertical-align: super;
+    border-radius: 50%;
+    background: #ff4d4f;
+}
+.feedback-tab-unread-dot[hidden],
+.tap-unread-dot[hidden] {
+    display: none !important;
+}
+.feedback-item--unread {
+    border-left: 3px solid #ff4d4f;
+}
+.feedback-item--unread .feedback-item-title::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    vertical-align: middle;
+    border-radius: 50%;
+    background: #ff4d4f;
+}
+
+
 /* tfhers img fail-safe empty covers */
 .pinned-news-thumb--empty {
     display: flex;
@@ -6246,4 +6288,16 @@ html.theme-light .settings-toggle-row input[type="checkbox"] {
 .article-detail-cover-wrap--empty .article-detail-cover-bg--empty {
     position: absolute;
     inset: 0;
+}
+
+
+/* 社区管理员昵称金色高亮（users.role=ADMIN） */
+.user-name--admin {
+    color: #f5c542 !important;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(245, 197, 66, 0.35);
+}
+.profile-page-nickname.user-name--admin,
+.tap-nickname.user-name--admin {
+    color: #f5c542 !important;
 }

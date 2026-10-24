@@ -16,6 +16,7 @@
         <result column="updated_at" property="updatedAt"/>
         <result column="author_name" property="authorName"/>
         <result column="author_avatar" property="authorAvatar"/>
+        <result column="is_admin" property="isAdmin"/>
         <result column="character_name" property="characterName"/>
     </resultMap>
 
@@ -46,7 +47,8 @@
     <select id="findByCharacterIdAndStatusWithAuthor" resultMap="ComboResultMap">
         SELECT c.id, c.character_id, c.title, c.description, c.damage_total,
                c.video_url, c.combo_file_url, c.created_by, c.status, c.created_at, c.updated_at,
-               u.nickname AS author_name, u.avatar_url AS author_avatar
+               u.nickname AS author_name, u.avatar_url AS author_avatar,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS is_admin
         FROM combos c
         LEFT JOIN users u ON c.created_by = u.id
         WHERE c.character_id = #{characterId}

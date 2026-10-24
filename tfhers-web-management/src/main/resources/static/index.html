@@ -554,6 +554,70 @@
         </div>
     </main>
 
+
+    <!-- 创建/编辑赛事 -->
+    <div id="tournamentFormModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="tournamentFormModalTitle">创建比赛</h3>
+                <button class="modal-close" type="button" onclick="closeTournamentFormModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="tournamentForm" onsubmit="return false;">
+                    <input type="hidden" id="tournamentFormId" value="">
+                    <div class="form-group">
+                        <label for="tournamentFormTitle">比赛名称 *</label>
+                        <input type="text" id="tournamentFormTitle" required maxlength="120" placeholder="例如：周末社群杯">
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentFormDescription">比赛规则 / 说明</label>
+                        <textarea id="tournamentFormDescription" rows="5" maxlength="2000"
+                            placeholder="赛制、换人条件、禁止事项等，将展示在社区端「比赛规则」"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentFormMaxSlots">名额</label>
+                        <select id="tournamentFormMaxSlots">
+                            <option value="8">8 人</option>
+                            <option value="16" selected>16 人</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentFormBracketType">赛制</label>
+                        <select id="tournamentFormBracketType">
+                            <option value="double" selected>双败（胜者组+败者组+总决赛重置）</option>
+                            <option value="single">单败</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentFormOpensAt">报名开始时间（可空）</label>
+                        <input type="datetime-local" id="tournamentFormOpensAt">
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentFormClosesAt">报名截止时间（可空；到点自动截止报名）</label>
+                        <input type="datetime-local" id="tournamentFormClosesAt">
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentFormStartsAt">比赛开始时间（可空）</label>
+                        <input type="datetime-local" id="tournamentFormStartsAt">
+                    </div>
+                    <div class="form-group" id="tournamentFormStatusGroup">
+                        <label for="tournamentFormStatus">初始状态</label>
+                        <select id="tournamentFormStatus">
+                            <option value="draft">草稿</option>
+                            <option value="registration" selected>报名中</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeTournamentFormModal()">取消</button>
+                <button class="btn btn-primary" type="button" id="tournamentFormSubmitBtn" onclick="submitTournamentForm()">保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 删除确认模态框 -->
     <div id="deleteModal" class="modal">
         <div class="modal-content">

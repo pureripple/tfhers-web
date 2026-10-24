@@ -14,6 +14,7 @@
         <result column="nickname" property="nickname"/>
         <result column="avatar_url" property="avatarUrl"/>
         <result column="username" property="username"/>
+        <result column="is_admin" property="isAdmin"/>
     </resultMap>
 
     <select id="findByUserId" resultMap="BaseResultMap">
@@ -39,7 +40,8 @@
 
     <select id="listLeaderboard" resultMap="BaseResultMap">
         SELECT r.user_id, r.rating, r.matches_played, r.wins, r.losses, r.created_at, r.updated_at,
-               u.nickname, u.avatar_url, u.username
+               u.nickname, u.avatar_url, u.username,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS is_admin
         FROM user_ratings r
         INNER JOIN users u ON u.id = r.user_id
         WHERE u.status = 1

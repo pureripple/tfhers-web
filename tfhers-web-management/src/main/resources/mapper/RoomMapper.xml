@@ -18,6 +18,7 @@
         <result column="has_password" property="hasPassword"/>
         <result column="host_nickname" property="hostNickname"/>
         <result column="host_avatar_url" property="hostAvatarUrl"/>
+        <result column="host_is_admin" property="hostIsAdmin"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.example.pojo.Room" useGeneratedKeys="true" keyProperty="id">
@@ -55,7 +56,8 @@
                r.member_count, r.created_at, r.updated_at, r.closed_at,
                (r.password_hash IS NOT NULL AND r.password_hash &lt;&gt; '') AS has_password,
                COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS host_nickname,
-               u.avatar_url AS host_avatar_url
+               u.avatar_url AS host_avatar_url,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS host_is_admin
         FROM rooms r
         LEFT JOIN users u ON r.host_user_id = u.id
         WHERE r.id = #{id}
@@ -66,7 +68,8 @@
                r.member_count, r.created_at, r.updated_at, r.closed_at,
                (r.password_hash IS NOT NULL AND r.password_hash &lt;&gt; '') AS has_password,
                COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS host_nickname,
-               u.avatar_url AS host_avatar_url
+               u.avatar_url AS host_avatar_url,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS host_is_admin
         FROM rooms r
         LEFT JOIN users u ON r.host_user_id = u.id
         WHERE r.status IN ('OPEN', 'FULL')
@@ -86,7 +89,8 @@
                r.member_count, r.created_at, r.updated_at, r.closed_at,
                (r.password_hash IS NOT NULL AND r.password_hash &lt;&gt; '') AS has_password,
                COALESCE(NULLIF(TRIM(u.nickname), ''), u.username) AS host_nickname,
-               u.avatar_url AS host_avatar_url
+               u.avatar_url AS host_avatar_url,
+               (CASE WHEN UPPER(COALESCE(u.role, '')) = 'ADMIN' THEN 1 ELSE 0 END) AS host_is_admin
         FROM rooms r
         LEFT JOIN users u ON r.host_user_id = u.id
         WHERE r.host_user_id = #{hostUserId}
@@ -100,7 +104,8 @@
                r.member_count, r.created_at, r.updated_at, r.closed_at,
                (r.password_hash IS NOT NULL AND r.password_hash &lt;&gt; '') AS has_password,
                NULL AS host_nickname,
-               NULL AS host_avatar_url
+               NULL AS host_avatar_url,
+               0 AS host_is_admin
         FROM rooms r
         WHERE r.status = 'CLOSED'
           AND r.closed_at IS NOT NULL

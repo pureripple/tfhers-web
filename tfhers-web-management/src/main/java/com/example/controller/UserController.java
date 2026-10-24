@@ -168,6 +168,8 @@ public class UserController {
             userData.put("steamLevel", user.getSteamLevel());
             userData.put("steamAchievementsCount", user.getSteamAchievementsCount());
             userData.put("steamAchievementsTotal", user.getSteamAchievementsTotal());
+            userData.put("role", user.getRole() != null ? user.getRole() : "USER");
+            userData.put("isAdmin", "ADMIN".equalsIgnoreCase(user.getRole()));
             userData.put("token", token);
             
             response.put("data", userData);

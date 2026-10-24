@@ -85,6 +85,31 @@ const AppState = {
     modalBodyScrollPrevOverflow: ''
 };
 
+/** 是否社区管理员（users.role=ADMIN 或接口 isAdmin/authorIsAdmin） */
+function isAdminUser(obj) {
+    if (!obj) return false;
+    const flag = obj.isAdmin != null ? obj.isAdmin
+        : (obj.authorIsAdmin != null ? obj.authorIsAdmin
+            : (obj.hostIsAdmin != null ? obj.hostIsAdmin
+                : (obj.author_is_admin != null ? obj.author_is_admin
+                    : (obj.host_is_admin != null ? obj.host_is_admin : null))));
+    if (flag === true || flag === 1 || flag === '1') return true;
+    if (flag === false || flag === 0 || flag === '0') return false;
+    // 文章：后台 admin_users 发布
+    if (obj.authorAdminId != null || obj.author_admin_id != null) return true;
+    const role = obj.role || obj.userRole || obj.authorRole;
+    return String(role || '').toUpperCase() === 'ADMIN';
+}
+function adminNameClass(obj) {
+    return isAdminUser(obj) ? ' user-name--admin' : '';
+}
+if (typeof window !== 'undefined') {
+    window.isAdminUser = isAdminUser;
+    window.adminNameClass = adminNameClass;
+}
+
+
+
 // 角色静态数据已废弃，改为从管理端 API 加载真实角色和教程数据
 
 // 模拟文章数据已删除 - 现在只从API获取真实数据
@@ -505,6 +530,7 @@ function showPage(pageId) {
             if (typeof refreshProfilePageFromServer === 'function') refreshProfilePageFromServer();
             if (typeof initProfileHomeTabs === 'function') initProfileHomeTabs();
             if (typeof loadMyPublishedContent === 'function') loadMyPublishedContent();
+            if (typeof loadMyTournamentHistory === 'function') loadMyTournamentHistory();
             break;
         case 'settings':
             if (!AppState.isLoggedIn || !AppState.user || !AppState.user.token) {
@@ -824,7 +850,7 @@ function renderArticleGrid(articles, searchQuery) {
                     <div class="article-card-author">
                         <img src="${avatarUrl}" alt="" class="article-author-avatar" width="40" height="40" loading="lazy" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                         <div class="article-card-author-meta">
-                            <span class="article-author-name">${authorName}</span>
+                            <span class="article-author-name${adminNameClass(article)}">${authorName}</span>
                             ${timeHtml}
                         </div>
                     </div>
@@ -882,7 +908,7 @@ function renderPinnedNews(articles) {
             ${thumbHtml}
             <div class="pinned-news-text">
                 <div class="pinned-news-item-title">${title}</div>
-                <div class="pinned-news-item-meta">${metaLine}</div>
+                <div class="pinned-news-item-meta${adminNameClass(a)}">${metaLine}</div>
             </div>
         </div>`;
     }).join('');
@@ -951,7 +977,7 @@ function renderHotNews(articles) {
             <div class="hot-news-overlay">
                 <img src="${avatar}" alt="" class="hot-news-author-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                 <div class="hot-news-meta">
-                    <div class="hot-news-author">${author} · ${view} 阅读${timePart}</div>
+                    <div class="hot-news-author${adminNameClass(a)}">${author} · ${view} 阅读${timePart}</div>
                     <div class="hot-news-title">${title}</div>
                 </div>
             </div>
@@ -1076,7 +1102,7 @@ async function showCharacter(characterId) {
                                         <div class="user-combo-avatar-wrap">
                                             <img src="${authorAvatar}" alt="" class="user-combo-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                                         </div>
-                                            <span class="user-combo-author-name">${escHtml(authorName)}</span>
+                                            <span class="user-combo-author-name${adminNameClass(combo)}">${escHtml(authorName)}</span>
                                         </div>
                                         <div class="user-combo-headline">${escHtml(headline)}</div>
                                     </div>
@@ -1375,7 +1401,7 @@ async function showArticle(articleId) {
                                     <div class="article-detail-author">
                                         <img src="${authorAvatarUrl}" alt="" class="article-detail-author-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
                                         <div class="article-detail-author-text">
-                                            <div class="article-detail-author-name">${escHtml(authorName)}</div>
+                                            <div class="article-detail-author-name${adminNameClass(article)}">${escHtml(authorName)}</div>
                                             ${timeMetaHtml}
                                         </div>
                                     </div>
@@ -1796,6 +1822,7 @@ function renderRootComment(c) {
     const avatar = (c.authorAvatar || '/images/CSel3_LargePortTianhuo.png');
     const time = c.created_at ? formatDate(c.created_at) : (c.createdAt ? formatDate(c.createdAt) : '');
     const author = escHtml(c.authorName || '用户');
+        const authorAdminCls = adminNameClass(c);
     const contentHtml = formatCommentContentHtml(c.content, escHtml, escAttr);
     const replies = Array.isArray(c.replies) ? c.replies : [];
     const rootId = c.id;
@@ -1819,7 +1846,7 @@ function renderRootComment(c) {
                 <img src="${avatar}" alt="" class="comment-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
             </div>
             <div class="comment-body">
-                <span class="comment-author">${author}</span>
+                <span class="comment-author${authorAdminCls}">${author}</span>
                 <span class="comment-time">${time}</span>
                 <p class="comment-content">${contentHtml}</p>
                 <div class="comment-actions">
@@ -1835,6 +1862,7 @@ function renderReplyComment(r, rootId, escHtml, escAttr) {
     const avatar = (r.authorAvatar || '/images/CSel3_LargePortTianhuo.png');
     const time = r.created_at ? formatDate(r.created_at) : (r.createdAt ? formatDate(r.createdAt) : '');
     const author = escHtml(r.authorName || '用户');
+        const authorAdminCls = adminNameClass(r);
     const contentHtml = formatCommentContentHtml(r.content, escHtml, escAttr);
     const parentId = r.parentId != null ? r.parentId : r.parent_id;
     const replyToName = r.replyToAuthorName || r.reply_to_author_name || '';
@@ -1849,7 +1877,7 @@ function renderReplyComment(r, rootId, escHtml, escAttr) {
                 <img src="${avatar}" alt="" class="comment-avatar" onerror="this.onerror=null;window.__tfhersImgFail&&__tfhersImgFail(this,'/images/CSel3_LargePortTianhuo.png','fallback')">
             </div>
             <div class="comment-body">
-                <span class="comment-author">${author}</span>
+                <span class="comment-author${authorAdminCls}">${author}</span>
                 ${directedHtml}
                 <span class="comment-time">${time}</span>
                 <p class="comment-content">${contentHtml}</p>
@@ -2192,6 +2220,9 @@ function apiErrorMessage(result, response, fallback) {
 /** 登录成功后若首屏未加载过内容，则补一次初始化 */
 async function bootstrapAppAfterAuth() {
     applyAuthEntryGate();
+    if (typeof refreshFeedbackUnreadBadge === 'function') {
+        refreshFeedbackUnreadBadge().catch(() => {});
+    }
     if (!AppState._contentBootstrapped) {
         await loadCharacters({ silent: true });
         await loadArticles({ silent: true });
@@ -2408,11 +2439,14 @@ async function syncUserSteamFromServer() {
         const j = await r.json();
         if (j.code !== 200 || !j.data) return;
         const d = j.data;
-        ['username', 'nickname', 'email', 'phone', 'avatarUrl', 'signature'].forEach((k) => {
+        ['username', 'nickname', 'email', 'phone', 'avatarUrl', 'signature', 'role', 'isAdmin'].forEach((k) => {
             if (d[k] !== undefined && d[k] !== null) {
                 AppState.user[k] = d[k];
             }
         });
+        if (AppState.user && AppState.user.isAdmin == null && AppState.user.role) {
+            AppState.user.isAdmin = String(AppState.user.role).toUpperCase() === 'ADMIN';
+        }
         if ('steamId' in d) AppState.user.steamId = d.steamId;
         if ('steamPersonaName' in d) AppState.user.steamPersonaName = d.steamPersonaName;
         if ('steamAvatarUrl' in d) AppState.user.steamAvatarUrl = d.steamAvatarUrl;
@@ -2441,6 +2475,7 @@ async function syncUserSteamFromServer() {
         syncTopUserAvatar(AppState.user && AppState.user.avatarUrl);
         const userName = document.getElementById('userName');
         if (userName) userName.textContent = AppState.user.nickname || AppState.user.username;
+        if (userName) userName.classList.toggle('user-name--admin', isAdminUser(AppState.user));
         const userSignature = document.getElementById('userSignature');
         if (userSignature) userSignature.textContent = AppState.user.signature || '这个人很懒，还没有个性签名';
 
@@ -2760,6 +2795,9 @@ async function logout() {
     AppState.isLoggedIn = false;
     AppState.user = null;
     localStorage.removeItem('user');
+    if (typeof setFeedbackUnreadDotsVisible === 'function') {
+        setFeedbackUnreadDotsVisible(false, 0);
+    }
     updateUserInterface();
     if (typeof showAuthEntryActions === 'function') showAuthEntryActions();
     
@@ -2780,12 +2818,21 @@ function checkLoginStatus() {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
         AppState.user = JSON.parse(savedUser);
+                if (AppState.user && AppState.user.isAdmin == null && AppState.user.role) {
+                    AppState.user.isAdmin = String(AppState.user.role).toUpperCase() === 'ADMIN';
+                }
         AppState.isLoggedIn = true;
         updateUserInterface();
+        if (typeof refreshFeedbackUnreadBadge === 'function') {
+            refreshFeedbackUnreadBadge().catch(() => {});
+        }
     } else {
         AppState.isLoggedIn = false;
         AppState.user = null;
         updateUserInterface();
+        if (typeof setFeedbackUnreadDotsVisible === 'function') {
+            setFeedbackUnreadDotsVisible(false, 0);
+        }
     }
 }
 
@@ -2977,7 +3024,7 @@ async function refreshProfileIntoSettings() {
         const result = await r.json();
         if (result.code === 200 && result.data) {
             const d = result.data;
-            ['nickname', 'email', 'phone', 'signature', 'avatarUrl', 'username', 'gender', 'birthday', 'coverUrl'].forEach(k => {
+            ['nickname', 'email', 'phone', 'signature', 'avatarUrl', 'username', 'gender', 'birthday', 'coverUrl', 'role', 'isAdmin'].forEach(k => {
                 if (k in d && d[k] != null) AppState.user[k] = d[k];
             });
             localStorage.setItem('user', JSON.stringify(AppState.user));
@@ -3973,6 +4020,7 @@ function updateUserInterface() {
         const userSignature = document.getElementById('userSignature');
         
         if (userName) userName.textContent = AppState.user.nickname || AppState.user.username;
+    if (userName) userName.classList.toggle('user-name--admin', isAdminUser(AppState.user));
         if (userSignature) userSignature.textContent = AppState.user.signature || '这个人很懒，还没有个性签名';
 
         if (typeof refreshMyRatingBadge === 'function') refreshMyRatingBadge();
@@ -4091,6 +4139,7 @@ function updateTopAccountPanel() {
     const score = document.getElementById('tapScore');
     const rank = document.getElementById('tapRank');
     if (nick) nick.textContent = u.nickname || u.username || '—';
+    if (nick) nick.classList.toggle('user-name--admin', isAdminUser(u));
     if (uname) uname.textContent = '@' + (u.username || '—');
     const ratingVal = (u.rating != null) ? u.rating : null;
     const letter = (function () {
@@ -4127,6 +4176,9 @@ function openTopAccountPanel() {
     if (!wrap || !panel) return;
     closeTopPostMenu();
     updateTopAccountPanel();
+    if (typeof refreshFeedbackUnreadBadge === 'function') {
+        refreshFeedbackUnreadBadge().catch(() => {});
+    }
     if (typeof refreshMyRatingBadge === 'function') {
         refreshMyRatingBadge().then(() => updateTopAccountPanel()).catch(() => {});
     }
@@ -4234,7 +4286,7 @@ function initProfileHomeTabs() {
 }
 
 function switchProfileHomeTab(kind) {
-    const want = kind === 'combos' ? 'combos' : 'articles';
+    const want = (kind === 'combos' || kind === 'tournaments') ? kind : 'articles';
     document.querySelectorAll('.profile-home-tabs [data-ph-tab]').forEach((tab) => {
         const on = tab.getAttribute('data-ph-tab') === want;
         tab.classList.toggle('is-active', on);
@@ -4242,17 +4294,18 @@ function switchProfileHomeTab(kind) {
     });
     const artPanel = document.getElementById('phPanelArticles');
     const comboPanel = document.getElementById('phPanelCombos');
-    if (artPanel) {
-        const show = want === 'articles';
-        artPanel.classList.toggle('is-active', show);
-        if (show) artPanel.removeAttribute('hidden');
-        else artPanel.setAttribute('hidden', '');
-    }
-    if (comboPanel) {
-        const show = want === 'combos';
-        comboPanel.classList.toggle('is-active', show);
-        if (show) comboPanel.removeAttribute('hidden');
-        else comboPanel.setAttribute('hidden', '');
+    const tourPanel = document.getElementById('phPanelTournaments');
+    const sync = (el, show) => {
+        if (!el) return;
+        el.classList.toggle('is-active', show);
+        if (show) el.removeAttribute('hidden');
+        else el.setAttribute('hidden', '');
+    };
+    sync(artPanel, want === 'articles');
+    sync(comboPanel, want === 'combos');
+    sync(tourPanel, want === 'tournaments');
+    if (want === 'tournaments' && typeof loadMyTournamentHistory === 'function') {
+        loadMyTournamentHistory();
     }
 }
 
@@ -4333,6 +4386,7 @@ function fillProfilePage(user) {
     }
     if (avatar) avatar.src = u.avatarUrl || '/images/CSel3_LargePortTianhuo.png';
     if (nick) nick.textContent = u.nickname || u.username || '昵称';
+    if (nick) nick.classList.toggle('user-name--admin', isAdminUser(u));
     if (uname) uname.textContent = '@' + (u.username || 'user');
     if (bio) bio.textContent = (u.signature && String(u.signature).trim())
         ? u.signature
@@ -5501,6 +5555,56 @@ function initAppearanceAndNotifyPrefs() {
 
 
 
+
+function setFeedbackUnreadDotsVisible(visible, count) {
+    const n = Number(count) || 0;
+    const show = !!visible && n > 0;
+    const entryDot = document.getElementById('feedbackUnreadDot');
+    const tabDot = document.getElementById('feedbackTabMineUnreadDot');
+    if (entryDot) {
+        entryDot.hidden = !show;
+        entryDot.title = show ? ('有 ' + n + ' 条未读回复') : '';
+    }
+    if (tabDot) {
+        tabDot.hidden = !show;
+        tabDot.title = show ? ('有 ' + n + ' 条未读回复') : '';
+    }
+}
+
+async function refreshFeedbackUnreadBadge() {
+    if (!AppState.isLoggedIn || !AppState.user || !AppState.user.token) {
+        setFeedbackUnreadDotsVisible(false, 0);
+        return 0;
+    }
+    try {
+        const response = await fetch(`${AppState.managementApiUrl}/api/feedback/unread-count`, {
+            headers: { 'Authorization': `Bearer ${AppState.user.token}` }
+        });
+        const data = await response.json();
+        if (data.code === 200 && data.data) {
+            const count = Number(data.data.count) || 0;
+            setFeedbackUnreadDotsVisible(count > 0, count);
+            return count;
+        }
+    } catch (e) {
+        console.warn('refreshFeedbackUnreadBadge failed', e);
+    }
+    return 0;
+}
+
+async function markFeedbackRead() {
+    if (!AppState.isLoggedIn || !AppState.user || !AppState.user.token) return;
+    try {
+        await fetch(`${AppState.managementApiUrl}/api/feedback/mark-read`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${AppState.user.token}` }
+        });
+    } catch (e) {
+        console.warn('markFeedbackRead failed', e);
+    }
+    await refreshFeedbackUnreadBadge();
+}
+
 // ================== 问题反馈 ==================
 const FeedbackState = {
     page: 1,
@@ -5525,6 +5629,7 @@ function openFeedbackModal() {
     modal.style.display = 'block';
     modal.setAttribute('aria-hidden', 'false');
     if (typeof lockBodyScroll === 'function') lockBodyScroll();
+    if (typeof refreshFeedbackUnreadBadge === 'function') refreshFeedbackUnreadBadge();
 }
 
 function closeFeedbackModal() {
@@ -5548,7 +5653,9 @@ function switchFeedbackTab(tab) {
     if (minePane) minePane.hidden = FeedbackState.tab !== 'mine';
     if (FeedbackState.tab === 'mine') {
         FeedbackState.page = 1;
-        loadMyFeedbackList();
+        Promise.resolve(loadMyFeedbackList()).then(() => {
+            if (typeof markFeedbackRead === 'function') markFeedbackRead();
+        }).catch(() => {});
     }
 }
 
@@ -5661,7 +5768,8 @@ async function loadMyFeedbackList() {
                 } else if (status === 0 || status === 1) {
                     replyHtml = '<div class="feedback-item-reply"><div class="feedback-item-reply-label">处理结果</div><div class="feedback-item-content" style="color:var(--text-secondary);">暂未回复，请耐心等待</div></div>';
                 }
-                return `<div class="feedback-item">
+                const unread = item.unread === true || item.unread === 1 || item.unread === 'true';
+                return `<div class="feedback-item${unread ? ' feedback-item--unread' : ''}">
                     <div class="feedback-item-head">
                         <div class="feedback-item-title">${escapeFeedbackHtml(item.title || '')}</div>
                         <span class="feedback-status status-${status}">${feedbackStatusText(status)}</span>

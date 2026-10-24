@@ -16,4 +16,10 @@ public interface UserFeedbackService {
 
     /** 管理端更新状态与回复 */
     results updateStatus(Long id, Integer status, String adminReply);
+
+    /** unread reply count for current user */
+    int countUnread(Long userId);
+
+    /** mark current user's replied feedback as read */
+    results markAllRead(Long userId);
 }

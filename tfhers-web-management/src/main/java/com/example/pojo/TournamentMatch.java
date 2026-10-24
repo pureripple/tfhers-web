@@ -5,6 +5,13 @@ import java.time.LocalDateTime;
 public class TournamentMatch {
     private Long id;
     private Long tournamentId;
+    /** single | winners | losers | grand_final */
+    private String bracketSide;
+    private Long loserNextMatchId;
+    private Integer loserNextSlot;
+    /** 1 = grand final reset match (GF2) */
+    private Integer isResetMatch;
+
     private Integer round;
     private Integer matchIndex;
     private Long player1UserId;
@@ -22,6 +29,10 @@ public class TournamentMatch {
 
     private String player1Nickname;
     private String player1AvatarUrl;
+    /** 展示用：社区 users.role=ADMIN */
+    private Boolean player1IsAdmin;
+    private Boolean player2IsAdmin;
+    private Boolean winnerIsAdmin;
     private String player2Nickname;
     private String player2AvatarUrl;
     private String winnerNickname;
@@ -31,6 +42,16 @@ public class TournamentMatch {
     public void setId(Long id) { this.id = id; }
     public Long getTournamentId() { return tournamentId; }
     public void setTournamentId(Long tournamentId) { this.tournamentId = tournamentId; }
+
+    public String getBracketSide() { return bracketSide; }
+    public void setBracketSide(String bracketSide) { this.bracketSide = bracketSide; }
+    public Long getLoserNextMatchId() { return loserNextMatchId; }
+    public void setLoserNextMatchId(Long loserNextMatchId) { this.loserNextMatchId = loserNextMatchId; }
+    public Integer getLoserNextSlot() { return loserNextSlot; }
+    public void setLoserNextSlot(Integer loserNextSlot) { this.loserNextSlot = loserNextSlot; }
+    public Integer getIsResetMatch() { return isResetMatch; }
+    public void setIsResetMatch(Integer isResetMatch) { this.isResetMatch = isResetMatch; }
+
     public Integer getRound() { return round; }
     public void setRound(Integer round) { this.round = round; }
     public Integer getMatchIndex() { return matchIndex; }
@@ -70,4 +91,11 @@ public class TournamentMatch {
 
     public Integer getRatingApplied() { return ratingApplied; }
     public void setRatingApplied(Integer ratingApplied) { this.ratingApplied = ratingApplied; }
+
+    public Boolean getPlayer1IsAdmin() { return player1IsAdmin; }
+    public void setPlayer1IsAdmin(Boolean player1IsAdmin) { this.player1IsAdmin = player1IsAdmin; }
+    public Boolean getPlayer2IsAdmin() { return player2IsAdmin; }
+    public void setPlayer2IsAdmin(Boolean player2IsAdmin) { this.player2IsAdmin = player2IsAdmin; }
+    public Boolean getWinnerIsAdmin() { return winnerIsAdmin; }
+    public void setWinnerIsAdmin(Boolean winnerIsAdmin) { this.winnerIsAdmin = winnerIsAdmin; }
 }

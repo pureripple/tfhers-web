@@ -16,6 +16,8 @@ public class RoomMember {
     private String avatarUrl;
     private Integer rating;
     private String tier;
+    /** 展示用：社区 users.role=ADMIN */
+    private Boolean isAdmin;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -39,4 +41,7 @@ public class RoomMember {
     public void setRating(Integer rating) { this.rating = rating; }
     public String getTier() { return tier; }
     public void setTier(String tier) { this.tier = tier; }
+
+    public Boolean getIsAdmin() { return isAdmin; }
+    public void setIsAdmin(Boolean isAdmin) { this.isAdmin = isAdmin; }
 }

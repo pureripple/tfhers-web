@@ -511,7 +511,7 @@
       return (
         '<div class="room-member-chip">' +
           avatarImg(m.avatarUrl) +
-          '<span class="room-member-name">' + esc(name) + ' ' + role + '</span>' +
+          '<span class="room-member-name' + ((typeof adminNameClass === 'function' ? adminNameClass(m) : '')) + '">' + esc(name) + ' ' + role + '</span>' +
           '<div class="room-member-rating">' +
             '<span class="room-member-tier" title="段位">' + esc(tier) + '</span>' +
             '<span class="room-member-score" title="积分">' + rating + '</span>' +
@@ -553,6 +553,7 @@
     }
 
     const hostName = room.hostNickname || ('用户' + (room.hostUserId || ''));
+    const hostAdminCls = (typeof adminNameClass === 'function') ? adminNameClass({ isAdmin: room.hostIsAdmin, hostIsAdmin: room.hostIsAdmin }) : '';
     const cnt = members.length;
     const max = room.maxPlayers || 4;
     const listSt = roomListStatus(room, cnt, max);
@@ -598,7 +599,7 @@
                 '<span class="room-status ' + listSt + '">' + roomStatusLabel(listSt) + '</span>' +
                 '<span class="room-info-count">' + cnt + ' / ' + max + '</span>' +
               '</div>' +
-              '<div class="room-info-row"><span class="room-info-label">房主</span><span class="room-info-value">' + esc(hostName) + '</span></div>' +
+              '<div class="room-info-row"><span class="room-info-label">房主</span><span class="room-info-value' + hostAdminCls + '">' + esc(hostName) + '</span></div>' +
               lockHint +
               pwdLine +
               '<p class="room-info-tip">' + esc(tip) + '</p>' +
@@ -682,7 +683,7 @@
       div.innerHTML =
         avatarImg(m.avatarUrl, 'room-chat-avatar') +
         '<div class="room-chat-bubble">' +
-          '<div class="room-chat-meta">' + esc(name) + (time ? ' · ' + esc(time) : '') + '</div>' +
+          '<div class="room-chat-meta' + ((typeof adminNameClass === 'function' ? adminNameClass(m) : '')) + '">' + esc(name) + (time ? ' · ' + esc(time) : '') + '</div>' +
           bodyHtml +
         '</div>';
       box.appendChild(div);
