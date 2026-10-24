@@ -904,6 +904,16 @@ html.tfhers-authed.sidebar-collapsed .app-sidebar {
     padding-right: 0;
 }
 
+/* 赛事页贴左铺满主内容区，避免居中导致右侧被裁切 */
+#tournaments.page {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    box-sizing: border-box;
+}
+
 .page-header {
     text-align: center;
     margin-bottom: 60px;

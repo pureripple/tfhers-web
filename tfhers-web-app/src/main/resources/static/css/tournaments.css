@@ -1,9 +1,11 @@
 ﻿/* 比赛页：左右分栏；卡片实色对齐教程角色卡 */
 
 .tournaments-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 28px 20px 56px;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 20px 16px 48px 12px;
+  box-sizing: border-box;
 }
 
 .tournaments-page-header {
@@ -12,9 +14,10 @@
 
 .tournaments-layout {
   display: grid;
-  grid-template-columns: minmax(260px, 340px) 1fr;
-  gap: 18px;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 14px;
   align-items: start;
+  width: 100%;
 }
 
 .tournament-list {
@@ -127,11 +130,15 @@
 .tournament-detail {
   display: block;
   min-height: 280px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
-  padding: 20px 22px 26px;
+  padding: 20px 18px 26px 16px;
   box-shadow: 0 12px 32px var(--shadow-hover);
+  box-sizing: border-box;
 }
 
 .tournament-detail.active { display: block; }
@@ -211,7 +218,8 @@
   overflow-x: auto;
   padding-bottom: 12px;
   padding-left: 0;
-  margin-left: -6px;
+  margin-left: 0;
+  max-width: 100%;
 }
 
 .bracket-board {
@@ -345,7 +353,7 @@
 
 @media (max-width: 860px) {
   .tournaments-page {
-    padding: 16px 12px 48px;
+    padding: 16px 12px 48px 8px;
   }
   .tournaments-layout {
     grid-template-columns: 1fr;
