@@ -111,6 +111,7 @@ jobs:
           PORT="${PORT:-22}"
           BACKEND=/opt/tfhers/backend
           FRONTEND=/opt/tfhers/frontend/www
+          FRONTEND_VUE=/opt/tfhers/frontend/www-vue
           NGINX_STAGING=/opt/tfhers/deploy/nginx
           ADMIN_STATIC=tfhers-web-management/src/main/resources/static
           VUE_DIST=frontend/dist
@@ -123,13 +124,18 @@ jobs:
             "${RSYNC[@]}" deploy/nginx/ "$USER@$HOST:$NGINX_STAGING/"
           fi
 
-          # Vue SPA owns the public site root. Do NOT rsync legacy app static here
-          # (would overwrite dist). Repo legacy dirs under tfhers-web-app are left intact.
+          # Live site root stays legacy static at $FRONTEND until Vue restyle is ready.
+          # Vue builds land in $FRONTEND_VUE (nginx still points at legacy www).
           if [ "$DO_VUE" = "true" ] && [ -d "$VUE_DIST" ]; then
-            "${SSH[@]}" "mkdir -p $FRONTEND"
-            "${RSYNC[@]}" --delete "$VUE_DIST"/ "$USER@$HOST:$FRONTEND/"
-          elif [ "$DO_FRONT_LEGACY" = "true" ]; then
-            echo "Skip legacy tfhers-web-app static sync: Vue dist is the primary site at $FRONTEND"
+            "${SSH[@]}" "mkdir -p $FRONTEND_VUE"
+            "${RSYNC[@]}" --delete "$VUE_DIST"/ "$USER@$HOST:$FRONTEND_VUE/"
+          fi
+          if [ "$DO_FRONT_LEGACY" = "true" ]; then
+            LEGACY_FRONT=tfhers-web-app/src/main/resources/static
+            if [ -d "$LEGACY_FRONT" ]; then
+              "${SSH[@]}" "mkdir -p $FRONTEND"
+              "${RSYNC[@]}" --delete "$LEGACY_FRONT"/ "$USER@$HOST:$FRONTEND/"
+            fi
           fi
 
           # Legacy admin static kept on disk for rollback; SPA /admin is served from Vue root
