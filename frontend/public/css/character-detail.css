@@ -1,0 +1,434 @@
+/* 角色教程页：左栏（信息+背景+出招表）与右栏（玩家连段）分栏，各自滚动 */
+
+.character-detail.character-detail--tutorial-dark {
+    --ctd-bg: var(--bg-primary, #0a0a0a);
+    --ctd-card: var(--bg-secondary, #1a1a1a);
+    --ctd-border: var(--border-color, #333333);
+    --ctd-text: var(--text-primary, #ffffff);
+    --ctd-muted: var(--text-secondary, #b3b3b3);
+    --ctd-accent: var(--accent-primary, #ff6b6b);
+    color: var(--ctd-text);
+}
+
+.character-tutorial-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: stretch;
+    min-height: 0;
+}
+
+.character-tutorial-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+.character-tutorial-pane {
+    min-height: 0;
+    max-height: min(76vh, 860px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--ctd-border, #1a1f28);
+    border-radius: 14px;
+    padding: 14px 14px 18px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+.character-tutorial-pane--left {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.character-dark-card {
+    background: var(--ctd-card, #0e1015);
+    border: 1px solid var(--ctd-border, #1a1f28);
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 12px 32px var(--shadow-hover, rgba(0, 0, 0, 0.3));
+}
+
+.character-dark-card .dark-card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ctd-accent, #ff6b6b);
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--ctd-border, #2a3142);
+}
+
+.character-dark-card .dark-card-body {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--ctd-muted, #c4c7ce);
+    margin: 0;
+}
+
+/* 第一张卡片：大头像 | 中文名/英文名/难度 | 右侧介绍 */
+.character-card-bio .character-bio-row {
+    display: grid;
+    grid-template-columns: auto 1fr 1.2fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.character-bio-avatar {
+    flex-shrink: 0;
+}
+
+.character-detail--tutorial-dark .btn-outline {
+    border-color: var(--accent-primary, #ff6b6b);
+    color: var(--accent-primary, #ff6b6b);
+    background: transparent;
+}
+
+.character-detail--tutorial-dark .btn-outline:hover {
+    background: rgba(255, 107, 107, 0.12);
+    color: #ff8787;
+}
+
+.character-bio-avatar img {
+    width: 168px;
+    height: 168px;
+    border-radius: 20px;
+    object-fit: cover;
+    border: 2px solid var(--ctd-border, #1a1f28);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+    display: block;
+    background: var(--bg-primary, #0a0a0a);
+}
+
+.character-bio-meta {
+    min-width: 0;
+}
+
+.character-name-zh {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--ctd-text, #e8eaed);
+    margin: 0 0 8px;
+    line-height: 1.25;
+}
+
+.character-name-en {
+    font-size: 1.05rem;
+    color: var(--ctd-muted, #9aa0a6);
+    margin: 0 0 10px;
+    font-weight: 500;
+}
+
+.character-difficulty-line {
+    font-size: 0.9rem;
+    color: var(--ctd-accent, #ff6b6b);
+    margin: 0;
+}
+
+.character-bio-intro {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: var(--ctd-muted, #c4c7ce);
+    border-left: 3px solid var(--ctd-border, #2a3142);
+    padding-left: 16px;
+    min-height: 60px;
+}
+
+.character-bio-intro p {
+    margin: 0;
+}
+
+/* 出招表：与背景故事同款 .character-dark-card，位于左栏底部同列滚动 */
+.character-moves-sidebar {
+    position: static;
+    flex-shrink: 0;
+}
+
+/* 右栏「玩家连段」标题（左栏出招表已改用 .dark-card-title） */
+.character-combos-pane .moves-sidebar-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ctd-accent, #ff6b6b);
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--ctd-border, #2a3142);
+}
+
+/* 出招表大图：圆角框高度随图片比例撑开，横宽 100%、竖向完整显示（过长时在左栏内滚动） */
+.character-moves-sidebar .move-list-image-wrap {
+    margin: 0 0 20px;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--ctd-border, #2a3142);
+    background: #0a0a0a;
+    line-height: 0;
+}
+
+.character-moves-sidebar .move-list-image {
+    width: 100%;
+    height: auto;
+    max-width: none;
+    display: block;
+    border: none;
+    border-radius: 0;
+}
+
+.character-moves-sidebar .moves-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.character-moves-sidebar .move-item {
+    padding: 14px 16px;
+    background: var(--bg-tertiary, #2a2a2a);
+    border-radius: 10px;
+    border: 1px solid var(--ctd-border, #1a1f28);
+    border-left: 3px solid var(--ctd-accent, #ff6b6b);
+}
+
+.character-moves-sidebar .move-name {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--ctd-text, #e8eaed);
+    margin: 0 0 6px;
+}
+
+.character-moves-sidebar .move-input {
+    font-size: 0.88rem;
+    color: var(--text-secondary, #b3b3b3);
+    font-family: ui-monospace, monospace;
+    margin: 0 0 6px;
+}
+
+.character-moves-sidebar .move-desc {
+    font-size: 0.9rem;
+    color: var(--ctd-muted, #9aa0a6);
+    margin: 0;
+    line-height: 1.55;
+}
+
+.character-moves-sidebar .moves-empty {
+    font-size: 0.9rem;
+    color: var(--ctd-muted, #9aa0a6);
+    margin: 0;
+}
+
+.character-combos-pane .combo-list.user-combo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.character-combos-empty {
+    font-size: 0.9rem;
+    color: var(--ctd-muted, #9aa0a6);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* 官方教程 / 玩家连段卡片内元素 */
+.character-dark-card .section-subtitle-dark {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ctd-text, #e8eaed);
+    margin: 20px 0 12px;
+}
+
+.character-dark-card .section-subtitle-dark:first-of-type {
+    margin-top: 0;
+}
+
+.character-dark-card .btn {
+    margin-top: 8px;
+}
+
+.character-dark-card .combo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.character-dark-card .combo-item {
+    background: var(--bg-tertiary, #2a2a2a);
+    border: 1px solid var(--ctd-border, #1a1f28);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.character-dark-card .combo-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ctd-text, #e8eaed);
+    margin: 0 0 8px;
+}
+
+.character-dark-card .combo-desc {
+    font-size: 0.88rem;
+    color: var(--ctd-muted, #9aa0a6);
+    margin: 0 0 10px;
+    line-height: 1.55;
+}
+
+/* 玩家连段：每条独立圆角框，与教程深色卡（.character-dark-card）视觉一致 */
+.character-detail--tutorial-dark .user-combo-item {
+    background: var(--ctd-card, #0e1015);
+    border: 1px solid var(--ctd-border, #1a1f28);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 12px 32px var(--shadow-hover, rgba(0, 0, 0, 0.3));
+    box-sizing: border-box;
+}
+
+.character-detail--tutorial-dark .user-combo-main {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+}
+
+.character-detail--tutorial-dark .user-combo-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.character-detail--tutorial-dark .user-combo-avatar-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid var(--ctd-border, #1a1f28);
+}
+
+.character-detail--tutorial-dark .user-combo-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.character-detail--tutorial-dark .user-combo-author-name {
+    color: var(--ctd-muted, #c4c7ce);
+    font-size: 0.95rem;
+    line-height: 1.25;
+}
+
+.character-detail--tutorial-dark .user-combo-headline {
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ctd-text, #e8eaed);
+    margin-left: 0;
+    text-align: left;
+    flex: 0 1 auto;
+    height: 36px; /* 对齐头像高度，避免出现上下错位 */
+    display: flex;
+    align-items: center;
+}
+
+.character-detail--tutorial-dark .user-combo-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.character-detail--tutorial-dark .user-combo-download-link {
+    font-size: 0.82rem;
+    color: var(--ctd-muted, #9aa0a6);
+    text-decoration: none;
+}
+
+.character-detail--tutorial-dark .user-combo-download-link:hover {
+    color: var(--ctd-accent, #ff6b6b);
+}
+
+.character-detail--tutorial-dark .user-combo-download-link--disabled {
+    opacity: 0.65;
+    cursor: default;
+}
+
+.character-detail--tutorial-dark .user-combo-watch-btn {
+    margin-top: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.character-detail--tutorial-dark .user-combo-watch-btn--disabled {
+    font-size: 0.82rem;
+    color: var(--ctd-muted, #9aa0a6);
+    opacity: 0.7;
+}
+
+.character-detail--tutorial-dark .user-combo-text-action {
+    font-size: 0.82rem;
+    color: var(--ctd-muted, #9aa0a6);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.character-detail--tutorial-dark .user-combo-text-action:hover {
+    color: var(--ctd-accent, #ff6b6b);
+}
+
+@media screen and (max-width: 960px) {
+    .character-tutorial-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .character-tutorial-pane {
+        max-height: min(52vh, 560px);
+    }
+
+    .character-card-bio .character-bio-row {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .character-bio-avatar img {
+        margin: 0 auto;
+    }
+
+    .character-bio-intro {
+        border-left: none;
+        padding-left: 0;
+        text-align: left;
+    }
+
+    .character-detail--tutorial-dark .user-combo-main {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .character-detail--tutorial-dark .user-combo-headline {
+        margin-left: 0;
+        text-align: left;
+        height: auto;
+        display: block;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .character-bio-avatar img {
+        width: 120px;
+        height: 120px;
+    }
+
+    .character-name-zh {
+        font-size: 1.25rem;
+    }
+}
