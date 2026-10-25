@@ -122,6 +122,8 @@ jobs:
           if [ -d deploy/nginx ]; then
             "${SSH[@]}" "mkdir -p $NGINX_STAGING"
             "${RSYNC[@]}" deploy/nginx/ "$USER@$HOST:$NGINX_STAGING/"
+            # Never leave a stale .auto_install from older deploys (would overwrite live legacy conf).
+            "${SSH[@]}" "rm -f $NGINX_STAGING/.auto_install"
           fi
 
           # Live site root stays legacy static at $FRONTEND until Vue restyle is ready.
