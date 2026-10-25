@@ -17,6 +17,7 @@ export default defineConfig({
       // management (8081) — more specific prefixes first
       '/api/admin': { target: 'http://127.0.0.1:8081', changeOrigin: true },
       '/api/user-management': { target: 'http://127.0.0.1:8081', changeOrigin: true },
+      '/api/user': { target: 'http://127.0.0.1:8081', changeOrigin: true },
       '/api/profile': { target: 'http://127.0.0.1:8081', changeOrigin: true },
       // articles CRUD/pin live on management; app 8080 only proxies a subset
       '/api/articles': { target: 'http://127.0.0.1:8081', changeOrigin: true },

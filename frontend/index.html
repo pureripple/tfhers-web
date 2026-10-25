@@ -14,6 +14,32 @@
     <link href="/css/rankings.css" rel="stylesheet" />
     <link href="/css/rooms.css" rel="stylesheet" />
     <link href="/css/ai-chat.css" rel="stylesheet" />
+    <script>
+      /* Early paint: only mark authed when stored user has a token (Vue API needs it). */
+      (function () {
+        try {
+          document.title = '蹄斗族群助手';
+          var raw = localStorage.getItem('user');
+          if (!raw) return;
+          var u = JSON.parse(raw);
+          if (u && u.token) {
+            document.documentElement.classList.add('tfhers-authed');
+          }
+          if (localStorage.getItem('tfhers_sidebar_collapsed') === '1') {
+            document.documentElement.classList.add('sidebar-collapsed');
+          }
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('tfhers-theme') === 'light') {
+            document.documentElement.classList.add('theme-light');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

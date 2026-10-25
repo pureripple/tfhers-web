@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { fetchAdminUserInfo, loginAdmin, loginUser, logoutAdminRemote } from '@/api/auth'
+import { fetchAdminUserInfo, loginAdmin, loginUser, logoutAdminRemote, registerUser } from '@/api/auth'
 import type { AdminUserInfo, UserInfo } from '@/api/types'
 
 const USER_KEY = 'user'
@@ -20,17 +20,33 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   const user = ref<UserInfo | null>(readStoredUser())
 
   const token = computed(() => user.value?.token || null)
+  /** Vue API calls need a token; shell chrome follows the same rule. */
   const isLoggedIn = computed(() => Boolean(token.value))
 
   function hydrate() {
     user.value = readStoredUser()
   }
 
-  async function login(username: string, password: string) {
-    const data = await loginUser(username, password)
+  function persist(data: UserInfo) {
     user.value = data
     localStorage.setItem(USER_KEY, JSON.stringify(data))
+  }
+
+  async function login(username: string, password: string) {
+    const data = await loginUser(username, password)
+    persist(data)
     return data
+  }
+
+  /** Register then auto-login (legacy behavior). */
+  async function register(payload: {
+    username: string
+    nickname: string
+    password: string
+    email?: string
+  }) {
+    await registerUser(payload)
+    return login(payload.username, payload.password)
   }
 
   function logout() {
@@ -38,7 +54,7 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     localStorage.removeItem(USER_KEY)
   }
 
-  return { user, token, isLoggedIn, hydrate, login, logout }
+  return { user, token, isLoggedIn, hydrate, login, register, logout }
 })
 
 export const useAdminAuthStore = defineStore('adminAuth', () => {

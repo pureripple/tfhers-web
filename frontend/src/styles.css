@@ -11,7 +11,6 @@ html, body, #app {
 .main-content > .page-ai-chat,
 .main-content .page,
 .main-content .admin-page,
-.main-content .auth-entry,
 .main-content .auth-card-legacy {
   display: block !important;
 }
@@ -207,3 +206,5 @@ html, body, #app {
   color: var(--text-muted, #9ca3af);
   font-size: 0.82rem;
 }
+
+/* auth-entry lives outside .main-content; do not force display:block on it */

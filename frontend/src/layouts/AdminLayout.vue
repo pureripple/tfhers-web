@@ -2,7 +2,7 @@
   <div class="tfhers-app tfhers-admin">
     <aside class="app-sidebar" aria-label="管理导航">
       <div class="sidebar-top">
-        <button type="button" class="sidebar-toggle" aria-label="收起侧栏" title="收起/展开" @click="toggleSidebar">
+        <button type="button" class="sidebar-toggle" aria-label="折叠侧栏" title="折叠/展开" @click="toggleSidebar">
           <i class="fas fa-bars"></i>
         </button>
         <span class="sidebar-brand">tfhers管理端</span>
@@ -12,7 +12,9 @@
           v-for="item in nav"
           :key="item.to"
           :to="item.to"
-          class="nav-link" active-class="" exact-active-class=""
+          class="nav-link"
+          active-class=""
+          exact-active-class=""
           :class="{ 'nav-link-ai': item.ai, active: isActive(item) }"
         >
           <i :class="item.icon"></i>
@@ -29,7 +31,7 @@
     ></div>
 
     <div class="sidebar-float-cluster">
-      <button type="button" class="sidebar-float-toggle" aria-label="展开侧栏" title="展开/收起" @click="toggleSidebar">
+      <button type="button" class="sidebar-float-toggle" aria-label="展开侧栏" title="展开/折叠" @click="toggleSidebar">
         <i class="fas fa-bars"></i>
       </button>
       <span class="sidebar-float-brand">tfhers管理端</span>
@@ -47,7 +49,7 @@
               aria-label="账户"
               aria-haspopup="true"
               :aria-expanded="accountOpen ? 'true' : 'false'"
-              @click="accountOpen = !accountOpen"
+              @click.stop="accountOpen = !accountOpen"
             >
               <img :src="avatarSrc" alt="" />
             </button>
@@ -61,7 +63,7 @@
               </div>
               <div class="tap-actions">
                 <RouterLink to="/admin/profile" class="tap-action-btn" @click="accountOpen = false">
-                  <i class="fas fa-user-circle"></i><span>个人资料</span>
+                  <i class="fas fa-user-circle"></i><span>个人设置</span>
                 </RouterLink>
                 <button type="button" class="tap-action-btn" @click="onLogout">
                   <i class="fas fa-sign-out-alt"></i><span>退出登录</span>
@@ -84,6 +86,8 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminAuthStore } from '@/stores/auth'
 
+const SIDEBAR_KEY = 'tfhers_sidebar_collapsed'
+
 const adminAuth = useAdminAuthStore()
 const route = useRoute()
 const router = useRouter()
@@ -92,7 +96,7 @@ const nav = [
   { to: '/admin/articles', label: '资讯管理', icon: 'fas fa-newspaper', match: ['admin-articles'] },
   { to: '/admin/characters', label: '角色管理', icon: 'fas fa-users', match: ['admin-characters'] },
   { to: '/admin/user-combos', label: '用户连段审核', icon: 'fas fa-user-check', match: ['admin-user-combos'] },
-  { to: '/admin/reports', label: '举报处理', icon: 'fas fa-flag', match: ['admin-reports'] },
+  { to: '/admin/reports', label: '举报审核', icon: 'fas fa-flag', match: ['admin-reports'] },
   { to: '/admin/feedback', label: '问题反馈', icon: 'fas fa-comment-dots', match: ['admin-feedback'] },
   { to: '/admin/comment-review', label: '评论审核', icon: 'fas fa-comments', match: ['admin-comment-review'] },
   { to: '/admin', label: '数据统计', icon: 'fas fa-chart-line', match: ['admin-statistics'] },
@@ -111,14 +115,22 @@ const titles: Record<string, string> = {
   'admin-comment-review': '评论审核',
   'admin-games': '游戏管理',
   'admin-tournaments': '赛事管理',
-  'admin-reports': '举报处理',
+  'admin-reports': '举报审核',
   'admin-feedback': '问题反馈',
   'admin-users': '用户管理',
   'admin-profile': '个人设置',
   'admin-ai-chat': 'AI 助手',
 }
 
-const collapsed = ref(false)
+function readCollapsed(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+const collapsed = ref(readCollapsed())
 const sidebarOpenMobile = ref(false)
 const accountOpen = ref(false)
 
@@ -140,9 +152,17 @@ function isActive(item: (typeof nav)[number]) {
 
 function applyHtmlClasses() {
   const root = document.documentElement
-  root.classList.add('tfhers-authed')
+  root.classList.toggle('tfhers-authed', adminAuth.isLoggedIn)
   root.classList.toggle('sidebar-collapsed', collapsed.value)
   root.classList.toggle('sidebar-open', sidebarOpenMobile.value)
+}
+
+function persistCollapsed() {
+  try {
+    localStorage.setItem(SIDEBAR_KEY, collapsed.value ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
 }
 
 function toggleSidebar() {
@@ -150,6 +170,7 @@ function toggleSidebar() {
     sidebarOpenMobile.value = !sidebarOpenMobile.value
   } else {
     collapsed.value = !collapsed.value
+    persistCollapsed()
   }
   applyHtmlClasses()
 }
@@ -162,6 +183,7 @@ function closeMobile() {
 async function onLogout() {
   accountOpen.value = false
   await adminAuth.logout()
+  applyHtmlClasses()
   router.push({ name: 'admin-login' })
 }
 
@@ -169,22 +191,6 @@ function onDocClick(e: MouseEvent) {
   const t = e.target as HTMLElement | null
   if (!t?.closest('.top-avatar-wrap')) accountOpen.value = false
 }
-
-onMounted(() => {
-  applyHtmlClasses()
-  if (adminAuth.isLoggedIn && !adminAuth.userInfo) {
-    adminAuth.loadUserInfo().catch(() => undefined)
-  }
-  // swap to admin theme sheet
-  ensureAdminCss(true)
-  document.addEventListener('click', onDocClick)
-})
-
-onUnmounted(() => {
-  document.documentElement.classList.remove('tfhers-authed', 'sidebar-collapsed', 'sidebar-open')
-  ensureAdminCss(false)
-  document.removeEventListener('click', onDocClick)
-})
 
 function ensureAdminCss(on: boolean) {
   const id = 'tfhers-admin-index-css'
@@ -201,6 +207,27 @@ function ensureAdminCss(on: boolean) {
     el.remove()
   }
 }
+
+onMounted(() => {
+  adminAuth.hydrate()
+  applyHtmlClasses()
+  if (adminAuth.isLoggedIn && !adminAuth.userInfo) {
+    adminAuth.loadUserInfo().catch(() => undefined)
+  }
+  ensureAdminCss(true)
+  document.addEventListener('click', onDocClick)
+})
+
+onUnmounted(() => {
+  document.documentElement.classList.remove('tfhers-authed', 'sidebar-collapsed', 'sidebar-open')
+  ensureAdminCss(false)
+  document.removeEventListener('click', onDocClick)
+})
+
+watch(
+  () => adminAuth.isLoggedIn,
+  () => applyHtmlClasses(),
+)
 
 watch([collapsed, sidebarOpenMobile], applyHtmlClasses)
 </script>
