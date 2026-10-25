@@ -103,3 +103,21 @@ systemctl status tfhers-management
 - 工作流里的静态目录名若和你本地模块不一致，第一次 push 前让助手对照 `pom.xml` 改一下路径
 - 纯静态更新通常**不用** `nginx reload`；只有改了 nginx 配置才 reload
 - 数据库 SQL 变更仍要单独执行（Actions 默认不跑 DDL）
+
+## Vue 前端（2026-10-25）
+
+- 源码：仓库 `frontend/`（Vue3 + Vite），用户端 `/` 与管理端 `/admin` 同一 SPA。
+- CI：变更 `frontend/` 或本 workflow 时，Node 20 → `npm ci && npm run build`，再 rsync `frontend/dist/` → **`/opt/tfhers/frontend/www`**（`--delete`，只换服务器站点目录）。
+- **不会**删除仓库内 `tfhers-web-app` / `tfhers-web-management` 的旧 static；也不再把旧 app static 同步到 `frontend/www`（避免盖住 Vue）。
+- 旧管理端静态仍可同步到 `/opt/tfhers/backend/www`（回滚用）；线上主站以 Vue 为准。
+- Nginx 样例：`deploy/nginx/tfhers.conf` → 服务器暂存 `/opt/tfhers/deploy/nginx/`；判定 nginx 变更时拷到 `/etc/nginx/conf.d/tfhers.conf` 并 `nginx -t && reload`。
+- SPA：`try_files $uri $uri/ /index.html`；`/api/` 按 Vite 代理规则拆到 8080 / 8081。
+
+首次启用 SPA 	ry_files：把 deploy/nginx/tfhers.conf 里的 location 合并进现有 HTTPS server，或在服务器执行：
+
+\ash
+touch /opt/tfhers/deploy/nginx/.auto_install
+cp -a /opt/tfhers/deploy/nginx/tfhers.conf /etc/nginx/conf.d/tfhers.conf
+nginx -t && systemctl reload nginx
+\\n
+（也可在仓库提交空文件 deploy/nginx/.auto_install，之后 Actions 会在 DO_NGINX 时自动安装。）
