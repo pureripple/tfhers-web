@@ -1,17 +1,17 @@
 <template>
-  <div class="auth-card">
+  <div class="auth-card-legacy">
     <h1>用户登录</h1>
-    <form class="auth-form" @submit.prevent="onSubmit">
-      <label>
-        <span>用户名</span>
-        <input v-model.trim="username" type="text" autocomplete="username" required />
-      </label>
-      <label>
-        <span>密码</span>
-        <input v-model="password" type="password" autocomplete="current-password" required />
-      </label>
+    <form class="auth-entry-form" @submit.prevent="onSubmit">
+      <div class="form-group">
+        <label for="vueLoginUsername">用户名</label>
+        <input id="vueLoginUsername" v-model.trim="username" type="text" autocomplete="username" required />
+      </div>
+      <div class="form-group">
+        <label for="vueLoginPassword">密码</label>
+        <input id="vueLoginPassword" v-model="password" type="password" autocomplete="current-password" required />
+      </div>
       <p v-if="error" class="auth-error">{{ error }}</p>
-      <button type="submit" class="auth-btn" :disabled="loading">
+      <button type="submit" class="btn btn-primary" :disabled="loading" style="width:100%">
         {{ loading ? '登录中…' : '登录' }}
       </button>
     </form>

@@ -1,59 +1,62 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>资讯管理</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
-    <p class="page-desc">列表 / 置顶 / 删除。富文本新建编辑未迁入（占位）。</p>
-
-    <div class="toolbar filter-bar">
-      <input v-model.trim="keyword" type="search" placeholder="搜索标题…" @keyup.enter="load" />
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">搜索</button>
+  <section class="page active">
+    <div class="action-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input v-model.trim="keyword" type="text" placeholder="搜索文章标题、内容、作者..." @keyup.enter="load" />
+        <button type="button" class="search-btn" :disabled="loading" @click="load">搜索</button>
+      </div>
+      <div class="action-buttons">
+        <button type="button" class="btn btn-primary" disabled title="富文本新建未迁入">
+          <i class="fas fa-plus"></i> 新增文章
+        </button>
+        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load">
+          <i class="fas fa-sync-alt"></i> 刷新
+        </button>
+      </div>
     </div>
 
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-    <p v-else-if="!items.length" class="state">暂无资讯</p>
+    <p v-if="loading" class="vue-state">加载中…</p>
+    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
 
-    <div v-else class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>标题</th>
-            <th>作者</th>
-            <th>阅读</th>
-            <th>置顶</th>
-            <th>创建时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="a in items" :key="a.id">
-            <td>{{ a.id }}</td>
-            <td class="cell-ellipsis" :title="a.title">{{ a.title || '无标题' }}</td>
-            <td>{{ a.author || '-' }}</td>
-            <td>{{ a.viewCount ?? a.view_count ?? 0 }}</td>
-            <td>
-              <span class="badge" :class="isPinned(a) ? 'badge-ok' : ''">
-                {{ isPinned(a) ? '已置顶' : '否' }}
-              </span>
-            </td>
-            <td>{{ a.createdAt || a.created_at || '-' }}</td>
-            <td class="cell-actions">
-              <button type="button" class="ghost-btn" :disabled="busyId === a.id" @click="onTogglePin(a)">
-                {{ isPinned(a) ? '取消置顶' : '置顶' }}
-              </button>
-              <button type="button" class="ghost-btn danger-btn" :disabled="busyId === a.id" @click="onDelete(a)">
-                删除
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="content-card">
+      <div class="card-header">
+        <h3 class="card-title">文章列表</h3>
+        <div class="card-actions">
+          <span class="article-count">共 <span>{{ items.length }}</span> 篇</span>
+        </div>
+      </div>
+      <div class="table-container">
+        <p v-if="!loading && !error && !items.length" class="vue-state">暂无资讯</p>
+        <table v-else-if="items.length" class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th><th>标题</th><th>作者</th><th>阅读</th><th>置顶</th><th>创建时间</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="a in items" :key="a.id">
+              <td>{{ a.id }}</td>
+              <td class="cell-ellipsis" :title="a.title">{{ a.title || '无标题' }}</td>
+              <td>{{ a.author || '-' }}</td>
+              <td>{{ a.viewCount ?? a.view_count ?? 0 }}</td>
+              <td>{{ isPinned(a) ? '已置顶' : '否' }}</td>
+              <td>{{ a.createdAt || a.created_at || '-' }}</td>
+              <td class="cell-actions">
+                <button type="button" class="btn btn-secondary btn-sm" :disabled="busyId === a.id" @click="onTogglePin(a)">
+                  {{ isPinned(a) ? '取消置顶' : '置顶' }}
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" :disabled="busyId === a.id" @click="onDelete(a)">
+                  删除
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <p v-if="actionMsg" class="state" :class="actionErr ? 'state-error' : ''">{{ actionMsg }}</p>
-  </div>
+    <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
+  </section>
 </template>
 
 <script setup lang="ts">

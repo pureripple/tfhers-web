@@ -1,37 +1,38 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>AI 助手</h1>
-      <span class="status-pill" :class="statusClass">{{ statusLabel }}</span>
-    </header>
-    <p class="page-desc">管理端 AI（与用户端同一接口；需已登录管理后台）。</p>
-
-    <div class="chat-panel">
-      <div ref="listEl" class="chat-list">
-        <div
-          v-for="(m, i) in messages"
-          :key="i"
-          class="chat-bubble"
-          :class="m.role === 'user' ? 'is-user' : 'is-ai'"
-        >
-          <div class="chat-role">{{ m.role === 'user' ? '你' : '助手' }}</div>
-          <div class="chat-text">{{ m.text }}</div>
+  <section class="page active">
+    <div class="ai-chat-layout grok-layout">
+      <div class="grok-chat-panel">
+        <header class="grok-head">
+          <div class="grok-head-left">
+            <span class="grok-model-badge">蹄斗 AI（管理）</span>
+            <span class="status-indicator grok-status-dot">
+              <i class="fas fa-circle"></i>
+              <span class="grok-status-text">{{ statusLabel }}</span>
+            </span>
+          </div>
+        </header>
+        <div ref="listEl" class="grok-messages" style="flex:1;overflow:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;min-height:360px">
+          <div
+            v-for="(m, i) in messages"
+            :key="i"
+            :style="m.role === 'user'
+              ? { alignSelf: 'flex-end', background: 'rgba(255,122,122,0.18)', maxWidth: '85%', padding: '0.65rem 0.85rem', borderRadius: '12px' }
+              : { alignSelf: 'flex-start', background: 'var(--bg-secondary,rgba(255,255,255,0.06))', maxWidth: '85%', padding: '0.65rem 0.85rem', borderRadius: '12px' }"
+          >
+            <div style="font-size:0.75rem;opacity:0.7;margin-bottom:0.2rem">{{ m.role === 'user' ? '我' : '助手' }}</div>
+            <div style="white-space:pre-wrap;word-break:break-word">{{ m.text }}</div>
+          </div>
+          <p v-if="sending" class="vue-state">助手正在回复…</p>
         </div>
-        <p v-if="sending" class="state">助手正在回复…</p>
+        <form style="display:flex;gap:0.5rem;padding:0.75rem;border-top:1px solid var(--border-color,rgba(255,255,255,0.08))" @submit.prevent="onSend">
+          <input v-model.trim="input" type="text" maxlength="1000" placeholder="问运营/内容相关问题…" :disabled="sending"
+            style="flex:1;border:1px solid var(--border-color,rgba(255,255,255,0.14));border-radius:10px;padding:0.55rem 0.7rem;background:var(--bg-tertiary,#0f0f14);color:inherit;font:inherit" />
+          <button type="submit" class="btn btn-primary" :disabled="sending || !input">发送</button>
+        </form>
+        <p v-if="error" class="vue-state vue-state-error">{{ error }}</p>
       </div>
-      <form class="chat-input-row" @submit.prevent="onSend">
-        <input
-          v-model.trim="input"
-          type="text"
-          maxlength="1000"
-          placeholder="问角色、招式、比赛…"
-          :disabled="sending"
-        />
-        <button type="submit" class="auth-btn" :disabled="sending || !input">发送</button>
-      </form>
-      <p v-if="error" class="state state-error">{{ error }}</p>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">

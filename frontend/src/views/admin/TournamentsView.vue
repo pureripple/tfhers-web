@@ -1,79 +1,64 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>赛事管理</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
-    <p class="page-desc">赛事列表、改状态、删除。创建/对阵编辑未完整迁入。</p>
-
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-    <p v-else-if="!items.length" class="state">暂无赛事</p>
-
-    <div v-else class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>标题</th>
-            <th>状态</th>
-            <th>报名</th>
-            <th>赛制</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="t in items" :key="t.id">
-            <td>{{ t.id }}</td>
-            <td class="cell-ellipsis" :title="t.title">{{ t.title || '-' }}</td>
-            <td>{{ statusLabel[t.status || ''] || t.status || '-' }}</td>
-            <td>{{ t.registrationCount ?? 0 }} / {{ t.maxSlots || 16 }}</td>
-            <td>{{ t.bracketType === 'single' ? '单败' : '双败' }}</td>
-            <td class="cell-actions">
-              <select
-                class="inline-select"
-                :value="t.status || 'draft'"
-                :disabled="busyId === t.id"
-                @change="onStatus(t.id, ($event.target as HTMLSelectElement).value)"
-              >
-                <option v-for="s in statusOptions" :key="s" :value="s">{{ statusLabel[s] }}</option>
-              </select>
-              <button type="button" class="ghost-btn" :disabled="busyId === t.id" @click="openDetail(t.id)">详情</button>
-              <button type="button" class="ghost-btn danger-btn" :disabled="busyId === t.id" @click="onDelete(t)">
-                删除
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <section class="page active">
+    <div class="action-bar">
+      <p class="stats-page-desc">赛事管理（创建表单未迁入）</p>
+      <div class="action-buttons">
+        <button type="button" class="btn btn-primary" disabled><i class="fas fa-plus"></i> 创建赛事</button>
+        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
+      </div>
     </div>
+    <p v-if="loading" class="vue-state">加载中…</p>
+    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
+    <div class="content-card">
+      <div class="card-header">
+        <h3 class="card-title">赛事列表</h3>
+        <div class="card-actions"><span class="article-count">共 {{ items.length }} 场</span></div>
+      </div>
+      <div class="table-container">
+        <p v-if="!loading && !error && !items.length" class="vue-state">暂无赛事</p>
+        <table v-else-if="items.length" class="data-table">
+          <thead>
+            <tr><th>ID</th><th>标题</th><th>状态</th><th>报名</th><th>操作</th></tr>
+          </thead>
+          <tbody>
+            <tr v-for="t in items" :key="t.id">
+              <td>{{ t.id }}</td>
+              <td class="cell-ellipsis">{{ t.title || '-' }}</td>
+              <td>{{ t.status || '-' }}</td>
+              <td>
+                {{ t.registrationCount ?? 0 }}
+                <span v-if="t.maxSlots != null"> / {{ t.maxSlots }}</span>
+              </td>
+              <td class="cell-actions">
+                <button type="button" class="btn btn-secondary btn-sm" @click="openDetail(t)">详情</button>
+                <button type="button" class="btn btn-danger btn-sm" :disabled="busyId === t.id" @click="onDelete(t)">删除</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
 
-    <div v-if="detailOpen" class="drawer-mask" @click.self="detailOpen = false">
-      <aside class="drawer">
-        <header class="drawer-head">
+    <div v-if="detailOpen" class="vue-drawer-mask" @click.self="detailOpen = false">
+      <aside class="vue-drawer">
+        <header class="vue-drawer-head">
           <h2>{{ detail?.title || '赛事详情' }}</h2>
-          <button type="button" class="ghost-btn" @click="detailOpen = false">关闭</button>
+          <button type="button" class="btn btn-secondary btn-sm" @click="detailOpen = false">关闭</button>
         </header>
-        <p v-if="detailLoading" class="state">加载中…</p>
-        <p v-else-if="detailError" class="state state-error">{{ detailError }}</p>
-        <template v-else-if="detail">
-          <p class="card-meta">
-            <span>{{ statusLabel[detail.status || ''] || detail.status }}</span>
-            <span>报名 {{ regs.length }}</span>
-          </p>
-          <p class="detail-block">{{ detail.description || '暂无说明' }}</p>
-          <h3 style="font-size: 1rem">报名选手</h3>
-          <ul v-if="regs.length" class="plain-list">
-            <li v-for="(r, i) in regs" :key="i">
-              {{ (r as any).nickname || (r as any).username || `用户${(r as any).userId}` }}
-            </li>
+        <p v-if="detailLoading" class="vue-state">加载中…</p>
+        <p v-else-if="detailError" class="vue-state vue-state-error">{{ detailError }}</p>
+        <div v-else-if="detail">
+          <p class="vue-detail-meta">状态 {{ detail.status }} · 赛制 {{ detail.bracketType || '-' }}</p>
+          <p class="vue-detail-block">{{ detail.description || '无描述' }}</p>
+          <h3 style="margin:1rem 0 0.5rem;font-size:1rem">报名（{{ regs.length }}）</h3>
+          <ul class="plain-list">
+            <li v-for="(r, i) in regs" :key="i">{{ r.nickname || r.username || r.userId || JSON.stringify(r) }}</li>
           </ul>
-          <p v-else class="state">暂无报名</p>
-        </template>
+        </div>
       </aside>
     </div>
-    <p v-if="actionMsg" class="state" :class="actionErr ? 'state-error' : ''">{{ actionMsg }}</p>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">

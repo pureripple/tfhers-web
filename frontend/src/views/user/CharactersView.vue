@@ -1,67 +1,69 @@
 <template>
-  <div class="page">
-    <header class="page-head">
-      <h1>角色</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
+  <section class="page active">
+    <div class="action-bar" style="padding: 8px clamp(18px, 4vw, 28px) 0; max-width: 1200px; margin: 0 auto;">
+      <h2 class="hot-news-block-title" style="margin:0">角色教程</h2>
+      <button type="button" class="btn btn-secondary btn-sm" :disabled="loading" @click="load">
+        <i class="fas fa-sync-alt"></i> 刷新
+      </button>
+    </div>
 
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-    <p v-else-if="!items.length" class="state">暂无角色</p>
+    <p v-if="loading" class="vue-state">加载中…</p>
+    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
+    <p v-else-if="!items.length" class="vue-state">暂无角色</p>
 
-    <div v-else class="card-grid">
+    <div v-else class="characters-grid">
       <article
         v-for="item in items"
         :key="item.id"
-        class="card card-click"
+        class="character-card"
         @click="openDetail(item.id)"
       >
-        <div v-if="item.avatarUrl" class="card-cover-wrap card-cover-wrap--sq">
-          <img class="card-cover" :src="item.avatarUrl" alt="" />
+        <div class="character-avatar-container">
+          <img
+            class="character-avatar"
+            :src="item.avatarUrl || '/images/CSel3_LargePortTianhuo.png'"
+            :alt="item.nameZh || item.nameEn || '角色'"
+          />
         </div>
-        <div class="card-body">
-          <h2 class="card-title">{{ item.nameZh || item.nameEn || '角色' }}</h2>
-          <p class="card-meta">
-            <span v-if="item.nameEn">{{ item.nameEn }}</span>
-            <span v-if="item.difficultyLevel != null">难度 {{ item.difficultyLevel }}</span>
-          </p>
-          <p v-if="item.intro" class="card-summary">{{ item.intro }}</p>
-        </div>
+        <h3 class="character-name">{{ item.nameZh || item.nameEn || '角色' }}</h3>
+        <p v-if="item.nameEn && item.nameZh" class="character-subtitle" style="opacity:0.7;margin:0.25rem 0 0;font-size:0.85rem">
+          {{ item.nameEn }}
+        </p>
       </article>
     </div>
 
-    <div v-if="detailOpen" class="drawer-mask" @click.self="closeDetail">
-      <aside class="drawer">
-        <header class="drawer-head">
+    <div v-if="detailOpen" class="vue-drawer-mask" @click.self="closeDetail">
+      <aside class="vue-drawer">
+        <header class="vue-drawer-head">
           <h2>{{ detailChar?.nameZh || detailChar?.nameEn || '角色详情' }}</h2>
-          <button type="button" class="ghost-btn" @click="closeDetail">关闭</button>
+          <button type="button" class="btn btn-secondary btn-sm" @click="closeDetail">关闭</button>
         </header>
-        <p v-if="detailLoading" class="state">加载中…</p>
-        <p v-else-if="detailError" class="state state-error">{{ detailError }}</p>
+        <p v-if="detailLoading" class="vue-state">加载中…</p>
+        <p v-else-if="detailError" class="vue-state vue-state-error">{{ detailError }}</p>
         <template v-else-if="detailChar">
           <img
             v-if="detailChar.avatarUrl"
-            class="detail-cover detail-cover--sq"
+            class="vue-detail-cover vue-detail-cover--sq"
             :src="detailChar.avatarUrl"
             alt=""
           />
-          <p class="card-meta">
+          <p class="vue-detail-meta">
             <span v-if="detailChar.nameEn">{{ detailChar.nameEn }}</span>
             <span v-if="detailChar.difficultyLevel != null">难度 {{ detailChar.difficultyLevel }}</span>
           </p>
-          <p v-if="detailChar.intro" class="detail-block">{{ detailChar.intro }}</p>
-          <p v-if="detailChar.background" class="detail-block">{{ detailChar.background }}</p>
-          <p v-if="videoUrl" class="detail-block">
+          <p v-if="detailChar.intro" class="vue-detail-block">{{ detailChar.intro }}</p>
+          <p v-if="detailChar.background" class="vue-detail-block">{{ detailChar.background }}</p>
+          <p v-if="videoUrl" class="vue-detail-block">
             官方视频：
             <a :href="videoUrl" target="_blank" rel="noopener">打开链接</a>
           </p>
-          <p class="card-meta">
+          <p class="vue-detail-meta">
             出招 {{ moveCount }} · 官方连段 {{ officialCount }} · 玩家连段 {{ userComboCount }}
           </p>
         </template>
       </aside>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">

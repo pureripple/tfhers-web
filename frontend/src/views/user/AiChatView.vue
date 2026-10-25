@@ -1,41 +1,55 @@
 <template>
-  <div class="page">
-    <header class="page-head">
+  <section class="page page-ai-chat active">
+    <div v-if="!userAuth.isLoggedIn" class="auth-card-legacy" style="margin-top:2rem">
       <h1>AI 助手</h1>
-      <span v-if="userAuth.isLoggedIn" class="status-pill" :class="statusClass">{{ statusLabel }}</span>
-    </header>
-
-    <div v-if="!userAuth.isLoggedIn" class="gate-card">
       <p>请先登录后再使用 AI 助手。</p>
-      <RouterLink class="auth-btn" to="/login?redirect=/ai-chat">去登录</RouterLink>
+      <RouterLink class="btn btn-primary" to="/login?redirect=/ai-chat" style="display:inline-flex;margin-top:0.75rem;text-decoration:none">
+        去登录
+      </RouterLink>
     </div>
 
-    <div v-else class="chat-panel">
-      <div ref="listEl" class="chat-list">
-        <div
-          v-for="(m, i) in messages"
-          :key="i"
-          class="chat-bubble"
-          :class="m.role === 'user' ? 'is-user' : 'is-ai'"
-        >
-          <div class="chat-role">{{ m.role === 'user' ? '我' : '助手' }}</div>
-          <div class="chat-text">{{ m.text }}</div>
+    <div v-else class="ai-chat-layout grok-layout">
+      <div class="grok-chat-panel">
+        <header class="grok-head">
+          <div class="grok-head-left">
+            <span class="grok-model-badge">蹄斗 AI</span>
+            <span class="status-indicator grok-status-dot" :class="'is-' + status">
+              <i class="fas fa-circle"></i>
+              <span class="grok-status-text">{{ statusLabel }}</span>
+            </span>
+          </div>
+        </header>
+
+        <div ref="listEl" class="grok-messages" style="flex:1;overflow:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem">
+          <div
+            v-for="(m, i) in messages"
+            :key="i"
+            class="grok-bubble"
+            :class="m.role === 'user' ? 'is-user' : 'is-ai'"
+            style="max-width:85%;padding:0.65rem 0.85rem;border-radius:12px;background:var(--bg-secondary,rgba(255,255,255,0.06))"
+            :style="m.role === 'user' ? { alignSelf: 'flex-end', background: 'rgba(255,122,122,0.18)' } : { alignSelf: 'flex-start' }"
+          >
+            <div style="font-size:0.75rem;opacity:0.7;margin-bottom:0.2rem">{{ m.role === 'user' ? '我' : '助手' }}</div>
+            <div style="white-space:pre-wrap;word-break:break-word">{{ m.text }}</div>
+          </div>
+          <p v-if="sending" class="vue-state">助手正在回复…</p>
         </div>
-        <p v-if="sending" class="state">助手正在回复…</p>
+
+        <form class="grok-composer" style="display:flex;gap:0.5rem;padding:0.75rem;border-top:1px solid var(--border-color,rgba(255,255,255,0.08))" @submit.prevent="onSend">
+          <input
+            v-model.trim="input"
+            type="text"
+            maxlength="1000"
+            placeholder="问角色、技能、攻略…"
+            :disabled="sending"
+            style="flex:1;border:1px solid var(--border-color,rgba(255,255,255,0.14));border-radius:10px;padding:0.55rem 0.7rem;background:var(--bg-tertiary,#0f0f14);color:inherit;font:inherit"
+          />
+          <button type="submit" class="btn btn-primary" :disabled="sending || !input">发送</button>
+        </form>
+        <p v-if="error" class="vue-state vue-state-error">{{ error }}</p>
       </div>
-      <form class="chat-input-row" @submit.prevent="onSend">
-        <input
-          v-model.trim="input"
-          type="text"
-          maxlength="1000"
-          placeholder="问角色、技能、攻略…"
-          :disabled="sending"
-        />
-        <button type="submit" class="auth-btn" :disabled="sending || !input">发送</button>
-      </form>
-      <p v-if="error" class="state state-error">{{ error }}</p>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -63,9 +77,8 @@ const statusLabel = computed(() => {
   if (status.value === 'online') return '在线'
   if (status.value === 'offline') return '离线'
   if (status.value === 'warn') return '异常'
-  return '检测中'
+  return '检测中…'
 })
-const statusClass = computed(() => 'status-' + status.value)
 
 async function probeStatus() {
   if (!userAuth.isLoggedIn) return

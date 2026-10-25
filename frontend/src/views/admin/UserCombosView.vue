@@ -1,68 +1,43 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>用户连招审核</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
-
-    <div class="toolbar filter-bar">
-      <label>
-        状态
-        <select v-model="status" @change="load">
-          <option value="">全部</option>
-          <option value="pending">待审核</option>
-          <option value="approved">已通过</option>
-          <option value="rejected">已拒绝</option>
+  <section class="page active">
+    <div class="action-bar">
+      <div class="action-buttons" style="display:flex;gap:8px;flex-wrap:wrap">
+        <select v-model="status" class="inline-select" @change="load">
+          <option value="">全部状态</option>
+          <option value="pending">pending</option>
+          <option value="approved">approved</option>
+          <option value="rejected">rejected</option>
         </select>
-      </label>
+        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
+      </div>
     </div>
-
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-    <p v-else-if="!items.length" class="state">暂无连招</p>
-
-    <div v-else class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>角色</th>
-            <th>标题</th>
-            <th>伤害</th>
-            <th>状态</th>
-            <th>时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="c in items" :key="c.id">
-            <td>{{ c.id }}</td>
-            <td>{{ charName(c.characterId) }}</td>
-            <td class="cell-ellipsis" :title="c.title">{{ c.title || '-' }}</td>
-            <td>{{ c.damageTotal ?? '-' }}</td>
-            <td>{{ statusText[c.status || ''] || c.status || '-' }}</td>
-            <td>{{ c.createdAt || '-' }}</td>
-            <td class="cell-actions">
-              <template v-if="c.status === 'pending'">
-                <button type="button" class="ghost-btn" :disabled="busyId === c.id" @click="onStatus(c.id, 'approved')">
-                  通过
-                </button>
-                <button type="button" class="ghost-btn" :disabled="busyId === c.id" @click="onStatus(c.id, 'rejected')">
-                  拒绝
-                </button>
-              </template>
-              <button type="button" class="ghost-btn danger-btn" :disabled="busyId === c.id" @click="onDelete(c)">
-                删除
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <p v-if="loading" class="vue-state">加载中…</p>
+    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
+    <div class="content-card">
+      <div class="card-header"><h3 class="card-title">用户连段审核</h3><div class="card-actions"><span class="article-count">共 {{ items.length }} 条</span></div></div>
+      <div class="table-container">
+        <p v-if="!loading && !error && !items.length" class="vue-state">暂无连段</p>
+        <table v-else-if="items.length" class="data-table">
+          <thead><tr><th>ID</th><th>角色</th><th>标题</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr v-for="c in items" :key="c.id">
+              <td>{{ c.id }}</td>
+              <td>{{ charName(c.characterId) }}</td>
+              <td class="cell-ellipsis">{{ c.title || c.name || '-' }}</td>
+              <td>{{ statusText[c.status] || c.status || '-' }}</td>
+              <td class="cell-actions">
+                <button type="button" class="btn btn-primary btn-sm" :disabled="busyId === c.id" @click="onStatus(c.id, 'approved')">通过</button>
+                <button type="button" class="btn btn-danger btn-sm" :disabled="busyId === c.id" @click="onStatus(c.id, 'rejected')">拒绝</button>
+                <button type="button" class="btn btn-secondary btn-sm" :disabled="busyId === c.id" @click="onDelete(c)">删除</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <p v-if="actionMsg" class="state" :class="actionErr ? 'state-error' : ''">{{ actionMsg }}</p>
-  </div>
+    <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
+  </section>
 </template>
-
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { fetchAdminCharacters } from '@/api/admin/characters'

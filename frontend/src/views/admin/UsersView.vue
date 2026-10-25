@@ -1,90 +1,56 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>用户管理</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
-    <p class="page-desc">列表、启停、改角色、删除。创建/编辑/重置密码未迁入完整表单。</p>
-
-    <div class="toolbar filter-bar">
-      <input v-model.trim="keyword" type="search" placeholder="搜索用户名/昵称…" @keyup.enter="page = 1; load()" />
-      <label>
-        角色
-        <select v-model="role" @change="page = 1; load()">
-          <option value="">全部</option>
-          <option value="USER">普通用户</option>
-          <option value="ADMIN">管理员</option>
+  <section class="page active">
+    <div class="action-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input v-model.trim="keyword" type="text" placeholder="搜索用户名/昵称…" @keyup.enter="load" />
+        <button type="button" class="search-btn" :disabled="loading" @click="load">搜索</button>
+      </div>
+      <div class="action-buttons" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select v-model="role" class="inline-select" @change="load">
+          <option value="">全部角色</option>
+          <option value="user">user</option>
+          <option value="admin">admin</option>
         </select>
-      </label>
-      <label>
-        状态
-        <select v-model="status" @change="page = 1; load()">
-          <option value="">全部</option>
-          <option value="1">启用</option>
+        <select v-model="status" class="inline-select" @change="load">
+          <option value="">全部状态</option>
+          <option value="1">正常</option>
           <option value="0">禁用</option>
         </select>
-      </label>
-      <button type="button" class="ghost-btn" @click="page = 1; load()">搜索</button>
+        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
+      </div>
     </div>
-
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-    <p v-else-if="!items.length" class="state">暂无用户</p>
-
-    <div v-else class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>用户</th>
-            <th>角色</th>
-            <th>状态</th>
-            <th>最近登录</th>
-            <th>注册时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="u in items" :key="u.id">
-            <td>
-              <div class="cell-player">
-                <img v-if="u.avatarUrl" class="avatar" :src="u.avatarUrl" alt="" />
-                <div>
-                  <div>{{ u.nickname || u.username }}</div>
-                  <div class="muted">@{{ u.username }}</div>
-                </div>
-              </div>
-            </td>
-            <td>{{ u.role === 'ADMIN' ? '管理员' : '普通用户' }}</td>
-            <td>
-              <span class="badge" :class="u.status === 1 ? 'badge-ok' : ''">
-                {{ u.status === 1 ? '启用' : '禁用' }}
-              </span>
-            </td>
-            <td>{{ u.lastLoginTime || '从未登录' }}</td>
-            <td>{{ u.createdAt || '-' }}</td>
-            <td class="cell-actions">
-              <button type="button" class="ghost-btn" :disabled="busyId === u.id" @click="onToggleStatus(u)">
-                {{ u.status === 1 ? '禁用' : '启用' }}
-              </button>
-              <button type="button" class="ghost-btn" :disabled="busyId === u.id" @click="onToggleRole(u)">
-                {{ u.role === 'ADMIN' ? '降为用户' : '升为管理员' }}
-              </button>
-              <button type="button" class="ghost-btn danger-btn" :disabled="busyId === u.id" @click="onDelete(u)">
-                删除
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <p v-if="loading" class="vue-state">加载中…</p>
+    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
+    <div class="content-card">
+      <div class="card-header"><h3 class="card-title">用户列表</h3><div class="card-actions"><span class="article-count">共 {{ total }} 人</span></div></div>
+      <div class="table-container">
+        <p v-if="!loading && !error && !items.length" class="vue-state">暂无用户</p>
+        <table v-else-if="items.length" class="data-table">
+          <thead><tr><th>ID</th><th>用户名</th><th>昵称</th><th>角色</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr v-for="u in items" :key="u.id">
+              <td>{{ u.id }}</td>
+              <td>{{ u.username }}</td>
+              <td>{{ u.nickname || '-' }}</td>
+              <td>{{ u.role || '-' }}</td>
+              <td>{{ u.status }}</td>
+              <td class="cell-actions">
+                <button type="button" class="btn btn-secondary btn-sm" :disabled="busyId === u.id" @click="onToggleStatus(u)">切换状态</button>
+                <button type="button" class="btn btn-secondary btn-sm" disabled title="待接">重置密码</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div v-if="totalPages > 1" class="pagination" style="padding:12px;display:flex;gap:8px;align-items:center">
+        <button type="button" class="btn btn-secondary btn-sm" :disabled="page<=1 || loading" @click="page--; load()">上一页</button>
+        <span class="muted">{{ page }} / {{ totalPages }}</span>
+        <button type="button" class="btn btn-secondary btn-sm" :disabled="page>=totalPages || loading" @click="page++; load()">下一页</button>
+      </div>
     </div>
-
-    <div v-if="totalPages > 1" class="pager">
-      <button type="button" class="ghost-btn" :disabled="page <= 1" @click="page--; load()">上一页</button>
-      <span>第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条</span>
-      <button type="button" class="ghost-btn" :disabled="page >= totalPages" @click="page++; load()">下一页</button>
-    </div>
-    <p v-if="actionMsg" class="state" :class="actionErr ? 'state-error' : ''">{{ actionMsg }}</p>
-  </div>
+    <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
+  </section>
 </template>
 
 <script setup lang="ts">

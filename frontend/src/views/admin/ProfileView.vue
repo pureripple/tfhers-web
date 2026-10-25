@@ -1,64 +1,34 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>个人资料</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
-
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-
-    <div v-else class="profile-grid">
-      <section class="card profile-card">
-        <h2>基本信息</h2>
-        <div class="cell-player" style="margin-bottom: 1rem">
-          <img v-if="profile?.avatarUrl" class="avatar" style="width:48px;height:48px" :src="profile.avatarUrl" alt="" />
-          <div>
-            <div>{{ profile?.realName || profile?.nickname || profile?.username }}</div>
-            <div class="muted">@{{ profile?.username }}</div>
-          </div>
-        </div>
-        <form class="auth-form" @submit.prevent="onSaveProfile">
-          <label>
-            真实姓名
-            <input v-model.trim="form.realName" type="text" />
-          </label>
-          <label>
-            邮箱
-            <input v-model.trim="form.email" type="email" />
-          </label>
-          <label>
-            手机
-            <input v-model.trim="form.phone" type="text" />
-          </label>
-          <button type="submit" class="auth-btn" :disabled="saving">保存资料</button>
-          <p v-if="profileMsg" class="state" :class="profileErr ? 'state-error' : ''">{{ profileMsg }}</p>
-        </form>
-      </section>
-
-      <section class="card profile-card">
-        <h2>修改密码</h2>
-        <form class="auth-form" @submit.prevent="onChangePassword">
-          <label>
-            当前密码
-            <input v-model="pwd.oldPassword" type="password" autocomplete="current-password" required />
-          </label>
-          <label>
-            新密码
-            <input v-model="pwd.newPassword" type="password" autocomplete="new-password" required minlength="6" />
-          </label>
-          <label>
-            确认新密码
-            <input v-model="pwd.confirmPassword" type="password" autocomplete="new-password" required minlength="6" />
-          </label>
-          <button type="submit" class="auth-btn" :disabled="pwdSaving">修改密码</button>
-          <p v-if="pwdMsg" class="state" :class="pwdErr ? 'state-error' : ''">{{ pwdMsg }}</p>
-        </form>
-      </section>
+  <section class="page active">
+    <div class="action-bar">
+      <p class="stats-page-desc">个人设置</p>
+      <div class="action-buttons">
+        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
+      </div>
     </div>
-  </div>
+    <p v-if="loading" class="vue-state">加载中…</p>
+    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
+    <div v-else class="profile-grid">
+      <div class="content-card" style="padding:1.25rem">
+        <h3 class="card-title" style="margin-bottom:1rem">资料</h3>
+        <div class="form-field"><label>用户名</label><input :value="profile?.username || ''" disabled /></div>
+        <div class="form-field"><label>真实姓名</label><input v-model="form.realName" /></div>
+        <div class="form-field"><label>邮箱</label><input v-model="form.email" /></div>
+        <div class="form-field"><label>手机</label><input v-model="form.phone" /></div>
+        <button type="button" class="btn btn-primary" :disabled="saving" @click="onSaveProfile">{{ saving ? '保存中…' : '保存资料' }}</button>
+        <p v-if="profileMsg" class="vue-state" :class="profileErr ? 'vue-state-error' : ''">{{ profileMsg }}</p>
+      </div>
+      <div class="content-card" style="padding:1.25rem">
+        <h3 class="card-title" style="margin-bottom:1rem">修改密码</h3>
+        <div class="form-field"><label>当前密码</label><input v-model="pwd.oldPassword" type="password" autocomplete="current-password" /></div>
+        <div class="form-field"><label>新密码</label><input v-model="pwd.newPassword" type="password" autocomplete="new-password" /></div>
+        <div class="form-field"><label>确认新密码</label><input v-model="pwd.confirmPassword" type="password" autocomplete="new-password" /></div>
+        <button type="button" class="btn btn-primary" :disabled="pwdSaving" @click="onChangePassword">{{ pwdSaving ? '提交中…' : '更新密码' }}</button>
+        <p v-if="pwdMsg" class="vue-state" :class="pwdErr ? 'vue-state-error' : ''">{{ pwdMsg }}</p>
+      </div>
+    </div>
+  </section>
 </template>
-
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { changeAdminPassword, fetchAdminProfile, updateAdminProfile } from '@/api/admin/profile'

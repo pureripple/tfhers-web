@@ -1,40 +1,22 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>游戏 / Steam</h1>
-    </header>
-    <p class="page-desc">
-      管理端暂无游戏列表接口；此处提供 Steam 成就 schema 同步（与旧后台一致）。
-    </p>
-
-    <div class="card" style="padding: 1.25rem">
-      <h2 style="margin-top: 0; font-size: 1.1rem">同步 Steam 成就 Schema</h2>
-      <p class="muted">将从 Steam 拉取成就定义并写入库（含图标转存 OSS）。</p>
-      <button type="button" class="auth-btn" :disabled="syncing" @click="onSync">
-        {{ syncing ? '同步中…' : '开始同步' }}
-      </button>
-      <p v-if="error" class="state state-error">{{ error }}</p>
-      <div v-if="result" class="kpi-grid" style="margin-top: 1rem">
-        <div class="kpi-card">
-          <div class="kpi-label">App ID</div>
-          <div class="kpi-value small">{{ result.appId ?? '-' }}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">总数</div>
-          <div class="kpi-value small">{{ result.total ?? '-' }}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">写入</div>
-          <div class="kpi-value small">{{ result.upserted ?? '-' }}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">图标成功/失败</div>
-          <div class="kpi-value small">{{ result.uploadedAny ?? 0 }} / {{ result.failedAny ?? 0 }}</div>
-        </div>
+  <section class="page active">
+    <div class="action-bar">
+      <p class="stats-page-desc">游戏管理 / Steam 同步</p>
+      <div class="action-buttons">
+        <button type="button" class="btn btn-secondary" :disabled="syncing" @click="onSync">
+          <i class="fas fa-sync-alt"></i> {{ syncing ? '同步中…' : '刷新/同步' }}
+        </button>
       </div>
-      <p v-if="result?.updatedAt" class="state">完成于 {{ result.updatedAt }}</p>
     </div>
-  </div>
+    <p v-if="error" class="vue-state vue-state-error">{{ error }}</p>
+    <div class="content-card">
+      <div class="card-header"><h3 class="card-title">同步结果</h3></div>
+      <div class="table-container" style="padding:1rem">
+        <pre v-if="result" style="white-space:pre-wrap;margin:0;color:var(--text-secondary)">{{ typeof result === 'string' ? result : JSON.stringify(result, null, 2) }}</pre>
+        <p v-else class="vue-state">点击上方按钮同步</p>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script setup lang="ts">

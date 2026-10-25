@@ -1,28 +1,20 @@
 <template>
-  <div class="shell">
-    <header>
-      <span class="brand">TFHers 管理</span>
-      <RouterLink to="/" style="margin-left: auto">回用户端</RouterLink>
-    </header>
-    <main>
-      <div class="auth-card">
-        <h1>管理登录</h1>
-        <form class="auth-form" @submit.prevent="onSubmit">
-          <label>
-            <span>用户名</span>
-            <input v-model.trim="username" type="text" autocomplete="username" required />
-          </label>
-          <label>
-            <span>密码</span>
-            <input v-model="password" type="password" autocomplete="current-password" required />
-          </label>
-          <p v-if="error" class="auth-error">{{ error }}</p>
-          <button type="submit" class="auth-btn" :disabled="loading">
-            {{ loading ? '登录中…' : '登录' }}
-          </button>
-        </form>
+  <div class="auth-card-legacy">
+    <h1>管理端登录</h1>
+    <form class="auth-entry-form" @submit.prevent="onSubmit">
+      <div class="form-group">
+        <label for="adminLoginUsername">用户名</label>
+        <input id="adminLoginUsername" v-model.trim="username" type="text" autocomplete="username" required />
       </div>
-    </main>
+      <div class="form-group">
+        <label for="adminLoginPassword">密码</label>
+        <input id="adminLoginPassword" v-model="password" type="password" autocomplete="current-password" required />
+      </div>
+      <p v-if="error" class="auth-error">{{ error }}</p>
+      <button type="submit" class="btn btn-primary" :disabled="loading" style="width:100%">
+        {{ loading ? '登录中…' : '登录' }}
+      </button>
+    </form>
   </div>
 </template>
 

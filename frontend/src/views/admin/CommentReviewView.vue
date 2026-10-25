@@ -1,89 +1,56 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>评论审核</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
-
-    <div class="toolbar filter-bar">
-      <label>
-        状态
-        <select v-model="status" @change="page = 1; load()">
-          <option value="0">待审核</option>
-          <option value="1">已通过</option>
-          <option value="2">已拒绝</option>
-          <option value="">全部</option>
+  <section class="page active">
+    <div class="action-bar">
+      <div class="action-buttons" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select v-model="status" class="inline-select" @change="page=1; load()">
+          <option value="">全部状态</option>
+          <option value="pending">pending</option>
+          <option value="approved">approved</option>
+          <option value="rejected">rejected</option>
         </select>
-      </label>
-      <label>
-        资讯 ID
-        <input v-model.trim="articleId" type="text" placeholder="可选" @keyup.enter="page = 1; load()" />
-      </label>
-      <button type="button" class="ghost-btn" @click="page = 1; load()">筛选</button>
+        <input v-model.trim="articleId" class="inline-select" style="max-width:120px" placeholder="文章ID" @keyup.enter="page=1; load()" />
+        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
+      </div>
     </div>
-
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-    <p v-else-if="!items.length" class="state">暂无评论</p>
-
-    <div v-else class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>资讯</th>
-            <th>用户</th>
-            <th>内容</th>
-            <th>状态</th>
-            <th>时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="c in items" :key="c.id">
-            <td>{{ c.id }}</td>
-            <td>{{ c.articleId ?? c.article_id ?? '-' }}</td>
-            <td>{{ c.authorName || c.author_name || `用户 ${c.userId ?? c.user_id ?? '-'}` }}</td>
-            <td class="cell-ellipsis" :title="c.content">{{ c.content || '-' }}</td>
-            <td>{{ statusText[Number(c.status ?? 0)] || c.status }}</td>
-            <td>{{ c.createdAt || c.created_at || '-' }}</td>
-            <td class="cell-actions">
-              <button type="button" class="ghost-btn" :disabled="busyId === c.id" @click="openReview(c)">审核</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <p v-if="loading" class="vue-state">加载中…</p>
+    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
+    <div class="content-card">
+      <div class="card-header"><h3 class="card-title">评论审核</h3><div class="card-actions"><span class="article-count">共 {{ total }} 条</span></div></div>
+      <div class="table-container">
+        <p v-if="!loading && !error && !items.length" class="vue-state">暂无评论</p>
+        <table v-else-if="items.length" class="data-table">
+          <thead><tr><th>ID</th><th>文章</th><th>内容</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr v-for="c in items" :key="c.id">
+              <td>{{ c.id }}</td>
+              <td>{{ c.articleId ?? '-' }}</td>
+              <td class="cell-ellipsis" :title="c.content">{{ c.content || '-' }}</td>
+              <td>{{ c.status || '-' }}</td>
+              <td class="cell-actions">
+                <button type="button" class="btn btn-secondary btn-sm" @click="openReview(c)">审核</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-
-    <div v-if="totalPages > 1" class="pager">
-      <button type="button" class="ghost-btn" :disabled="page <= 1" @click="page--; load()">上一页</button>
-      <span>第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条</span>
-      <button type="button" class="ghost-btn" :disabled="page >= totalPages" @click="page++; load()">下一页</button>
-    </div>
-
-    <div v-if="reviewOpen" class="drawer-mask" @click.self="reviewOpen = false">
-      <aside class="drawer">
-        <header class="drawer-head">
-          <h2>审核评论 #{{ reviewItem?.id }}</h2>
-          <button type="button" class="ghost-btn" @click="reviewOpen = false">关闭</button>
+    <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
+    <div v-if="reviewOpen" class="vue-drawer-mask" @click.self="reviewOpen=false">
+      <aside class="vue-drawer">
+        <header class="vue-drawer-head"><h2>审核评论 #{{ reviewItem?.id }}</h2>
+          <button type="button" class="btn btn-secondary btn-sm" @click="reviewOpen=false">关闭</button>
         </header>
-        <p class="detail-block">{{ reviewItem?.content }}</p>
-        <label class="form-field">
-          结果
-          <select v-model.number="reviewStatus">
-            <option :value="1">通过</option>
-            <option :value="2">拒绝</option>
-          </select>
-        </label>
-        <label class="form-field">
-          备注
-          <input v-model.trim="reviewRemark" type="text" />
-        </label>
-        <button type="button" class="auth-btn" :disabled="busyId != null" @click="confirmReview">提交</button>
-        <p v-if="actionMsg" class="state" :class="actionErr ? 'state-error' : ''">{{ actionMsg }}</p>
+        <p class="vue-detail-block">{{ reviewItem?.content }}</p>
+        <div class="form-field"><label>状态</label>
+          <select v-model="reviewStatus"><option value="approved">approved</option><option value="rejected">rejected</option><option value="pending">pending</option></select>
+        </div>
+        <div class="form-field"><label>备注</label>
+          <textarea v-model="reviewRemark" rows="3"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" :disabled="busyId === reviewItem?.id" @click="confirmReview">提交</button>
       </aside>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">

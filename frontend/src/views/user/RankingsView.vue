@@ -1,46 +1,50 @@
 <template>
-  <div class="page">
-    <header class="page-head">
-      <h1>排行</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
-    <p v-if="description" class="page-desc">{{ description }}</p>
+  <section class="page active">
+    <div class="rankings-page">
+      <div class="action-bar" style="margin-bottom: 12px;">
+        <div>
+          <h2 class="hot-news-block-title" style="margin:0">排行</h2>
+          <p v-if="description" class="stats-page-desc" style="margin:6px 0 0">{{ description }}</p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" :disabled="loading" @click="load">
+          <i class="fas fa-sync-alt"></i> 刷新
+        </button>
+      </div>
 
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-    <p v-else-if="!rows.length" class="state">暂无排名</p>
-
-    <div v-else class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>名次</th>
-            <th>玩家</th>
-            <th>段位</th>
-            <th>积分</th>
-            <th>战绩</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, i) in rows" :key="row.userId ?? i">
-            <td>{{ row.rank ?? i + 1 }}</td>
-            <td class="cell-player">
-              <img
-                v-if="row.avatarUrl"
-                class="avatar"
-                :src="row.avatarUrl"
-                alt=""
-              />
-              <span>{{ row.nickname || row.username || ('用户#' + row.userId) }}</span>
-            </td>
-            <td><span class="tier">{{ row.tier || '-' }}</span></td>
-            <td>{{ row.rating ?? '-' }}</td>
-            <td>{{ (row.wins ?? 0) }}胜 / {{ (row.losses ?? 0) }}负</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="rankings-list">
+        <div v-if="loading" class="rankings-empty">加载中…</div>
+        <div v-else-if="error" class="rankings-empty">{{ error }}</div>
+        <div v-else-if="!rows.length" class="rankings-empty">暂无排名</div>
+        <div
+          v-for="(row, i) in rows"
+          v-else
+          :key="row.userId ?? i"
+          class="ranking-row"
+          :class="topClass(row.rank ?? i + 1)"
+        >
+          <div class="ranking-rank">
+            <i v-if="(row.rank ?? i + 1) <= 3" class="fas fa-crown"></i>
+            {{ row.rank ?? i + 1 }}
+          </div>
+          <img
+            class="ranking-avatar"
+            :src="row.avatarUrl || '/images/CSel3_LargePortTianhuo.png'"
+            alt=""
+          />
+          <div class="ranking-info">
+            <div class="ranking-name">{{ row.nickname || row.username || ('用户#' + row.userId) }}</div>
+            <div class="ranking-meta">
+              战绩 {{ row.wins ?? 0 }}胜 / {{ row.losses ?? 0 }}负 · 共 {{ (row.wins ?? 0) + (row.losses ?? 0) }} 场
+            </div>
+          </div>
+          <div class="ranking-score-box">
+            <div class="ranking-score">{{ row.rating ?? '-' }}</div>
+            <span class="ranking-tier">{{ String(row.tier || 'C').toUpperCase().charAt(0) }}</span>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -52,6 +56,13 @@ const rows = ref<RankingRow[]>([])
 const description = ref('')
 const loading = ref(false)
 const error = ref('')
+
+function topClass(rank: number) {
+  if (rank === 1) return 'top1'
+  if (rank === 2) return 'top2'
+  if (rank === 3) return 'top3'
+  return ''
+}
 
 async function load() {
   loading.value = true

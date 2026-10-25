@@ -1,45 +1,49 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>数据统计</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
-    <p class="page-desc">待办与站点概况（对齐旧管理端 KPI）。</p>
-
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-
-    <div v-else class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">资讯总数</div>
-        <div class="kpi-value">{{ kpis.articleCount }}</div>
+  <section class="page active">
+    <div class="action-bar">
+      <div>
+        <p class="stats-page-desc">汇总平台运营数据：内容量与待办对比、Steam 时长分布等。</p>
+        <p v-if="updatedAt" class="stats-page-meta">上次刷新：{{ updatedAt }}</p>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">待审连招</div>
-        <div class="kpi-value">{{ kpis.pendingCombos }}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">待处理举报</div>
-        <div class="kpi-value">{{ kpis.reportsOpen }}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">待审评论</div>
-        <div class="kpi-value">{{ kpis.commentsPending }}</div>
+      <div class="action-buttons">
+        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load">
+          <i class="fas fa-sync-alt"></i> 刷新
+        </button>
       </div>
     </div>
 
-    <section class="admin-section">
-      <h2>Steam 时长 Top10</h2>
-      <p v-if="steamError" class="state state-error">{{ steamError }}</p>
-      <p v-else-if="!steamTop.length" class="state">暂无数据</p>
-      <div v-else class="table-wrap">
-        <table class="data-table">
+    <p v-if="loading" class="vue-state">加载中…</p>
+    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
+
+    <div v-else class="stats-kpi-grid">
+      <div class="stat-kpi-card">
+        <div class="stat-kpi-label">资讯总数</div>
+        <div class="stat-kpi-value">{{ kpis.articleCount }}</div>
+      </div>
+      <div class="stat-kpi-card">
+        <div class="stat-kpi-label">用户连段（待审）</div>
+        <div class="stat-kpi-value">{{ kpis.pendingCombos }}</div>
+      </div>
+      <div class="stat-kpi-card">
+        <div class="stat-kpi-label">待处理举报</div>
+        <div class="stat-kpi-value">{{ kpis.reportsOpen }}</div>
+      </div>
+      <div class="stat-kpi-card">
+        <div class="stat-kpi-label">待审评论</div>
+        <div class="stat-kpi-value">{{ kpis.commentsPending }}</div>
+      </div>
+    </div>
+
+    <div class="content-card" style="margin-top:1rem">
+      <div class="card-header">
+        <h3 class="card-title">Steam 时长 Top10</h3>
+      </div>
+      <div class="table-container">
+        <p v-if="steamError" class="vue-state vue-state-error">{{ steamError }}</p>
+        <p v-else-if="!steamTop.length" class="vue-state">暂无数据</p>
+        <table v-else class="data-table">
           <thead>
-            <tr>
-              <th>#</th>
-              <th>玩家</th>
-              <th>时长(小时)</th>
-            </tr>
+            <tr><th>#</th><th>玩家</th><th>时长(小时)</th></tr>
           </thead>
           <tbody>
             <tr v-for="(row, i) in steamTop" :key="i">
@@ -50,20 +54,18 @@
           </tbody>
         </table>
       </div>
-    </section>
+    </div>
 
-    <section class="admin-section">
-      <h2>站点成就解锁</h2>
-      <p v-if="achError" class="state state-error">{{ achError }}</p>
-      <p v-else-if="!achievements.length" class="state">暂无数据</p>
-      <div v-else class="table-wrap">
-        <table class="data-table">
+    <div class="content-card" style="margin-top:1rem">
+      <div class="card-header">
+        <h3 class="card-title">站点成就解锁</h3>
+      </div>
+      <div class="table-container">
+        <p v-if="achError" class="vue-state vue-state-error">{{ achError }}</p>
+        <p v-else-if="!achievements.length" class="vue-state">暂无数据</p>
+        <table v-else class="data-table">
           <thead>
-            <tr>
-              <th>成就</th>
-              <th>解锁数</th>
-              <th>样本</th>
-            </tr>
+            <tr><th>成就</th><th>解锁数</th><th>样本</th></tr>
           </thead>
           <tbody>
             <tr v-for="(a, i) in achievements.slice(0, 30)" :key="a.apiName || i">
@@ -74,9 +76,8 @@
           </tbody>
         </table>
       </div>
-      <p v-if="updatedAt" class="state">更新于 {{ updatedAt }}</p>
-    </section>
-  </div>
+    </div>
+  </section>
 </template>
 
 <script setup lang="ts">

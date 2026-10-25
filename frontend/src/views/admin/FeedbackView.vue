@@ -1,103 +1,60 @@
 <template>
-  <div class="page admin-page">
-    <header class="page-head">
-      <h1>用户反馈</h1>
-      <button type="button" class="ghost-btn" :disabled="loading" @click="load">刷新</button>
-    </header>
-
-    <div class="toolbar filter-bar">
-      <label>
-        状态
-        <select v-model="status" @change="page = 1; load()">
-          <option value="">全部</option>
-          <option value="0">待处理</option>
-          <option value="1">处理中</option>
-          <option value="2">已处理</option>
-          <option value="3">已关闭</option>
+  <section class="page active">
+    <div class="action-bar">
+      <div class="action-buttons" style="display:flex;gap:8px;flex-wrap:wrap">
+        <select v-model="status" class="inline-select" @change="page=1; load()">
+          <option value="">全部状态</option>
+          <option value="open">open</option>
+          <option value="replied">replied</option>
+          <option value="closed">closed</option>
         </select>
-      </label>
-      <label>
-        分类
-        <select v-model="category" @change="page = 1; load()">
-          <option value="">全部</option>
-          <option value="bug">故障/Bug</option>
-          <option value="suggestion">功能建议</option>
-          <option value="other">其他</option>
+        <select v-model="category" class="inline-select" @change="page=1; load()">
+          <option value="">全部分类</option>
+          <option value="bug">bug</option>
+          <option value="idea">idea</option>
+          <option value="other">other</option>
         </select>
-      </label>
+        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
+      </div>
     </div>
-
-    <p v-if="loading" class="state">加载中…</p>
-    <p v-else-if="error" class="state state-error">{{ error }}</p>
-    <p v-else-if="!items.length" class="state">暂无反馈</p>
-
-    <div v-else class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>用户</th>
-            <th>分类</th>
-            <th>标题</th>
-            <th>内容</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="f in items" :key="f.id">
-            <td>{{ f.id }}</td>
-            <td>{{ f.username || f.userId || f.user_id || '-' }}</td>
-            <td>{{ catText[f.category || ''] || f.category || '-' }}</td>
-            <td class="cell-ellipsis" :title="f.title">{{ f.title || '-' }}</td>
-            <td class="cell-ellipsis" :title="f.content">{{ f.content || '-' }}</td>
-            <td>{{ statusText[Number(f.status ?? -1)] || f.status }}</td>
-            <td class="cell-actions">
-              <button
-                v-if="f.status === 0 || f.status === 1 || f.status === 2"
-                type="button"
-                class="ghost-btn"
-                :disabled="busyId === f.id"
-                @click="openHandle(f)"
-              >
-                处理
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <p v-if="loading" class="vue-state">加载中…</p>
+    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
+    <div class="content-card">
+      <div class="card-header"><h3 class="card-title">问题反馈</h3><div class="card-actions"><span class="article-count">共 {{ total }} 条</span></div></div>
+      <div class="table-container">
+        <p v-if="!loading && !error && !items.length" class="vue-state">暂无反馈</p>
+        <table v-else-if="items.length" class="data-table">
+          <thead><tr><th>ID</th><th>分类</th><th>内容</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr v-for="f in items" :key="f.id">
+              <td>{{ f.id }}</td>
+              <td>{{ f.category || '-' }}</td>
+              <td class="cell-ellipsis" :title="f.content">{{ f.content || f.title || '-' }}</td>
+              <td>{{ f.status || '-' }}</td>
+              <td class="cell-actions">
+                <button type="button" class="btn btn-secondary btn-sm" @click="openHandle(f)">处理</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-
-    <div v-if="totalPages > 1" class="pager">
-      <button type="button" class="ghost-btn" :disabled="page <= 1" @click="page--; load()">上一页</button>
-      <span>第 {{ page }} / {{ totalPages }} 页，共 {{ total }} 条</span>
-      <button type="button" class="ghost-btn" :disabled="page >= totalPages" @click="page++; load()">下一页</button>
-    </div>
-
-    <div v-if="handleOpen" class="drawer-mask" @click.self="handleOpen = false">
-      <aside class="drawer">
-        <header class="drawer-head">
-          <h2>处理反馈 #{{ handleItem?.id }}</h2>
-          <button type="button" class="ghost-btn" @click="handleOpen = false">关闭</button>
+    <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
+    <div v-if="handleOpen" class="vue-drawer-mask" @click.self="handleOpen=false">
+      <aside class="vue-drawer">
+        <header class="vue-drawer-head"><h2>处理反馈 #{{ handleItem?.id }}</h2>
+          <button type="button" class="btn btn-secondary btn-sm" @click="handleOpen=false">关闭</button>
         </header>
-        <p class="detail-block">{{ handleItem?.content }}</p>
-        <label class="form-field">
-          状态
-          <select v-model.number="handleStatus">
-            <option :value="1">处理中</option>
-            <option :value="2">已处理</option>
-            <option :value="3">已关闭</option>
-          </select>
-        </label>
-        <label class="form-field">
-          回复
-          <textarea v-model.trim="handleReply" rows="3" />
-        </label>
-        <button type="button" class="auth-btn" :disabled="busyId != null" @click="confirmHandle">提交</button>
-        <p v-if="actionMsg" class="state" :class="actionErr ? 'state-error' : ''">{{ actionMsg }}</p>
+        <div class="form-field"><label>状态</label>
+          <select v-model="handleStatus"><option value="open">open</option><option value="replied">replied</option><option value="closed">closed</option></select>
+        </div>
+        <div class="form-field"><label>回复</label>
+          <textarea v-model="handleReply" rows="4"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" :disabled="busyId === handleItem?.id" @click="confirmHandle">提交</button>
       </aside>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
