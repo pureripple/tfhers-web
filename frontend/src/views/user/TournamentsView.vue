@@ -1,19 +1,11 @@
 <template>
   <section class="page active">
     <div class="tournaments-page">
-      <div class="action-bar" style="margin-bottom: 12px;">
-        <h2 class="hot-news-block-title" style="margin:0">比赛</h2>
-        <button type="button" class="btn btn-secondary btn-sm" :disabled="loading" @click="load">
-          <i class="fas fa-sync-alt"></i> 刷新
-        </button>
-      </div>
       <div class="tournaments-layout">
-        <div class="tournament-list" aria-label="比赛列表">
+        <div class="tournament-list" aria-label="list">
           <div v-if="loading" class="tournament-empty">加载中…</div>
           <div v-else-if="error" class="tournament-empty">{{ error }}</div>
-          <div v-else-if="!items.length" class="tournament-empty">
-            暂无公开比赛<br /><span style="font-size:0.85em">管理员可在后台创建并开放报名</span>
-          </div>
+          <div v-else-if="!items.length" class="tournament-empty">暂无公开赛事</div>
           <article
             v-for="item in items"
             v-else
@@ -23,7 +15,7 @@
             @click="selectedId = item.id"
           >
             <div class="tournament-card-top">
-              <h3 class="tournament-card-title">{{ item.title || '未命名比赛' }}</h3>
+              <h3 class="tournament-card-title">{{ item.title || '-' }}</h3>
               <span class="tournament-status" :class="item.status || ''">{{ statusLabel(item.status) }}</span>
             </div>
             <div class="tournament-card-meta">
@@ -31,23 +23,20 @@
                 <i class="fas fa-users"></i>
                 {{ item.registrationCount ?? 0 }}
                 <template v-if="item.maxSlots != null"> / {{ item.maxSlots }}</template>
-                人
                 <template v-if="item.registeredByMe"> · 已报名</template>
               </span>
-              <span v-if="item.startsAt">
-                <i class="fas fa-clock"></i> {{ formatTime(item.startsAt) }}
-              </span>
+              <span v-if="item.startsAt"><i class="fas fa-clock"></i> {{ formatTime(item.startsAt) }}</span>
             </div>
           </article>
         </div>
-        <div class="tournament-detail active" aria-label="比赛详情">
-          <div v-if="!selected" class="tournament-empty">请选择左侧比赛查看详情</div>
+        <div class="tournament-detail active" aria-label="detail">
+          <div v-if="!selected" class="tournament-empty">请选择赛事</div>
           <template v-else>
             <div class="tournament-detail-panel">
               <div class="tournament-detail-head">
                 <div class="tournament-detail-head-row">
                   <div class="tournament-detail-head-main">
-                    <h3 class="tournament-detail-title">{{ selected.title || '未命名比赛' }}</h3>
+                    <h3 class="tournament-detail-title">{{ selected.title || '-' }}</h3>
                     <span class="tournament-status" :class="selected.status || ''">{{ statusLabel(selected.status) }}</span>
                   </div>
                 </div>
@@ -63,7 +52,20 @@
                 </div>
               </div>
               <div class="tournament-detail-actions">
-                <button type="button" class="btn btn-primary" disabled title="下一步再接">报名（待接）</button>
+                <button
+                  v-if="!selected.registeredByMe"
+                  type="button"
+                  class="btn btn-primary"
+                  :disabled="acting || !canRegister(selected)"
+                  @click="doRegister"
+                >立即报名</button>
+                <button
+                  v-else
+                  type="button"
+                  class="btn btn-outline"
+                  :disabled="acting"
+                  @click="doUnregister"
+                >取消报名</button>
               </div>
             </div>
           </template>
@@ -74,14 +76,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { fetchTournaments } from '@/api/tournaments'
+import { computed, onMounted, ref } from 'vue'
+import { fetchTournaments, registerTournament, unregisterTournament } from '@/api/tournaments'
 import { ApiError, type Tournament } from '@/api/types'
+import { useUserAuthStore } from '@/stores/auth'
 
+const auth = useUserAuthStore()
 const items = ref<Tournament[]>([])
 const loading = ref(false)
 const error = ref('')
 const selectedId = ref<number | null>(null)
+const acting = ref(false)
 
 const STATUS_MAP: Record<string, string> = {
   draft: '草稿',
@@ -96,17 +101,16 @@ const STATUS_MAP: Record<string, string> = {
 const selected = computed(() => items.value.find((t) => t.id === selectedId.value) || null)
 
 function statusLabel(s?: string) {
-  if (!s) return '未知'
+  if (!s) return '-'
   return STATUS_MAP[s] || s
 }
-
 function formatTime(v?: string) {
   if (!v) return ''
-  try {
-    return new Date(v).toLocaleString('zh-CN')
-  } catch {
-    return v
-  }
+  try { return new Date(v).toLocaleString('zh-CN') } catch { return v }
+}
+function canRegister(t: Tournament) {
+  const st = (t.status || '').toLowerCase()
+  return st === 'open' || st === 'registration'
 }
 
 async function load() {
@@ -122,7 +126,7 @@ async function load() {
       selectedId.value = null
     }
   } catch (e) {
-    error.value = e instanceof ApiError ? e.message : '加载赛事失败'
+    error.value = e instanceof ApiError ? e.message : 'error'
     items.value = []
     selectedId.value = null
   } finally {
@@ -130,12 +134,35 @@ async function load() {
   }
 }
 
-watch(
-  () => items.value.length,
-  () => {
-    if (!selectedId.value && items.value[0]) selectedId.value = items.value[0].id
-  },
-)
+async function doRegister() {
+  if (!selected.value) return
+  if (!auth.isLoggedIn) {
+    window.alert('请先登录')
+    return
+  }
+  acting.value = true
+  try {
+    await registerTournament(selected.value.id)
+    await load()
+  } catch (e) {
+    window.alert(e instanceof ApiError ? e.message : 'error')
+  } finally {
+    acting.value = false
+  }
+}
+
+async function doUnregister() {
+  if (!selected.value) return
+  acting.value = true
+  try {
+    await unregisterTournament(selected.value.id)
+    await load()
+  } catch (e) {
+    window.alert(e instanceof ApiError ? e.message : 'error')
+  } finally {
+    acting.value = false
+  }
+}
 
 onMounted(load)
 </script>
