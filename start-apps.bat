@@ -10,7 +10,7 @@ timeout /t 10 /nobreak >nul
 echo [2/3] app :8080
 start "TFHers-app-8080" /D "%~dp0tfhers-web-app" cmd /k mvn spring-boot:run
 echo [3/3] Vue Vite :5173
-if not exist "%~dp0frontend\node_modules\" (
+if not exist "%~dp0frontend\node_modules\." (
   start "TFHers-Vue-5173" /D "%~dp0frontend" cmd /k "npm install && npm run dev"
 ) else (
   start "TFHers-Vue-5173" /D "%~dp0frontend" cmd /k npm run dev
