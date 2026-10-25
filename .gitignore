@@ -44,3 +44,8 @@ tfhers-gha-deploy.pub
 _tmp_*.py
 _patch_*/
 _revert_*.txt
+
+# Vue frontend
+frontend/node_modules/
+frontend/dist/
+
