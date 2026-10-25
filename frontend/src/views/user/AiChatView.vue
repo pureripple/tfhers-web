@@ -1,14 +1,6 @@
 <template>
   <section class="page page-ai-chat active">
-    <div v-if="!userAuth.isLoggedIn" class="auth-card-legacy" style="margin-top:2rem">
-      <h1>AI 助手</h1>
-      <p>请先登录后再使用 AI 助手。</p>
-      <RouterLink class="btn btn-primary" to="/login?redirect=/ai-chat" style="display:inline-flex;margin-top:0.75rem;text-decoration:none">
-        去登录
-      </RouterLink>
-    </div>
-
-    <div v-else class="ai-chat-layout grok-layout">
+    <div class="ai-chat-layout grok-layout">
       <div class="grok-chat-panel">
         <header class="grok-head">
           <div class="grok-head-left">
@@ -29,7 +21,7 @@
             style="max-width:85%;padding:0.65rem 0.85rem;border-radius:12px;background:var(--bg-secondary,rgba(255,255,255,0.06))"
             :style="m.role === 'user' ? { alignSelf: 'flex-end', background: 'rgba(255,122,122,0.18)' } : { alignSelf: 'flex-start' }"
           >
-            <div style="font-size:0.75rem;opacity:0.7;margin-bottom:0.2rem">{{ m.role === 'user' ? '我' : '助手' }}</div>
+            <div style="font-size:0.75rem;opacity:0.7;margin-bottom:0.2rem">{{ m.role === 'user' ? '你' : '助手' }}</div>
             <div style="white-space:pre-wrap;word-break:break-word">{{ m.text }}</div>
           </div>
           <p v-if="sending" class="vue-state">助手正在回复…</p>
@@ -40,7 +32,7 @@
             v-model.trim="input"
             type="text"
             maxlength="1000"
-            placeholder="问角色、技能、攻略…"
+            placeholder="问角色、连招、赛制…"
             :disabled="sending"
             style="flex:1;border:1px solid var(--border-color,rgba(255,255,255,0.14));border-radius:10px;padding:0.55rem 0.7rem;background:var(--bg-tertiary,#0f0f14);color:inherit;font:inherit"
           />
@@ -53,19 +45,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { fetchAiStatus, postAiChat } from '@/api/ai'
 import { ApiError } from '@/api/types'
-import { useUserAuthStore } from '@/stores/auth'
 
 interface ChatMsg {
   role: 'user' | 'ai'
   text: string
 }
 
-const userAuth = useUserAuthStore()
 const messages = ref<ChatMsg[]>([
-  { role: 'ai', text: '你好，我是蹄斗族群 AI 助手。可以问我角色、技能、攻略等问题。' },
+  { role: 'ai', text: '你好，我是蹄斗族群 AI 助手。可以问我角色、连招、赛制等问题。' },
 ])
 const input = ref('')
 const sending = ref(false)
@@ -81,7 +71,6 @@ const statusLabel = computed(() => {
 })
 
 async function probeStatus() {
-  if (!userAuth.isLoggedIn) return
   try {
     const data = await fetchAiStatus()
     status.value = data?.status === 'online' ? 'online' : 'warn'
@@ -107,21 +96,14 @@ async function onSend() {
     const answer = await postAiChat(q)
     messages.value.push({ role: 'ai', text: answer || '（空回复）' })
   } catch (e) {
-    const msg = e instanceof ApiError ? e.message : 'AI 服务暂时不可用'
+    const msg = e instanceof ApiError ? e.message : 'AI 请求暂时不可用'
     error.value = msg
-    messages.value.push({ role: 'ai', text: '抱歉，我现在无法回答您的问题，请稍后再试。' })
+    messages.value.push({ role: 'ai', text: '抱歉，这一次无法回答你的问题，请稍后再试。' })
   } finally {
     sending.value = false
     await scrollBottom()
   }
 }
-
-watch(
-  () => userAuth.isLoggedIn,
-  (ok) => {
-    if (ok) probeStatus()
-  },
-)
 
 onMounted(probeStatus)
 </script>

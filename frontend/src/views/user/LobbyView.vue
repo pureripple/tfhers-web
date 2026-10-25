@@ -1,21 +1,13 @@
 <template>
   <section class="page active">
     <div class="rooms-page">
-      <div v-if="!userAuth.isLoggedIn" class="auth-card-legacy" style="margin-top:2rem">
-        <h1>大厅</h1>
-        <p>大厅需要登录后才能查看房间列表与加入约战。</p>
-        <RouterLink class="btn btn-primary" to="/login?redirect=/lobby" style="display:inline-flex;margin-top:0.75rem;text-decoration:none">
-          去登录
-        </RouterLink>
-      </div>
-
-      <div v-else class="rooms-layout">
+      <div class="rooms-layout">
         <div class="rooms-list-col">
           <header class="rooms-rail-head" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
             <button type="button" class="rooms-icon-btn" title="刷新列表" aria-label="刷新列表" :disabled="loading" @click="load">
               <i class="fas fa-sync-alt"></i>
             </button>
-            <button type="button" class="rooms-icon-btn" title="创建房间（待接）" aria-label="创建房间" disabled>
+            <button type="button" class="rooms-icon-btn" title="创建房间（占位）" aria-label="创建房间" disabled>
               <i class="fas fa-plus"></i>
             </button>
           </header>
@@ -38,7 +30,7 @@
             >
               <span class="room-tile-face">
                 <i v-if="room.hasPassword" class="fas fa-lock" style="position:absolute;top:8px;left:8px;font-size:0.7rem;opacity:0.8"></i>
-                <span v-if="room.joinedByMe" class="room-tile-mark room-tile-mark--joined">在</span>
+                <span v-if="room.joinedByMe" class="room-tile-mark room-tile-mark--joined">我</span>
                 <span class="room-tile-abbr">{{ abbrOf(room) }}</span>
                 <span class="room-tile-count">
                   {{ room.memberCount ?? 0 }}<template v-if="room.maxPlayers != null">/{{ room.maxPlayers }}</template>
@@ -74,12 +66,12 @@
                   </div>
                   <div v-if="selected.hasPassword" class="room-info-row">
                     <span class="room-info-label">密码</span>
-                    <span class="room-info-value">有密码</span>
+                    <span class="room-info-value">已加密</span>
                   </div>
                 </div>
-                <p class="room-info-tip">房间仅用于互相联系、约定上线对战；对局请自行在 Steam 启动游戏。</p>
+                <p class="room-info-tip">约战房间用于群内约战或本地对战；对局请自行用 Steam 启动游戏。</p>
                 <div class="room-info-actions">
-                  <button type="button" class="btn btn-primary" disabled title="下一步再接">加入（待接）</button>
+                  <button type="button" class="btn btn-primary" disabled title="下一步再接">加入（占位）</button>
                 </div>
               </div>
             </div>
@@ -91,12 +83,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { fetchRooms } from '@/api/rooms'
 import { ApiError, type Room } from '@/api/types'
-import { useUserAuthStore } from '@/stores/auth'
 
-const userAuth = useUserAuthStore()
 const rooms = ref<Room[]>([])
 const loading = ref(false)
 const error = ref('')
@@ -115,7 +105,7 @@ function roomStatus(r: Room) {
 function roomStatusLabel(st: string) {
   if (st === 'FULL') return '已满'
   if (st === 'CLOSED') return '已关闭'
-  return '开放中'
+  return '可加入'
 }
 function abbrOf(r: Room) {
   const title = (r.title || ('R' + r.id)).trim()
@@ -133,10 +123,6 @@ function tileTitle(r: Room) {
 }
 
 async function load() {
-  if (!userAuth.isLoggedIn) {
-    rooms.value = []
-    return
-  }
   loading.value = true
   error.value = ''
   try {
@@ -152,17 +138,6 @@ async function load() {
     loading.value = false
   }
 }
-
-watch(
-  () => userAuth.isLoggedIn,
-  (ok) => {
-    if (ok) load()
-    else {
-      rooms.value = []
-      selectedId.value = null
-    }
-  },
-)
 
 onMounted(load)
 </script>
