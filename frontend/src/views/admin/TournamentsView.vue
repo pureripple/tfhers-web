@@ -3,7 +3,7 @@
     <div class="action-bar">
       <p class="stats-page-desc">赛事管理（创建表单未迁入）</p>
       <div class="action-buttons">
-        <button type="button" class="btn btn-primary" disabled><i class="fas fa-plus"></i> 创建赛事</button>
+        <button type="button" class="btn btn-primary" @click="openCreate"><i class="fas fa-plus"></i> 创建赛事</button>
         <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
       </div>
     </div>
@@ -58,7 +58,27 @@
         </div>
       </aside>
     </div>
-  </section>
+    <div v-if="showCreate" class="modal" style="display:block" @click.self="showCreate=false">
+    <div class="modal-content">
+      <div class="modal-header"><h3>创建赛事</h3><button type="button" class="modal-close" @click="showCreate=false"><i class="fas fa-times"></i></button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>名称 *</label><input v-model.trim="form.title" type="text" /></div>
+        <div class="form-group"><label>描述</label><textarea v-model.trim="form.description" rows="3" style="width:100%"></textarea></div>
+        <div class="form-group"><label>名额</label>
+          <select v-model.number="form.maxSlots"><option :value="8">8</option><option :value="16">16</option></select>
+        </div>
+        <div class="form-group"><label>赛制</label><input v-model.trim="form.bracketType" type="text" placeholder="single_elim" /></div>
+        <div class="form-group"><label>状态</label>
+          <select v-model="form.status"><option value="draft">draft</option><option value="open">open</option><option value="registration">registration</option></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" @click="showCreate=false">取消</button>
+        <button type="button" class="btn btn-primary" :disabled="creating" @click="onCreate">保存</button>
+      </div>
+    </div>
+  </div>
+</section>
 </template>
 
 <script setup lang="ts">
@@ -85,6 +105,27 @@ const items = ref<Tournament[]>([])
 const loading = ref(false)
 const error = ref('')
 const busyId = ref<number | null>(null)
+const showCreate = ref(false)
+const creating = ref(false)
+const form = ref({ title: '', description: '', maxSlots: 16, bracketType: 'single_elim', status: 'draft' })
+function openCreate() {
+  form.value = { title: '', description: '', maxSlots: 16, bracketType: 'single_elim', status: 'draft' }
+  showCreate.value = true
+}
+async function onCreate() {
+  if (!form.value.title) { actionMsg.value = '请填写名称'; actionErr.value = true; return }
+  creating.value = true
+  try {
+    await createAdminTournament({ ...form.value })
+    showCreate.value = false
+    actionMsg.value = '创建成功'
+    actionErr.value = false
+    await load()
+  } catch (e) {
+    actionMsg.value = e instanceof ApiError ? e.message : '创建失败'
+    actionErr.value = true
+  } finally { creating.value = false }
+}
 const actionMsg = ref('')
 const actionErr = ref(false)
 

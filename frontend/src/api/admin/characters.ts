@@ -1,4 +1,4 @@
-import { del, get } from '../http'
+import { del, get, post, put } from '../http'
 import type { GameCharacter } from '../types'
 
 export function fetchAdminCharacters() {
@@ -7,4 +7,11 @@ export function fetchAdminCharacters() {
 
 export function deleteAdminCharacter(id: number) {
   return del<unknown>(`/api/admin/characters/${id}`, { auth: 'admin' })
+}
+export function createAdminCharacter(payload: Record<string, unknown>) {
+  return post<GameCharacter>('/api/admin/characters', payload, { auth: 'admin' })
+}
+
+export function updateAdminCharacter(id: number, payload: Record<string, unknown>) {
+  return put<GameCharacter>(`/api/admin/characters/${id}`, payload, { auth: 'admin' })
 }

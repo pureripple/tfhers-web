@@ -1,4 +1,4 @@
-import { del, get, put } from '../http'
+import { del, get, post, put } from '../http'
 import type { Tournament } from '../types'
 
 export function fetchAdminTournaments() {
@@ -20,4 +20,11 @@ export function updateTournamentStatus(id: number, status: string) {
 
 export function deleteAdminTournament(id: number) {
   return del<unknown>(`/api/admin/tournaments/${id}`, { auth: 'admin' })
+}
+export function createAdminTournament(payload: Record<string, unknown>) {
+  return post<Tournament>('/api/admin/tournaments', payload, { auth: 'admin' })
+}
+
+export function updateAdminTournament(id: number, payload: Record<string, unknown>) {
+  return put<Tournament>(`/api/admin/tournaments/${id}`, payload, { auth: 'admin' })
 }

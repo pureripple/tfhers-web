@@ -7,7 +7,7 @@
         <button type="button" class="search-btn" :disabled="loading" @click="load">搜索</button>
       </div>
       <div class="action-buttons">
-        <button type="button" class="btn btn-primary" disabled title="富文本新建未迁入">
+        <button type="button" class="btn btn-primary" @click="showCreate = true">
           <i class="fas fa-plus"></i> 新增文章
         </button>
         <button type="button" class="btn btn-secondary" :disabled="loading" @click="load">
@@ -56,7 +56,25 @@
       </div>
     </div>
     <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
-  </section>
+    <div v-if="showCreate" class="modal" style="display:block" @click.self="showCreate = false">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3>新增文章</h3>
+        <button type="button" class="modal-close" @click="showCreate = false"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label>标题 *</label><input v-model.trim="createTitle" type="text" /></div>
+        <div class="form-group"><label>摘要</label><input v-model.trim="createSummary" type="text" /></div>
+        <div class="form-group"><label>作者</label><input v-model.trim="createAuthor" type="text" /></div>
+        <div class="form-group"><label>内容 *</label><textarea v-model.trim="createContent" rows="8" style="width:100%"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" @click="showCreate = false">取消</button>
+        <button type="button" class="btn btn-primary" :disabled="creating" @click="onCreate">发布</button>
+      </div>
+    </div>
+  </div>
+</section>
 </template>
 
 <script setup lang="ts">
@@ -73,6 +91,43 @@ const items = ref<Article[]>([])
 const loading = ref(false)
 const error = ref('')
 const keyword = ref('')
+const showCreate = ref(false)
+const createTitle = ref('')
+const createSummary = ref('')
+const createAuthor = ref('')
+const createContent = ref('')
+const creating = ref(false)
+
+async function onCreate() {
+  if (!createTitle.value || !createContent.value) {
+    actionMsg.value = '请填写标题和内容'
+    actionErr.value = true
+    return
+  }
+  creating.value = true
+  actionMsg.value = ''
+  try {
+    await createAdminArticle({
+      title: createTitle.value,
+      summary: createSummary.value,
+      content: createContent.value,
+      author: createAuthor.value || 'admin',
+    })
+    showCreate.value = false
+    createTitle.value = ''
+    createSummary.value = ''
+    createAuthor.value = ''
+    createContent.value = ''
+    actionMsg.value = '发布成功'
+    actionErr.value = false
+    await load()
+  } catch (e) {
+    actionMsg.value = e instanceof ApiError ? e.message : '发布失败'
+    actionErr.value = true
+  } finally {
+    creating.value = false
+  }
+}
 const busyId = ref<number | null>(null)
 const actionMsg = ref('')
 const actionErr = ref(false)

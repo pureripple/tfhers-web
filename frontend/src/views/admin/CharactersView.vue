@@ -3,7 +3,7 @@
     <div class="action-bar">
       <p class="stats-page-desc">角色管理（新建/编辑表单未迁入）</p>
       <div class="action-buttons">
-        <button type="button" class="btn btn-primary" disabled title="表单未迁入"><i class="fas fa-plus"></i> 新增角色</button>
+        <button type="button" class="btn btn-primary" @click="openCreate"><i class="fas fa-plus"></i> 新增角色</button>
         <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
       </div>
     </div>
@@ -30,18 +30,55 @@
       </div>
     </div>
     <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
-  </section>
+    <div v-if="showCreate" class="modal" style="display:block" @click.self="showCreate=false">
+    <div class="modal-content">
+      <div class="modal-header"><h3>新增角色</h3><button type="button" class="modal-close" @click="showCreate=false"><i class="fas fa-times"></i></button></div>
+      <div class="modal-body">
+        <div class="form-group"><label>中文名 *</label><input v-model.trim="form.nameZh" type="text" /></div>
+        <div class="form-group"><label>英文名 *</label><input v-model.trim="form.nameEn" type="text" /></div>
+        <div class="form-group"><label>头像 URL</label><input v-model.trim="form.avatarUrl" type="text" /></div>
+        <div class="form-group"><label>简介</label><textarea v-model.trim="form.intro" rows="3" style="width:100%"></textarea></div>
+        <div class="form-group"><label>难度</label><input v-model.number="form.difficultyLevel" type="number" min="1" max="5" /></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" @click="showCreate=false">取消</button>
+        <button type="button" class="btn btn-primary" :disabled="creating" @click="onCreate">保存</button>
+      </div>
+    </div>
+  </div>
+</section>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { deleteAdminCharacter, fetchAdminCharacters } from '@/api/admin/characters'
+import { createAdminCharacter, deleteAdminCharacter, fetchAdminCharacters } from '@/api/admin/characters'
 import { ApiError, type GameCharacter } from '@/api/types'
 
 const items = ref<GameCharacter[]>([])
 const loading = ref(false)
 const error = ref('')
 const busyId = ref<number | null>(null)
+const showCreate = ref(false)
+const creating = ref(false)
+const form = ref({ nameZh: '', nameEn: '', avatarUrl: '', intro: '', difficultyLevel: 3 })
+function openCreate() {
+  form.value = { nameZh: '', nameEn: '', avatarUrl: '', intro: '', difficultyLevel: 3 }
+  showCreate.value = true
+}
+async function onCreate() {
+  if (!form.value.nameZh || !form.value.nameEn) { actionMsg.value = '请填写中英文名'; actionErr.value = true; return }
+  creating.value = true
+  try {
+    await createAdminCharacter({ ...form.value })
+    showCreate.value = false
+    actionMsg.value = '新增成功'
+    actionErr.value = false
+    await load()
+  } catch (e) {
+    actionMsg.value = e instanceof ApiError ? e.message : '新增失败'
+    actionErr.value = true
+  } finally { creating.value = false }
+}
 const actionMsg = ref('')
 const actionErr = ref(false)
 

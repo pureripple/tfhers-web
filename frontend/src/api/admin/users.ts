@@ -1,4 +1,4 @@
-import { del, get, put } from '../http'
+import { del, get, put, post } from '../http'
 import type { ManagedUser, ManagedUserListData } from './types'
 
 export function fetchManagedUsers(
@@ -32,3 +32,6 @@ export function deleteManagedUser(id: number) {
 }
 
 export type { ManagedUser }
+export function resetManagedUserPassword(id: number, newPassword: string) {
+  return put<unknown>(`/api/user-management/${id}/password`, { newPassword }, { auth: 'admin' })
+}

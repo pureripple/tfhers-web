@@ -37,7 +37,7 @@
               <td>{{ u.status }}</td>
               <td class="cell-actions">
                 <button type="button" class="btn btn-secondary btn-sm" :disabled="busyId === u.id" @click="onToggleStatus(u)">切换状态</button>
-                <button type="button" class="btn btn-secondary btn-sm" disabled title="待接">重置密码</button>
+                <button type="button" class="btn btn-secondary btn-sm" :disabled="busyId === u.id" @click="onResetPassword(u)">重置密码</button>
               </td>
             </tr>
           </tbody>

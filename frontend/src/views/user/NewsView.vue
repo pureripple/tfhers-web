@@ -57,7 +57,7 @@
                   ></button>
                 </div>
               </div>
-              <p v-else-if="!loading" class="vue-state">暂无热门</p>
+              <p v-else-if="!loading" class="room-empty">暂无热门</p>
             </div>
           </div>
           <div class="hot-news-split-divider" role="separator" aria-hidden="true"></div>
@@ -116,9 +116,9 @@
         </div>
       </div>
 
-      <p v-if="loading" class="vue-state">加载中…</p>
-      <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
-      <p v-else-if="!filteredItems.length" class="vue-state">暂无资讯</p>
+      <p v-if="loading" class="room-empty">加载中…</p>
+      <p v-else-if="error" class="room-empty">{{ error }}</p>
+      <p v-else-if="!filteredItems.length" class="room-empty">暂无资讯</p>
       <div v-else class="articles-grid">
         <article
           v-for="item in filteredItems"
@@ -150,33 +150,60 @@
       </div>
     </div>
 
-    <div v-if="detailOpen" class="vue-drawer-mask" @click.self="closeDetail">
-      <aside class="vue-drawer">
-        <header class="vue-drawer-head">
-          <h2>{{ detail?.title || '资讯详情' }}</h2>
-          <button type="button" class="btn btn-secondary btn-sm" @click="closeDetail">关闭</button>
-        </header>
-        <p v-if="detailLoading" class="vue-state">加载中…</p>
-        <p v-else-if="detailError" class="vue-state vue-state-error">{{ detailError }}</p>
-        <template v-else-if="detail">
-          <p class="vue-detail-meta">
-            <span>{{ detail.author || '匿名' }}</span>
-            <span>{{ dateOf(detail) }}</span>
-            <span>阅读 {{ viewsOf(detail) }}</span>
-          </p>
-          <img v-if="coverOf(detail)" class="vue-detail-cover" :src="coverOf(detail)" alt="" />
-          <div class="vue-detail-content">{{ detail.content || detail.summary || '暂无正文' }}</div>
-        </template>
-      </aside>
+    <div v-if="detailOpen" class="modal" style="display:block" @click.self="closeDetail">
+      <div class="modal-content modal-large">
+        <div class="modal-header">
+          <h3>{{ detail?.title || '资讯详情' }}</h3>
+          <button type="button" class="modal-close" @click="closeDetail"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p v-if="detailLoading" class="room-empty">加载中…</p>
+          <p v-else-if="detailError" class="room-empty">{{ detailError }}</p>
+          <template v-else-if="detail">
+            <p class="article-meta" style="opacity:0.8;margin-bottom:12px;">
+              <span>{{ detail.author || '匿名' }}</span>
+              <span v-if="dateOf(detail)"> · {{ dateOf(detail) }}</span>
+              <span> · 阅读 {{ viewsOf(detail) }}</span>
+              <span v-if="likeCount != null"> · 点赞 {{ likeCount }}</span>
+            </p>
+            <img v-if="coverOf(detail)" class="article-cover" :src="coverOf(detail)" alt="" style="max-width:100%;border-radius:8px;margin-bottom:12px;" />
+            <div class="article-content" style="white-space:pre-wrap;line-height:1.7;">{{ detail.content || detail.summary || '' }}</div>
+            <div class="article-actions" style="display:flex;gap:8px;margin:16px 0;flex-wrap:wrap;">
+              <button type="button" class="btn btn-outline btn-sm" :disabled="acting" @click="onLike">
+                <i class="fas fa-thumbs-up"></i> 点赞
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" :disabled="acting" @click="onReport">
+                <i class="fas fa-flag"></i> 举报
+              </button>
+            </div>
+            <div class="article-comments">
+              <h4 style="margin:12px 0;">评论 ({{ comments.length }})</h4>
+              <div v-if="commentsLoading" class="room-empty">加载中…</div>
+              <div v-else-if="!comments.length" class="room-empty">暂无评论</div>
+              <div v-for="(c, idx) in comments" :key="c.id || idx" class="comment-item" style="padding:10px 0;border-bottom:1px solid var(--border-color);">
+                <div style="font-weight:600;">{{ c.authorName || c.author_name || c.nickname || c.username || '用户' }}</div>
+                <div style="opacity:0.7;font-size:0.85rem;">{{ c.createdAt || c.created_at || '' }}</div>
+                <div style="margin-top:4px;white-space:pre-wrap;">{{ c.content }}</div>
+              </div>
+              <div style="margin-top:12px;display:flex;gap:8px;">
+                <input v-model.trim="commentText" type="text" class="hot-news-search-input" style="flex:1;" :placeholder="'说点什么…'" @keyup.enter="onComment" />
+                <button type="button" class="btn btn-primary btn-sm" :disabled="acting || !commentText" @click="onComment">发送</button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { fetchArticle, fetchArticles } from '@/api/articles'
+import { fetchArticle, fetchArticles, fetchArticleComments, likeArticle, postArticleComment, reportArticle } from '@/api/articles'
+import { useUserAuthStore } from '@/stores/auth'
 import { ApiError, type Article } from '@/api/types'
 
+const auth = useUserAuthStore()
 const items = ref<Article[]>([])
 const loading = ref(false)
 const error = ref('')
@@ -238,13 +265,82 @@ async function load() {
   }
 }
 
+
+const comments = ref<any[]>([])
+const commentsLoading = ref(false)
+const commentText = ref('')
+const acting = ref(false)
+const likeCount = ref<number | null>(null)
+
+async function loadComments(id: number) {
+  commentsLoading.value = true
+  try {
+    const data = await fetchArticleComments(id)
+    comments.value = Array.isArray(data) ? data : []
+  } catch {
+    comments.value = []
+  } finally {
+    commentsLoading.value = false
+  }
+}
+
+async function onLike() {
+  if (!detail.value) return
+  if (!auth.isLoggedIn) { window.alert('请先登录'); return }
+  acting.value = true
+  try {
+    await likeArticle(detail.value.id)
+    likeCount.value = (likeCount.value || 0) + 1
+  } catch (e) {
+    window.alert(e instanceof ApiError ? e.message : 'error')
+  } finally {
+    acting.value = false
+  }
+}
+
+async function onReport() {
+  if (!detail.value) return
+  if (!auth.isLoggedIn) { window.alert('请先登录'); return }
+  const reason = window.prompt('请输入举报理由', '') || ''
+  acting.value = true
+  try {
+    await reportArticle(detail.value.id, reason)
+    window.alert('已提交举报')
+  } catch (e) {
+    window.alert(e instanceof ApiError ? e.message : 'error')
+  } finally {
+    acting.value = false
+  }
+}
+
+async function onComment() {
+  if (!detail.value || !commentText.value) return
+  if (!auth.isLoggedIn) { window.alert('请先登录'); return }
+  acting.value = true
+  try {
+    await postArticleComment(detail.value.id, commentText.value)
+    commentText.value = ''
+    await loadComments(detail.value.id)
+  } catch (e) {
+    window.alert(e instanceof ApiError ? e.message : 'error')
+  } finally {
+    acting.value = false
+  }
+}
+
 async function openDetail(id: number) {
   detailOpen.value = true
   detail.value = null
   detailError.value = ''
   detailLoading.value = true
+  comments.value = []
+  commentText.value = ''
+  likeCount.value = null
   try {
     detail.value = await fetchArticle(id)
+    const d = detail.value as any
+    likeCount.value = d?.likeCount ?? d?.like_count ?? d?.likes ?? null
+    await loadComments(id)
   } catch (e) {
     detailError.value = e instanceof ApiError ? e.message : '加载详情失败'
   } finally {
