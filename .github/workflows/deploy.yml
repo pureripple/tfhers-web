@@ -1,13 +1,15 @@
-# Push to main → build → SSH deploy
+# Push to main -> build -> SSH deploy
 # Secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY (optional DEPLOY_PORT)
 name: Deploy TFHers
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 concurrency:
   group: deploy-production
   cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+
       - name: Detect changes
         id: changes
         run: |
@@ -24,7 +27,8 @@ jobs:
             echo "java=true" >> "$GITHUB_OUTPUT"
             echo "admin_static=true" >> "$GITHUB_OUTPUT"
             echo "frontend_static=true" >> "$GITHUB_OUTPUT"
-            echo "nginx=false" >> "$GITHUB_OUTPUT"
+            echo "vue_frontend=true" >> "$GITHUB_OUTPUT"
+            echo "nginx=true" >> "$GITHUB_OUTPUT"
           }
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then mark_all; exit 0; fi
           BEFORE="${{ github.event.before }}"
@@ -34,12 +38,18 @@ jobs:
           echo "java=false" >> "$GITHUB_OUTPUT"
           echo "admin_static=false" >> "$GITHUB_OUTPUT"
           echo "frontend_static=false" >> "$GITHUB_OUTPUT"
+          echo "vue_frontend=false" >> "$GITHUB_OUTPUT"
           echo "nginx=false" >> "$GITHUB_OUTPUT"
           echo "$FILES" | grep -qE '(^pom\.xml$|\.java$|tfhers-web-management/)' && echo "java=true" >> "$GITHUB_OUTPUT" || true
           echo "$FILES" | grep -qE 'tfhers-web-management/.*/static/' && echo "admin_static=true" >> "$GITHUB_OUTPUT" || true
+          # Legacy Spring static under app — kept for detection only; live user site is Vue dist
           echo "$FILES" | grep -qE 'tfhers-web-app/.*/static/' && echo "frontend_static=true" >> "$GITHUB_OUTPUT" || true
           if echo "$FILES" | grep -qE '\.java$|pom\.xml|tfhers-web-management/'; then echo "admin_static=true" >> "$GITHUB_OUTPUT"; fi
-          echo "$FILES" | grep -qE 'nginx|\.conf$' && echo "nginx=true" >> "$GITHUB_OUTPUT" || true
+          echo "$FILES" | grep -qE '^frontend/' && echo "vue_frontend=true" >> "$GITHUB_OUTPUT" || true
+          echo "$FILES" | grep -qE '(^deploy/nginx/|nginx|\.conf$|\.github/workflows/deploy\.yml$)' && echo "nginx=true" >> "$GITHUB_OUTPUT" || true
+          # Workflow itself changing Vue deploy steps should rebuild frontend once
+          echo "$FILES" | grep -qE '^\.github/workflows/deploy\.yml$' && echo "vue_frontend=true" >> "$GITHUB_OUTPUT" || true
+
       - name: Set up JDK 17
         if: steps.changes.outputs.java == 'true'
         uses: actions/setup-java@v4
@@ -47,6 +57,7 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
+
       - name: Build management jar
         if: steps.changes.outputs.java == 'true'
         run: |
@@ -55,9 +66,28 @@ jobs:
           JAR=$(find ./tfhers-web-management/target -name 'tfhers-web-management-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -1)
           test -n "$JAR"
           echo "JAR=$JAR" >> "$GITHUB_ENV"
+
+      - name: Set up Node 20
+        if: steps.changes.outputs.vue_frontend == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build Vue frontend
+        if: steps.changes.outputs.vue_frontend == 'true'
+        run: |
+          set -euo pipefail
+          cd frontend
+          npm ci
+          npm run build
+          test -f dist/index.html
+
       - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
       - name: Known hosts
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
@@ -65,6 +95,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           ssh-keyscan -p "${PORT:-22}" -H "$HOST" >> ~/.ssh/known_hosts
+
       - name: Deploy
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
@@ -72,27 +103,61 @@ jobs:
           PORT: ${{ secrets.DEPLOY_PORT }}
           DO_JAVA: ${{ steps.changes.outputs.java }}
           DO_ADMIN: ${{ steps.changes.outputs.admin_static }}
-          DO_FRONT: ${{ steps.changes.outputs.frontend_static }}
+          DO_FRONT_LEGACY: ${{ steps.changes.outputs.frontend_static }}
+          DO_VUE: ${{ steps.changes.outputs.vue_frontend }}
           DO_NGINX: ${{ steps.changes.outputs.nginx }}
         run: |
           set -euo pipefail
           PORT="${PORT:-22}"
           BACKEND=/opt/tfhers/backend
           FRONTEND=/opt/tfhers/frontend/www
+          NGINX_STAGING=/opt/tfhers/deploy/nginx
           ADMIN_STATIC=tfhers-web-management/src/main/resources/static
-          APP_STATIC=tfhers-web-app/src/main/resources/static
+          VUE_DIST=frontend/dist
           SSH=(ssh -p "$PORT" -o StrictHostKeyChecking=yes "$USER@$HOST")
           RSYNC=(rsync -az -e "ssh -p $PORT -o StrictHostKeyChecking=yes")
+
+          # Always stage nginx snippets on the server (does not overwrite /etc until DO_NGINX)
+          if [ -d deploy/nginx ]; then
+            "${SSH[@]}" "mkdir -p $NGINX_STAGING"
+            "${RSYNC[@]}" deploy/nginx/ "$USER@$HOST:$NGINX_STAGING/"
+          fi
+
+          # Vue SPA owns the public site root. Do NOT rsync legacy app static here
+          # (would overwrite dist). Repo legacy dirs under tfhers-web-app are left intact.
+          if [ "$DO_VUE" = "true" ] && [ -d "$VUE_DIST" ]; then
+            "${SSH[@]}" "mkdir -p $FRONTEND"
+            "${RSYNC[@]}" --delete "$VUE_DIST"/ "$USER@$HOST:$FRONTEND/"
+          elif [ "$DO_FRONT_LEGACY" = "true" ]; then
+            echo "Skip legacy tfhers-web-app static sync: Vue dist is the primary site at $FRONTEND"
+          fi
+
+          # Legacy admin static kept on disk for rollback; SPA /admin is served from Vue root
           if [ "$DO_ADMIN" = "true" ] && [ -d "$ADMIN_STATIC" ]; then
             "${RSYNC[@]}" --delete "$ADMIN_STATIC"/ "$USER@$HOST:$BACKEND/www/"
           fi
-          if [ "$DO_FRONT" = "true" ] && [ -d "$APP_STATIC" ]; then
-            "${RSYNC[@]}" --delete "$APP_STATIC"/ "$USER@$HOST:$FRONTEND/"
-          fi
+
           if [ "$DO_JAVA" = "true" ]; then
             scp -P "$PORT" "$JAR" "$USER@$HOST:$BACKEND/tfhers-web-management-0.0.1-SNAPSHOT.jar.new"
             "${SSH[@]}" "set -euo pipefail; cd $BACKEND; cp -a tfhers-web-management-0.0.1-SNAPSHOT.jar tfhers-web-management-0.0.1-SNAPSHOT.jar.bak 2>/dev/null || true; mv -f tfhers-web-management-0.0.1-SNAPSHOT.jar.new tfhers-web-management-0.0.1-SNAPSHOT.jar; systemctl restart tfhers-management; systemctl --no-pager --full status tfhers-management | head -20"
           fi
+
           if [ "$DO_NGINX" = "true" ]; then
-            "${SSH[@]}" "nginx -t && systemctl reload nginx"
+            # Prefer merge into existing TLS server. Auto-install only when marker is present:
+            #   touch deploy/nginx/.auto_install  (committed) OR on server:
+            #   touch /opt/tfhers/deploy/nginx/.auto_install
+            "${SSH[@]}" "set -euo pipefail
+              if [ -f $NGINX_STAGING/.auto_install ] && [ -f $NGINX_STAGING/tfhers.conf ]; then
+                cp -a $NGINX_STAGING/tfhers.conf /etc/nginx/conf.d/tfhers.conf
+                echo 'Installed $NGINX_STAGING/tfhers.conf -> /etc/nginx/conf.d/tfhers.conf'
+              else
+                echo 'Nginx conf staged at $NGINX_STAGING (no .auto_install marker; not copying to conf.d)'
+                echo 'To enable SPA try_files: merge locations from tfhers.conf into the live server, or:'
+                echo '  touch $NGINX_STAGING/.auto_install && cp -a $NGINX_STAGING/tfhers.conf /etc/nginx/conf.d/tfhers.conf && nginx -t && systemctl reload nginx'
+              fi
+              if [ -f /etc/nginx/conf.d/tfhers.conf ]; then
+                nginx -t
+                systemctl reload nginx
+              fi
+            "
           fi
