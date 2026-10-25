@@ -26,7 +26,7 @@
                           />
                           <div v-else class="article-cover-placeholder" style="display:flex">
                             <i class="fas fa-image"></i>
-                            <span>暂无图片</span>
+                            
                           </div>
                           <div class="article-card-glass">
                             <div class="article-card-author">
@@ -35,7 +35,7 @@
                               </div>
                             </div>
                             <h3 class="article-title article-card-title">{{ hotItems[hotIndex].title || '无标题' }}</h3>
-                            <p class="article-excerpt article-card-summary">{{ hotItems[hotIndex].summary || '暂无摘要' }}</p>
+                            <p class="article-excerpt article-card-summary">{{ hotItems[hotIndex].summary || '' }}</p>
                           </div>
                         </div>
                       </article>
@@ -57,7 +57,6 @@
                   ></button>
                 </div>
               </div>
-              <p v-else-if="!loading" class="room-empty">暂无热门</p>
             </div>
           </div>
           <div class="hot-news-split-divider" role="separator" aria-hidden="true"></div>
@@ -66,7 +65,6 @@
               <i class="fas fa-thumbtack" aria-hidden="true"></i> 置顶资讯
             </h2>
             <div class="pinned-news-list">
-              <div v-if="!pinnedItems.length" class="pinned-news-empty">暂无置顶</div>
               <div
                 v-for="a in pinnedItems"
                 :key="'pin-' + a.id"
@@ -118,8 +116,7 @@
 
       <p v-if="loading" class="room-empty">加载中…</p>
       <p v-else-if="error" class="room-empty">{{ error }}</p>
-      <p v-else-if="!filteredItems.length" class="room-empty">暂无资讯</p>
-      <div v-else class="articles-grid">
+      <div v-else-if="filteredItems.length" class="articles-grid">
         <article
           v-for="item in filteredItems"
           :key="item.id"
@@ -130,7 +127,7 @@
             <img v-if="coverOf(item)" class="article-cover" :src="coverOf(item)" alt="" />
             <div v-else class="article-cover-placeholder" style="display:flex">
               <i class="fas fa-image"></i>
-              <span>暂无图片</span>
+              
             </div>
             <div class="article-card-glass">
               <div class="article-card-author">
@@ -143,7 +140,7 @@
                 <span v-if="isPinned(item)" class="badge" style="margin-right:6px">置顶</span>
                 {{ item.title || '无标题' }}
               </h3>
-              <p class="article-excerpt article-card-summary">{{ item.summary || '暂无摘要' }}</p>
+              <p class="article-excerpt article-card-summary">{{ item.summary || '' }}</p>
             </div>
           </div>
         </article>
@@ -179,7 +176,7 @@
             <div class="article-comments">
               <h4 style="margin:12px 0;">评论 ({{ comments.length }})</h4>
               <div v-if="commentsLoading" class="room-empty">加载中…</div>
-              <div v-else-if="!comments.length" class="room-empty">暂无评论</div>
+              <div v-else-if="!comments.length"></div>
               <div v-for="(c, idx) in comments" :key="c.id || idx" class="comment-item" style="padding:10px 0;border-bottom:1px solid var(--border-color);">
                 <div style="font-weight:600;">{{ c.authorName || c.author_name || c.nickname || c.username || '用户' }}</div>
                 <div style="opacity:0.7;font-size:0.85rem;">{{ c.createdAt || c.created_at || '' }}</div>
@@ -198,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { fetchArticle, fetchArticles, fetchArticleComments, likeArticle, postArticleComment, reportArticle } from '@/api/articles'
 import { useUserAuthStore } from '@/stores/auth'
 import { ApiError, type Article } from '@/api/types'
@@ -352,5 +349,12 @@ function closeDetail() {
   detailOpen.value = false
 }
 
-onMounted(load)
+function onArticlesChanged() { load() }
+onMounted(() => {
+  load()
+  window.addEventListener('tfhers:articles-changed', onArticlesChanged)
+})
+onUnmounted(() => {
+  window.removeEventListener('tfhers:articles-changed', onArticlesChanged)
+})
 </script>

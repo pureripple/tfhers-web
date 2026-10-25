@@ -110,6 +110,10 @@ async function onCoverPick(e: Event) {
 }
 
 async function submit() {
+  if (!auth.isLoggedIn || !auth.user?.token) {
+    window.alert('请先登录后再发布')
+    return
+  }
   if (!title.value) {
     window.alert('请输入资讯标题')
     return
@@ -133,7 +137,10 @@ async function submit() {
     emit('created')
     emit('close')
   } catch (err) {
-    window.alert(err instanceof ApiError ? err.message : '发布失败')
+    const msg = err instanceof ApiError
+      ? err.message
+      : (err instanceof Error ? err.message : '发布失败')
+    window.alert(msg || '发布失败')
   } finally {
     submitting.value = false
   }

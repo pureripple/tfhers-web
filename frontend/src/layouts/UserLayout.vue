@@ -102,7 +102,7 @@ const nav = [
   { to: '/tournaments', label: '赛事', icon: 'fas fa-trophy', match: ['tournaments'] },
   { to: '/lobby', label: '大厅', icon: 'fas fa-door-open', match: ['lobby'] },
   { to: '/rankings', label: '排行', icon: 'fas fa-medal', match: ['rankings'] },
-  { to: '/ai-chat', label: 'AI 问答', icon: 'fas fa-robot', match: ['ai-chat'], ai: true },
+  { to: '/ai-chat', label: 'AI', icon: 'fas fa-robot', match: ['ai-chat'], ai: true },
 ] as const
 
 type Overlay = 'profile' | 'manuscripts' | 'settings' | null
@@ -122,7 +122,7 @@ const ratingTier = computed(() => { const u = userAuth.user as Record<string, un
 const ratingScore = computed(() => { const u = userAuth.user as Record<string, unknown> | null; const s = u?.rating ?? u?.score; return s != null && String(s) ? String(s) : dash })
 const ratingRank = computed(() => { const u = userAuth.user as Record<string, unknown> | null; const r = u?.rank ?? u?.ranking; return r != null && String(r) ? '#' + r : '#' + dash })
 function isActive(item: (typeof nav)[number]) { return item.match.includes(String(route.name || '')) }
-function applyHtmlClasses() { const rootEl = document.documentElement; rootEl.classList.toggle('tfhers-authed', userAuth.isLoggedIn); rootEl.classList.toggle('sidebar-collapsed', collapsed.value); rootEl.classList.toggle('sidebar-open', sidebarOpenMobile.value); document.title = '铁拳社群站' }
+function applyHtmlClasses() { const rootEl = document.documentElement; rootEl.classList.toggle('tfhers-authed', userAuth.isLoggedIn); rootEl.classList.toggle('sidebar-collapsed', collapsed.value); rootEl.classList.toggle('sidebar-open', sidebarOpenMobile.value); document.title = "tfhers-\"Them's Fightin' Herds\"玩家们的社区" }
 function persistCollapsed() { try { localStorage.setItem(SIDEBAR_KEY, collapsed.value ? '1' : '0') } catch { /* ignore */ } }
 function toggleSidebar() { if (window.matchMedia('(max-width: 768px)').matches) { sidebarOpenMobile.value = !sidebarOpenMobile.value } else { collapsed.value = !collapsed.value; persistCollapsed() } applyHtmlClasses() }
 function openMobile() { sidebarOpenMobile.value = true; applyHtmlClasses() }
@@ -139,7 +139,7 @@ function closeOverlay() { overlay.value = null }
 function openCreateArticle() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) return; createArticleOpen.value = true }
 function openCreateCombo() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) return; createComboOpen.value = true }
 function openFeedback() { accountOpen.value = false; if (!userAuth.isLoggedIn) return; feedbackOpen.value = true }
-function onArticleCreated() { refreshOverlay('manuscripts'); refreshOverlay('profile') }
+function onArticleCreated() { refreshOverlay('manuscripts'); refreshOverlay('profile'); try { window.dispatchEvent(new CustomEvent('tfhers:articles-changed')) } catch { /* ignore */ } }
 function onComboCreated() { refreshOverlay('manuscripts'); refreshOverlay('profile') }
 function refreshOverlay(kind: Overlay) {
   if (overlay.value === kind) {

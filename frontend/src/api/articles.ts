@@ -22,7 +22,17 @@ export function createArticle(payload: {
   author?: string
   viewCount?: number
 }) {
-  return post<Article>('/api/articles', payload, { auth: 'user' })
+  const body = {
+    title: payload.title,
+    summary: payload.summary ?? '',
+    content: payload.content,
+    coverUrl: payload.coverUrl || '',
+    cover_url: payload.coverUrl || '',
+    author: payload.author || '',
+    viewCount: payload.viewCount ?? 0,
+    view_count: payload.viewCount ?? 0,
+  }
+  return post<Article>('/api/articles', body, { auth: 'user' })
 }
 
 export function deleteArticle(id: number | string) {

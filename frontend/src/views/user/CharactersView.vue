@@ -1,6 +1,6 @@
 <template>
   <section class="page active">
-    <div class="characters-grid" v-if="items.length">
+    <div v-if="!detailOpen" class="characters-grid">
       <article
         v-for="item in items"
         :key="item.id"
@@ -11,118 +11,105 @@
           <img
             class="character-avatar"
             :src="item.avatarUrl || '/images/CSel3_LargePortTianhuo.png'"
-            :alt="item.nameZh || item.nameEn || ''"
+            :alt="displayEnName(item.nameEn)"
           />
         </div>
-        <h3 class="character-name">{{ item.nameZh || item.nameEn || '' }}</h3>
-        <p v-if="item.nameEn && item.nameZh" class="character-subtitle" style="opacity:0.7;margin:0.25rem 0 0;font-size:0.85rem">
-          {{ item.nameEn }}
-        </p>
+        <h3 class="character-name">{{ displayEnName(item.nameEn) }}</h3>
       </article>
     </div>
-    <div v-else-if="!loading" class="characters-grid">
-      <div class="room-empty" style="grid-column:1/-1;text-align:center;padding:2rem;">暂无角色</div>
-    </div>
 
-    <div v-if="detailOpen" class="modal" style="display:block" @click.self="closeDetail">
-      <div class="modal-content modal-large character-detail-modal">
-        <div class="modal-header">
-          <h3>{{ detailChar?.nameZh || detailChar?.nameEn || '' }}</h3>
-          <button type="button" class="modal-close" @click="closeDetail"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body">
-          <div v-if="detailLoading" class="room-empty">加载中…</div>
-          <div v-else-if="detailError" class="room-empty">{{ detailError }}</div>
-          <template v-else-if="detailChar">
-            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
-              <img
-                v-if="detailChar.avatarUrl"
-                :src="detailChar.avatarUrl"
-                alt=""
-                style="max-width:160px;border-radius:8px"
-              />
-              <div style="flex:1;min-width:200px">
-                <p v-if="detailChar.nameEn"><strong>EN</strong> {{ detailChar.nameEn }}</p>
-                <p v-if="detailChar.difficultyLevel != null"><strong>难度</strong> {{ detailChar.difficultyLevel }}</p>
-                <p v-if="detailChar.intro">{{ detailChar.intro }}</p>
-                <p v-if="detailChar.background" style="opacity:.85">{{ detailChar.background }}</p>
-                <p v-if="videoUrl">
-                  <a :href="videoUrl" target="_blank" rel="noopener">官方视频</a>
-                </p>
-              </div>
-            </div>
+    <div v-else class="character-detail character-detail--tutorial-dark">
+      <div style="margin-bottom:12px">
+        <button type="button" class="btn btn-outline btn-sm" @click="closeDetail">
+          <i class="fas fa-arrow-left"></i> 返回角色列表
+        </button>
+      </div>
 
-            <h4 style="margin:0 0 8px">出招表</h4>
-            <div v-if="moveListImage" style="margin-bottom:12px">
-              <img :src="moveListImage" alt="出招表" style="max-width:100%;border-radius:8px;border:1px solid var(--border-color)" />
-            </div>
-            <div v-if="moves.length" class="moves-list" style="display:grid;gap:8px;margin-bottom:16px">
-              <div v-for="(m, i) in moves" :key="i" class="move-item" style="padding:8px;border:1px solid var(--border-color);border-radius:8px">
-                <h4 class="move-name" style="margin:0 0 4px;font-size:0.95rem">{{ moveName(m) }}</h4>
-                <p class="move-input" style="margin:0;opacity:.8">{{ moveInput(m) }}</p>
-                <p class="move-desc" style="margin:4px 0 0;opacity:.75">{{ moveDesc(m) }}</p>
-              </div>
-            </div>
-            <p v-else-if="!moveListImage" class="moves-empty">暂无出招表</p>
-
-            <h4 style="margin:16px 0 8px">官方连段（{{ officialCombos.length }}）</h4>
-            <div v-if="officialCombos.length" style="display:grid;gap:8px;margin-bottom:16px">
-              <div
-                v-for="(c, i) in officialCombos"
-                :key="i"
-                class="combo-item"
-                style="padding:8px;border:1px solid var(--border-color);border-radius:8px;display:flex;justify-content:space-between;gap:8px;align-items:center"
-              >
-                <div>
-                  <strong>{{ comboTitle(c) }}</strong>
-                  <div style="opacity:.75;font-size:0.9rem">{{ comboDesc(c) }}</div>
+      <div v-if="detailLoading" class="room-empty">加载中…</div>
+      <div v-else-if="detailError" class="room-empty">{{ detailError }}</div>
+      <div v-else-if="detailChar" class="character-tutorial-layout">
+        <div class="character-tutorial-pane character-tutorial-pane--left" aria-label="角色信息、背景故事与出招表">
+          <div class="character-tutorial-main">
+            <div class="character-dark-card character-card-bio">
+              <div class="character-bio-row">
+                <div class="character-bio-avatar">
+                  <img
+                    :src="detailChar.avatarUrl || '/images/CSel3_LargePortTianhuo.png'"
+                    :alt="displayEnName(detailChar.nameEn)"
+                  />
                 </div>
-                <button
-                  v-if="comboVideo(c)"
-                  type="button"
-                  class="btn btn-secondary btn-sm"
-                  @click="playVideo(comboVideo(c), comboTitle(c))"
-                >播放</button>
-              </div>
-            </div>
-            <p v-else class="character-combos-empty">暂无官方连段</p>
-
-            <h4 style="margin:16px 0 8px">玩家连段（{{ userCombos.length }}）</h4>
-            <div v-if="userCombos.length" style="display:grid;gap:8px">
-              <div
-                v-for="(c, i) in userCombos"
-                :key="i"
-                class="combo-item user-combo-item"
-                style="padding:8px;border:1px solid var(--border-color);border-radius:8px"
-              >
-                <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
-                  <div>
-                    <strong>{{ comboHeadline(c) }}</strong>
-                    <div style="opacity:.75;font-size:0.85rem;margin-top:2px">
-                      {{ comboAuthor(c) }}
-                    </div>
-                    <div style="opacity:.75;font-size:0.9rem;margin-top:4px">{{ comboDesc(c) }}</div>
-                  </div>
-                  <div style="display:flex;gap:6px;flex-shrink:0">
-                    <button
-                      v-if="comboVideo(c)"
-                      type="button"
-                      class="btn btn-secondary btn-sm"
-                      @click="playVideo(comboVideo(c), comboTitle(c))"
-                    >视频</button>
-                    <a
-                      v-if="comboFile(c)"
-                      class="btn btn-outline btn-sm"
-                      :href="comboFile(c)"
-                      :download="comboDownloadName(c)"
-                    >下载</a>
-                  </div>
+                <div class="character-bio-meta">
+                  <div class="character-name-en">{{ displayEnName(detailChar.nameEn) }}</div>
+                  <p class="character-difficulty-line">
+                    {{ detailChar.difficultyLevel != null ? `难度：${detailChar.difficultyLevel}/5` : '难度：—' }}
+                  </p>
+                </div>
+                <div class="character-bio-intro">
+                  <p>{{ detailChar.intro || '' }}</p>
                 </div>
               </div>
             </div>
-            <p v-else class="character-combos-empty">暂无玩家连段</p>
-          </template>
+
+            <div class="character-dark-card">
+              <h3 class="dark-card-title">背景故事</h3>
+              <p class="dark-card-body">{{ detailChar.background || '' }}</p>
+            </div>
+          </div>
+
+          <div class="character-moves-sidebar character-dark-card" aria-label="出招表">
+            <h3 class="dark-card-title">出招表</h3>
+            <div v-if="moveListImage" class="move-list-image-wrap">
+              <img :src="moveListImage" alt="出招表" class="move-list-image" />
+            </div>
+            <div v-if="moves.length" class="moves-list">
+              <div v-for="(m, i) in moves" :key="i" class="move-item">
+                <h4 class="move-name">{{ moveName(m) }}</h4>
+                <p class="move-input">{{ moveInput(m) }}</p>
+                <p class="move-desc">{{ moveDesc(m) }}</p>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <aside class="character-tutorial-pane character-tutorial-pane--right character-combos-pane" aria-label="玩家连段">
+          <h3 class="moves-sidebar-title">玩家连段</h3>
+          <div class="combo-list user-combo-list">
+            <div
+              v-for="(c, i) in userCombos"
+              :key="i"
+              class="combo-item user-combo-item"
+            >
+              <div class="user-combo-main">
+                <div class="user-combo-author">
+                  <div class="user-combo-avatar-wrap">
+                    <img
+                      :src="comboAuthorAvatar(c)"
+                      alt=""
+                      class="user-combo-avatar"
+                    />
+                  </div>
+                  <span class="user-combo-author-name">{{ comboAuthor(c) }}</span>
+                </div>
+                <div class="user-combo-headline">{{ comboHeadline(c) }}</div>
+                <div v-if="comboDesc(c)" style="opacity:.75;font-size:0.9rem;margin-top:4px">{{ comboDesc(c) }}</div>
+                <div class="user-combo-actions-row">
+                  <button
+                    v-if="comboVideo(c)"
+                    type="button"
+                    class="user-combo-watch-btn"
+                    @click="playVideo(comboVideo(c), comboTitle(c))"
+                  >观看视频</button>
+                  <a
+                    v-if="comboFile(c)"
+                    class="user-combo-download-link"
+                    :href="comboFile(c)"
+                    :download="comboDownloadName(c)"
+                  >下载连段</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
 
@@ -160,26 +147,25 @@ const videoTitle = ref('连段视频')
 
 const detailChar = computed(() => detailPayload.value?.character || null)
 const moves = computed(() => (Array.isArray(detailPayload.value?.moves) ? detailPayload.value!.moves! : []) as Record<string, unknown>[])
-const officialCombos = computed(() => {
-  const d = detailPayload.value as Record<string, unknown> | null
-  const list = (d?.officialCombos || d?.official_combos || []) as unknown[]
-  return Array.isArray(list) ? (list as Record<string, unknown>[]) : []
-})
 const userCombos = computed(() => {
   const list = detailPayload.value?.userCombos || []
   return Array.isArray(list) ? (list as Record<string, unknown>[]) : []
 })
-const videoUrl = computed(() =>
-  String(detailChar.value?.officialVideoUrl || detailPayload.value?.officialVideoUrl || ''),
-)
 const moveListImage = computed(() => String(detailChar.value?.moveListImageUrl || ''))
+
+/** English name only; capitalize first letter. */
+function displayEnName(name?: string | null) {
+  const raw = String(name || '').trim()
+  if (!raw) return ''
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
 
 function asRec(v: unknown) {
   return (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
 }
 function moveName(m: unknown) {
   const r = asRec(m)
-  return String(r.nameZh || r.nameEn || '未命名招式')
+  return String(r.nameEn || r.nameZh || '')
 }
 function moveInput(m: unknown) {
   return String(asRec(m).inputCommand || '')
@@ -204,6 +190,10 @@ function comboFile(c: unknown) {
 function comboAuthor(c: unknown) {
   const r = asRec(c)
   return String(r.authorName || r.author_name || '玩家')
+}
+function comboAuthorAvatar(c: unknown) {
+  const r = asRec(c)
+  return String(r.authorAvatar || r.author_avatar || '/images/CSel3_LargePortTianhuo.png')
 }
 function comboHeadline(c: unknown) {
   const r = asRec(c)

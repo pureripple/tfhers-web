@@ -51,15 +51,21 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 
-  let payload: ApiResult<T>
+  let payload: ApiResult<T> & { message?: string; error?: string; status?: number }
   try {
-    payload = (await res.json()) as ApiResult<T>
+    payload = (await res.json()) as ApiResult<T> & { message?: string; error?: string; status?: number }
   } catch {
-    throw new ApiError(res.status, res.statusText || 'Invalid JSON response')
+    throw new ApiError(res.status, res.statusText || `请求失败（HTTP ${res.status}）`)
   }
 
-  if (payload.code !== 200) {
-    throw new ApiError(payload.code, payload.msg || 'Request failed')
+  const code = typeof payload.code === 'number' ? payload.code : res.status
+  if (code !== 200) {
+    const msg =
+      (payload.msg && String(payload.msg).trim()) ||
+      (payload.message && String(payload.message).trim()) ||
+      (payload.error && String(payload.error).trim()) ||
+      `请求失败（${code}）`
+    throw new ApiError(code, msg)
   }
 
   return payload.data
