@@ -77,6 +77,10 @@ export function put<T>(path: string, body?: unknown, options?: RequestOptions) {
   return request<T>(path, { ...options, method: 'PUT', body })
 }
 
+export function patch<T>(path: string, body?: unknown, options?: RequestOptions) {
+  return request<T>(path, { ...options, method: 'PATCH', body })
+}
+
 export function del<T>(path: string, options?: RequestOptions) {
   return request<T>(path, { ...options, method: 'DELETE' })
 }
