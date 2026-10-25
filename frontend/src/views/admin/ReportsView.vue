@@ -25,13 +25,19 @@
       <div class="table-container">
         <p v-if="!loading && !error && !items.length" class="vue-state">暂无举报</p>
         <table v-else-if="items.length" class="data-table">
-          <thead><tr><th>ID</th><th>类型</th><th>目标</th><th>状态</th><th>操作</th></tr></thead>
+          <thead>
+            <tr>
+              <th>ID</th><th>类型</th><th>目标</th><th>原因</th><th>状态</th><th>时间</th><th>操作</th>
+            </tr>
+          </thead>
           <tbody>
             <tr v-for="r in items" :key="r.id">
               <td>{{ r.id }}</td>
-              <td>{{ r.targetType || '-' }}</td>
-              <td class="cell-ellipsis">{{ r.targetId ?? r.reason ?? '-' }}</td>
-              <td>{{ r.status || '-' }}</td>
+              <td>{{ r.targetType || r.target_type || '-' }}</td>
+              <td class="cell-ellipsis">{{ r.targetId ?? r.target_id ?? '-' }}</td>
+              <td class="cell-ellipsis" :title="String(r.reason || r.content || '')">{{ r.reason || r.content || '-' }}</td>
+              <td>{{ r.status ?? '-' }}</td>
+              <td>{{ r.createdAt || r.created_at || '-' }}</td>
               <td class="cell-actions">
                 <button type="button" class="btn btn-secondary btn-sm" @click="openHandle(r)">处理</button>
               </td>

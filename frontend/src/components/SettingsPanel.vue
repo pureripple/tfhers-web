@@ -75,6 +75,7 @@
               <input id="settingsNotifyComment" v-model="notifyComment" type="checkbox" role="switch" @change="persistNotify" />
             </label>
           </div>
+          <p class="form-hint" style="margin-top:8px">站内私信/通知推送后端尚未提供独立接口，此处偏好仅保存在本机。</p>
         </section>
 
         <hr class="settings-divider" />
@@ -83,10 +84,18 @@
           <h2 id="settingsBindHeading" class="settings-block-title">绑定服务</h2>
           <div class="settings-bind-block">
             <h3 class="settings-subsection-title"><i class="fab fa-steam-symbol"></i> Steam</h3>
-            <div class="settings-bind-steam-status">{{ steamBound ? '已绑定' : '未绑定' }}</div>
+            <div class="settings-bind-steam-status">
+              <template v-if="steamBound">
+                已绑定<template v-if="steamName">：{{ steamName }}</template>
+              </template>
+              <template v-else>未绑定</template>
+            </div>
             <div class="settings-form-actions" style="justify-content:flex-start;gap:8px;">
-              <button type="button" class="btn btn-primary" @click="onBindSteam">
+              <button v-if="!steamBound" type="button" class="btn btn-primary" :disabled="steamBusy" @click="onBindSteam">
                 <i class="fab fa-steam-symbol"></i> 绑定 Steam
+              </button>
+              <button v-else type="button" class="btn btn-outline" :disabled="steamBusy" @click="onUnbindSteam">
+                解除绑定
               </button>
             </div>
           </div>
@@ -108,7 +117,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { changeUserPassword, fetchUserProfile, updateUserProfile } from '@/api/user'
+import {
+  changeUserPassword,
+  fetchSteamLoginUrl,
+  fetchUserProfile,
+  unbindSteam,
+  updateUserProfile,
+} from '@/api/user'
 import { useUserAuthStore } from '@/stores/auth'
 import { ApiError } from '@/api/types'
 
@@ -129,6 +144,8 @@ const notifyLike = ref(true)
 const notifyComment = ref(true)
 const darkMode = ref(true)
 const steamBound = ref(false)
+const steamName = ref('')
+const steamBusy = ref(false)
 
 const username = computed(() => auth.user?.username || '')
 
@@ -164,7 +181,13 @@ async function hydrateFromServer() {
   try {
     const p = await fetchUserProfile()
     email.value = String(p.email || '')
-    steamBound.value = !!(p.steamId || p.steamName)
+    steamBound.value = !!(p.steamId || (p as { steam_id?: string }).steam_id)
+    steamName.value = String(
+      p.steamName ||
+        (p as { steamPersonaName?: string }).steamPersonaName ||
+        (p as { steam_persona_name?: string }).steam_persona_name ||
+        '',
+    )
     const raw = localStorage.getItem('user')
     if (raw) {
       const u = JSON.parse(raw) as Record<string, unknown>
@@ -173,12 +196,16 @@ async function hydrateFromServer() {
         nickname: p.nickname ?? u.nickname,
         avatarUrl: p.avatarUrl ?? u.avatarUrl,
         steamId: p.steamId ?? u.steamId,
+        steamName: steamName.value || u.steamName,
       })
       localStorage.setItem('user', JSON.stringify(u))
       auth.hydrate()
     }
   } catch {
     email.value = String((auth.user as { email?: string } | null)?.email || '')
+    const u = auth.user as Record<string, unknown> | null
+    steamBound.value = !!(u?.steamId)
+    steamName.value = String(u?.steamName || u?.steamPersonaName || '')
   }
 }
 
@@ -227,8 +254,46 @@ async function savePassword() {
   }
 }
 
-function onBindSteam() {
-  window.alert('请在线站完成 Steam 绑定（需 OAuth 回跳）')
+async function onBindSteam() {
+  steamBusy.value = true
+  try {
+    const data = await fetchSteamLoginUrl()
+    const url = data?.url
+    if (!url) {
+      window.alert('获取 Steam 绑定地址失败')
+      return
+    }
+    window.location.href = url
+  } catch (e) {
+    window.alert(e instanceof ApiError ? e.message : '绑定 Steam 出错，请稍后重试')
+  } finally {
+    steamBusy.value = false
+  }
+}
+
+async function onUnbindSteam() {
+  if (!confirm('确定要解除 Steam 绑定吗？解除后将清空 Steam 头像、时长等信息。')) return
+  steamBusy.value = true
+  try {
+    await unbindSteam()
+    steamBound.value = false
+    steamName.value = ''
+    const raw = localStorage.getItem('user')
+    if (raw) {
+      const u = JSON.parse(raw) as Record<string, unknown>
+      u.steamId = null
+      u.steamName = null
+      u.steamPersonaName = null
+      u.steamAvatarUrl = null
+      localStorage.setItem('user', JSON.stringify(u))
+      auth.hydrate()
+    }
+    window.alert('已解除 Steam 绑定')
+  } catch (e) {
+    window.alert(e instanceof ApiError ? e.message : '解除绑定失败')
+  } finally {
+    steamBusy.value = false
+  }
 }
 
 onMounted(async () => {

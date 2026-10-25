@@ -1,7 +1,7 @@
 <template>
   <section class="page active">
     <div class="action-bar">
-      <p class="stats-page-desc">游戏管理 / Steam 同步</p>
+      <p class="stats-page-desc">游戏管理：Steam 成就 schema 同步（与旧站一致，仅此操作）</p>
       <div class="action-buttons">
         <button type="button" class="btn btn-secondary" :disabled="syncing" @click="onSync">
           <i class="fas fa-sync-alt"></i> {{ syncing ? '同步中…' : '刷新/同步' }}

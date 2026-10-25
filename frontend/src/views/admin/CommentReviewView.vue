@@ -3,10 +3,10 @@
     <div class="action-bar">
       <div class="action-buttons" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <select v-model="status" class="inline-select" @change="page=1; load()">
-          <option value="">全部状态</option>
-          <option value="pending">pending</option>
-          <option value="approved">approved</option>
-          <option value="rejected">rejected</option>
+          <option value="0">待审核</option>
+          <option value="1">已通过</option>
+          <option value="2">已拒绝</option>
+          <option value="">全部</option>
         </select>
         <input v-model.trim="articleId" class="inline-select" style="max-width:120px" placeholder="文章ID" @keyup.enter="page=1; load()" />
         <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
@@ -25,7 +25,7 @@
               <td>{{ c.id }}</td>
               <td>{{ c.articleId ?? '-' }}</td>
               <td class="cell-ellipsis" :title="c.content">{{ c.content || '-' }}</td>
-              <td>{{ c.status || '-' }}</td>
+              <td>{{ statusText[Number(c.status)] || c.status || '-' }}</td>
               <td class="cell-actions">
                 <button type="button" class="btn btn-secondary btn-sm" @click="openReview(c)">审核</button>
               </td>
@@ -42,7 +42,11 @@
         </header>
         <p class="vue-detail-block">{{ reviewItem?.content }}</p>
         <div class="form-field"><label>状态</label>
-          <select v-model="reviewStatus"><option value="approved">approved</option><option value="rejected">rejected</option><option value="pending">pending</option></select>
+          <select v-model="reviewStatus">
+            <option :value="1">通过</option>
+            <option :value="2">拒绝</option>
+            <option :value="0">待审核</option>
+          </select>
         </div>
         <div class="form-field"><label>备注</label>
           <textarea v-model="reviewRemark" rows="3"></textarea>

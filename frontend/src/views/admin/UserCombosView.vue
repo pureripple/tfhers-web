@@ -18,17 +18,19 @@
       <div class="table-container">
         <p v-if="!loading && !error && !items.length" class="vue-state">暂无连段</p>
         <table v-else-if="items.length" class="data-table">
-          <thead><tr><th>ID</th><th>角色</th><th>标题</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>ID</th><th>角色</th><th>标题</th><th>伤害</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
           <tbody>
             <tr v-for="c in items" :key="c.id">
               <td>{{ c.id }}</td>
-              <td>{{ charName(c.characterId) }}</td>
-              <td class="cell-ellipsis">{{ c.title || c.name || '-' }}</td>
-              <td>{{ statusText[c.status] || c.status || '-' }}</td>
+              <td>{{ c.characterId ?? c.characterName ?? '-' }}</td>
+              <td class="cell-ellipsis">{{ c.title || '-' }}</td>
+              <td>{{ c.damageTotal ?? c.damage_total ?? '-' }}</td>
+              <td>{{ c.status || '-' }}</td>
+              <td>{{ c.createdAt || c.created_at || '-' }}</td>
               <td class="cell-actions">
-                <button type="button" class="btn btn-primary btn-sm" :disabled="busyId === c.id" @click="onStatus(c.id, 'approved')">通过</button>
-                <button type="button" class="btn btn-danger btn-sm" :disabled="busyId === c.id" @click="onStatus(c.id, 'rejected')">拒绝</button>
-                <button type="button" class="btn btn-secondary btn-sm" :disabled="busyId === c.id" @click="onDelete(c)">删除</button>
+                <button type="button" class="btn btn-secondary btn-sm" :disabled="busyId === c.id" @click="onApprove(c)">通过</button>
+                <button type="button" class="btn btn-secondary btn-sm" :disabled="busyId === c.id" @click="onReject(c)">拒绝</button>
+                <button type="button" class="btn btn-danger btn-sm" :disabled="busyId === c.id" @click="onDelete(c)">删除</button>
               </td>
             </tr>
           </tbody>

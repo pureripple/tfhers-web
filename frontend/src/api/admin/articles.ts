@@ -1,4 +1,4 @@
-import { del, get, patch, post } from '../http'
+import { del, get, patch, post, put } from '../http'
 import type { Article } from '../types'
 
 export function fetchAdminArticles() {
@@ -16,12 +16,27 @@ export function setArticlePinned(id: number, pinned: boolean) {
 export function deleteAdminArticle(id: number) {
   return del<unknown>(`/api/articles/${id}`, { auth: 'admin' })
 }
+
 export function createAdminArticle(payload: {
   title: string
   summary?: string
   content: string
   coverUrl?: string
   author?: string
+  isPinned?: number
+  viewCount?: number
 }) {
   return post<Article>('/api/articles', payload, { auth: 'admin' })
+}
+
+export function updateAdminArticle(payload: {
+  id: number
+  title: string
+  summary?: string
+  content: string
+  coverUrl?: string
+  author?: string
+  isPinned?: number
+}) {
+  return put<Article>('/api/articles', payload, { auth: 'admin' })
 }

@@ -7,7 +7,16 @@
         <span class="sidebar-brand">tfhers</span>
       </div>
       <nav class="sidebar-nav">
-        <RouterLink v-for="item in nav" :key="item.to" :to="item.to" class="nav-link" active-class="" exact-active-class="" :class="{ 'nav-link-ai': item.ai, active: isActive(item) && !overlay }" @click="closeOverlay">
+        <RouterLink
+          v-for="item in nav"
+          :key="item.to"
+          :to="item.to"
+          class="nav-link"
+          active-class=""
+          exact-active-class=""
+          :class="{ 'nav-link-ai': item.ai, active: isActive(item) && !overlay }"
+          @click="closeOverlay"
+        >
           <i :class="item.icon"></i><span>{{ item.label }}</span>
         </RouterLink>
       </nav>
@@ -30,11 +39,11 @@
           </button>
           <div class="top-post-menu" :hidden="!postMenuOpen">
             <button type="button" class="top-post-item" data-post="article" @click="openCreateArticle">资讯</button>
-            <button type="button" class="top-post-item" data-post="combo" @click="stubAction(postComboLabel)">连段</button>
+            <button type="button" class="top-post-item" data-post="combo" @click="openCreateCombo">连段</button>
           </div>
         </div>
-        <button type="button" class="top-icon-btn" :title="dmLabel" :aria-label="dmLabel" @click="stubAction(dmLabel)"><i class="fas fa-envelope"></i></button>
-        <button type="button" class="top-icon-btn" :title="notifyLabel" :aria-label="notifyLabel" @click="stubAction(notifyLabel)"><i class="fas fa-bell"></i></button>
+        <button type="button" class="top-icon-btn" :title="dmLabel" :aria-label="dmLabel" @click="stubNoBackend(dmLabel)"><i class="fas fa-envelope"></i></button>
+        <button type="button" class="top-icon-btn" :title="notifyLabel" :aria-label="notifyLabel" @click="stubNoBackend(notifyLabel)"><i class="fas fa-bell"></i></button>
         <div class="top-avatar-wrap">
           <button type="button" class="top-avatar-btn" :title="accountLabel" :aria-label="accountLabel" aria-haspopup="true" :aria-expanded="accountOpen ? 'true' : 'false'" @click.stop="toggleAccount">
             <img :src="avatarSrc" alt="" />
@@ -60,6 +69,7 @@
       <SettingsPanel v-if="overlay === 'settings'" />
     </main>
     <CreateArticleModal :open="createArticleOpen" @close="createArticleOpen = false" @created="onArticleCreated" />
+    <CreateComboModal :open="createComboOpen" @close="createComboOpen = false" @created="onComboCreated" />
     <FeedbackModal :open="feedbackOpen" @close="feedbackOpen = false" @unread="onFeedbackUnread" />
   </div>
 </template>
@@ -70,6 +80,7 @@ import { useRoute } from 'vue-router'
 import { useUserAuthStore } from '@/stores/auth'
 import AuthEntry from '@/components/AuthEntry.vue'
 import CreateArticleModal from '@/components/CreateArticleModal.vue'
+import CreateComboModal from '@/components/CreateComboModal.vue'
 import FeedbackModal from '@/components/FeedbackModal.vue'
 import ProfilePanel from '@/components/ProfilePanel.vue'
 import ManuscriptsPanel from '@/components/ManuscriptsPanel.vue'
@@ -84,8 +95,6 @@ const dmLabel = '私信'
 const notifyLabel = '通知'
 const accountLabel = '账户'
 const menuLabel = '账户菜单'
-const postComboLabel = '投稿 · 连段'
-const soonSuffix = '功能即将接入，请期待'
 
 const nav = [
   { to: '/', label: '资讯', icon: 'fas fa-newspaper', match: ['news'] },
@@ -104,6 +113,7 @@ const accountOpen = ref(false)
 const postMenuOpen = ref(false)
 const overlay = ref<Overlay>(null)
 const createArticleOpen = ref(false)
+const createComboOpen = ref(false)
 const feedbackOpen = ref(false)
 const feedbackUnread = ref(0)
 const displayName = computed(() => userAuth.user?.nickname || userAuth.user?.username || '用户')
@@ -119,17 +129,30 @@ function openMobile() { sidebarOpenMobile.value = true; applyHtmlClasses() }
 function closeMobile() { sidebarOpenMobile.value = false; applyHtmlClasses() }
 function togglePostMenu() { postMenuOpen.value = !postMenuOpen.value; if (postMenuOpen.value) accountOpen.value = false }
 function toggleAccount() { accountOpen.value = !accountOpen.value; if (accountOpen.value) postMenuOpen.value = false }
-function stubAction(label: string) { postMenuOpen.value = false; accountOpen.value = false; window.alert(label + soonSuffix) }
+function stubNoBackend(label: string) {
+  postMenuOpen.value = false
+  accountOpen.value = false
+  window.alert(label + '：后端暂无独立私信/通知接口，旧站也未接入，待后续补齐。')
+}
 function openOverlay(kind: Overlay) { if (!userAuth.isLoggedIn) return; accountOpen.value = false; postMenuOpen.value = false; overlay.value = kind; try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch { window.scrollTo(0, 0) } }
 function closeOverlay() { overlay.value = null }
 function openCreateArticle() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) return; createArticleOpen.value = true }
+function openCreateCombo() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) return; createComboOpen.value = true }
 function openFeedback() { accountOpen.value = false; if (!userAuth.isLoggedIn) return; feedbackOpen.value = true }
-function onArticleCreated() { if (overlay.value === 'manuscripts' || overlay.value === 'profile') { const cur = overlay.value; overlay.value = null; requestAnimationFrame(() => { overlay.value = cur }) } }
+function onArticleCreated() { refreshOverlay('manuscripts'); refreshOverlay('profile') }
+function onComboCreated() { refreshOverlay('manuscripts'); refreshOverlay('profile') }
+function refreshOverlay(kind: Overlay) {
+  if (overlay.value === kind) {
+    const cur = overlay.value
+    overlay.value = null
+    requestAnimationFrame(() => { overlay.value = cur })
+  }
+}
 function onFeedbackUnread(n: number) { feedbackUnread.value = n }
 async function refreshFeedbackBadge() { if (!userAuth.isLoggedIn) { feedbackUnread.value = 0; return } try { const data = await fetchFeedbackUnreadCount(); feedbackUnread.value = Number(data?.count) || 0 } catch { feedbackUnread.value = 0 } }
-function onLogout() { accountOpen.value = false; postMenuOpen.value = false; overlay.value = null; createArticleOpen.value = false; feedbackOpen.value = false; userAuth.logout(); applyHtmlClasses() }
+function onLogout() { accountOpen.value = false; postMenuOpen.value = false; overlay.value = null; createArticleOpen.value = false; createComboOpen.value = false; feedbackOpen.value = false; userAuth.logout(); applyHtmlClasses() }
 function onDocClick(e: MouseEvent) { const t = e.target as HTMLElement | null; if (!t?.closest('.top-avatar-wrap')) accountOpen.value = false; if (!t?.closest('.top-post-wrap')) postMenuOpen.value = false }
-function onKey(e: KeyboardEvent) { if (e.key === 'Escape') { postMenuOpen.value = false; accountOpen.value = false; feedbackOpen.value = false; createArticleOpen.value = false } }
+function onKey(e: KeyboardEvent) { if (e.key === 'Escape') { postMenuOpen.value = false; accountOpen.value = false; feedbackOpen.value = false; createArticleOpen.value = false; createComboOpen.value = false } }
 onMounted(() => { userAuth.hydrate(); applyHtmlClasses(); document.addEventListener('click', onDocClick); document.addEventListener('keydown', onKey); refreshFeedbackBadge() })
 onUnmounted(() => { document.documentElement.classList.remove('tfhers-authed', 'sidebar-collapsed', 'sidebar-open'); document.removeEventListener('click', onDocClick); document.removeEventListener('keydown', onKey) })
 watch(() => userAuth.isLoggedIn, () => { applyHtmlClasses(); if (!userAuth.isLoggedIn) { accountOpen.value = false; postMenuOpen.value = false; overlay.value = null; feedbackUnread.value = 0 } else { refreshFeedbackBadge() } })

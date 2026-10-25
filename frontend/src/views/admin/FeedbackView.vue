@@ -24,13 +24,20 @@
       <div class="table-container">
         <p v-if="!loading && !error && !items.length" class="vue-state">暂无反馈</p>
         <table v-else-if="items.length" class="data-table">
-          <thead><tr><th>ID</th><th>分类</th><th>内容</th><th>状态</th><th>操作</th></tr></thead>
+          <thead>
+            <tr>
+              <th>ID</th><th>用户</th><th>分类</th><th>标题</th><th>内容</th><th>状态</th><th>时间</th><th>操作</th>
+            </tr>
+          </thead>
           <tbody>
             <tr v-for="f in items" :key="f.id">
               <td>{{ f.id }}</td>
+              <td>{{ f.username || f.userId || f.user_id || '-' }}</td>
               <td>{{ f.category || '-' }}</td>
-              <td class="cell-ellipsis" :title="f.content">{{ f.content || f.title || '-' }}</td>
-              <td>{{ f.status || '-' }}</td>
+              <td class="cell-ellipsis">{{ f.title || '-' }}</td>
+              <td class="cell-ellipsis" :title="String(f.content || '')">{{ f.content || '-' }}</td>
+              <td>{{ f.status ?? '-' }}</td>
+              <td>{{ f.createdAt || f.created_at || '-' }}</td>
               <td class="cell-actions">
                 <button type="button" class="btn btn-secondary btn-sm" @click="openHandle(f)">处理</button>
               </td>

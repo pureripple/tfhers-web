@@ -122,3 +122,78 @@ export async function uploadArticleCover(file: File) {
   }
   return payload.data
 }
+
+export function createCombo(payload: {
+  characterId: number
+  title: string
+  description?: string | null
+  damageTotal?: number
+  videoUrl: string
+  comboFileUrl?: string | null
+}) {
+  return post<unknown>('/api/combos', payload, { auth: 'user' })
+}
+
+export function fetchSteamLoginUrl() {
+  return get<{ url?: string }>('/api/user/steam/login-url', { auth: 'user' })
+}
+
+export function unbindSteam() {
+  return post<unknown>('/api/user/steam/unbind', undefined, { auth: 'user' })
+}
+
+export function fetchSteamPlaytime() {
+  return get<unknown>('/api/user/steam/playtime', { auth: 'user' })
+}
+
+export function fetchSteamAchievements() {
+  return get<unknown>('/api/user/steam/achievements', { auth: 'user' })
+}
+
+export async function uploadComboVideo(file: File): Promise<string> {
+  const raw = localStorage.getItem('user')
+  let token = ''
+  try {
+    token = raw ? String((JSON.parse(raw) as { token?: string }).token || '') : ''
+  } catch {
+    token = ''
+  }
+  const fd = new FormData()
+  fd.append('file', file)
+  const res = await fetch('/api/file/upload/combo-video', {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: fd,
+  })
+  const payload = await res.json()
+  if (!payload || payload.code !== 200) {
+    throw new ApiError(payload?.code || res.status, payload?.msg || '上传失败')
+  }
+  const data = payload.data
+  if (typeof data === 'string') return data
+  return String(data?.url || data?.fileUrl || data?.path || '')
+}
+
+export async function uploadComboFile(file: File): Promise<string> {
+  const raw = localStorage.getItem('user')
+  let token = ''
+  try {
+    token = raw ? String((JSON.parse(raw) as { token?: string }).token || '') : ''
+  } catch {
+    token = ''
+  }
+  const fd = new FormData()
+  fd.append('file', file)
+  const res = await fetch('/api/file/upload/combo-file', {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: fd,
+  })
+  const payload = await res.json()
+  if (!payload || payload.code !== 200) {
+    throw new ApiError(payload?.code || res.status, payload?.msg || '上传失败')
+  }
+  const data = payload.data
+  if (typeof data === 'string') return data
+  return String(data?.url || data?.fileUrl || data?.path || '')
+}
