@@ -51,7 +51,7 @@
                   <span v-if="selected.registeredByMe" class="tournament-checkin-badge">已报名</span>
                 </div>
               </div>
-              <div class="tournament-detail-actions">
+              <div class="tournament-detail-actions" style="display:flex;gap:8px;flex-wrap:wrap">
                 <button
                   v-if="!selected.registeredByMe"
                   type="button"
@@ -66,6 +66,13 @@
                   :disabled="acting"
                   @click="doUnregister"
                 >取消报名</button>
+                <button
+                  v-if="selected.registeredByMe && canCheckIn(selected)"
+                  type="button"
+                  class="btn btn-primary"
+                  :disabled="acting"
+                  @click="doCheckIn"
+                >签到</button>
               </div>
             </div>
           </template>
@@ -77,7 +84,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { fetchTournaments, registerTournament, unregisterTournament } from '@/api/tournaments'
+import { checkInTournament, fetchTournaments, registerTournament, unregisterTournament } from '@/api/tournaments'
 import { ApiError, type Tournament } from '@/api/types'
 import { useUserAuthStore } from '@/stores/auth'
 
@@ -112,6 +119,10 @@ function canRegister(t: Tournament) {
   const st = (t.status || '').toLowerCase()
   return st === 'open' || st === 'registration'
 }
+function canCheckIn(t: Tournament) {
+  const st = (t.status || '').toLowerCase()
+  return st === 'closed' || st === 'ongoing' || st === 'registration'
+}
 
 async function load() {
   loading.value = true
@@ -126,7 +137,7 @@ async function load() {
       selectedId.value = null
     }
   } catch (e) {
-    error.value = e instanceof ApiError ? e.message : 'error'
+    error.value = e instanceof ApiError ? e.message : '加载失败'
     items.value = []
     selectedId.value = null
   } finally {
@@ -145,7 +156,7 @@ async function doRegister() {
     await registerTournament(selected.value.id)
     await load()
   } catch (e) {
-    window.alert(e instanceof ApiError ? e.message : 'error')
+    window.alert(e instanceof ApiError ? e.message : '报名失败')
   } finally {
     acting.value = false
   }
@@ -158,7 +169,25 @@ async function doUnregister() {
     await unregisterTournament(selected.value.id)
     await load()
   } catch (e) {
-    window.alert(e instanceof ApiError ? e.message : 'error')
+    window.alert(e instanceof ApiError ? e.message : '取消失败')
+  } finally {
+    acting.value = false
+  }
+}
+
+async function doCheckIn() {
+  if (!selected.value) return
+  if (!auth.isLoggedIn) {
+    window.alert('请先登录')
+    return
+  }
+  acting.value = true
+  try {
+    await checkInTournament(selected.value.id)
+    window.alert('签到成功')
+    await load()
+  } catch (e) {
+    window.alert(e instanceof ApiError ? e.message : '签到失败')
   } finally {
     acting.value = false
   }
