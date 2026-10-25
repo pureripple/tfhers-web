@@ -2,8 +2,9 @@
 
 Vue 3 + Vite + Vue Router + Pinia shell for the TFHers migration.
 
-User routes under `/`, admin under `/admin`. Business pages remain placeholders;
-auth, API client, layouts, and route guards are wired.
+User routes under `/`, admin under `/admin`. User-facing pages (news / lobby /
+rankings / tournaments / characters / AI chat) are wired to real `/api/*`
+endpoints; admin business pages remain placeholders.
 
 ## Auth
 
@@ -12,7 +13,8 @@ auth, API client, layouts, and route guards are wired.
 | User | `localStorage.user` (JSON incl. `token`) | `POST /api/user/login` |
 | Admin | `localStorage.admin_token` (JWT string) | `POST /api/admin/login` |
 
-Authed requests send `Authorization: Bearer …`. Unified response: `{ code, msg, data }` with success when `code === 200`.
+Authed requests send `Authorization: Bearer …`. Unified response: `{ code, msg, data }`
+with success when `code === 200`. AI chat uses `{ success, message, data }` instead.
 
 ## Dev proxy (`vite.config.ts`)
 
