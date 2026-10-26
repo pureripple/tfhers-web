@@ -579,6 +579,13 @@ watch(
 )
 
 onMounted(async () => {
+  // Viewport lock (body.lobby-page + overflow:hidden) assumes scrollY===0.
+  // Navigating from a scrolled page otherwise clips the top and leaves a black gap at the bottom.
+  try {
+    window.scrollTo(0, 0)
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  } catch { /* ignore */ }
   document.body.classList.add('lobby-page')
   await load()
   startListPoll()

@@ -2,6 +2,15 @@
 
 
 /* ===== Lobby viewport lock: page does not scroll; only lists/chat scroll ===== */
+/* Page-enter translateY leaves a transform containing block; with overflow:hidden it can
+   clip the top and show a black strip at the bottom on first paint. Keep lobby static. */
+#lobby.page.active,
+.page.active:has(.rooms-page) {
+  animation: none !important;
+  transform: none !important;
+}
+
+
 body.lobby-page {
   overflow: hidden;
   height: 100vh; /* fallback */

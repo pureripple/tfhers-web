@@ -12,6 +12,12 @@ declare module 'vue-router' {
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior(to) {
+    if (to.name === 'lobby' || to.name === 'ai-chat') {
+      return { top: 0, left: 0 }
+    }
+    return false
+  },
   routes: [
     {
       path: '/',
