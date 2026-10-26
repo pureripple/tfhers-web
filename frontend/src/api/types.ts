@@ -82,6 +82,7 @@ export interface RankingRow {
   nickname?: string
   username?: string
   avatarUrl?: string
+  isAdmin?: boolean
   rating?: number
   tier?: string
   wins?: number
@@ -119,6 +120,7 @@ export interface Room {
   memberCount?: number
   hasPassword?: boolean
   hostNickname?: string
+  hostIsAdmin?: boolean
   hostAvatarUrl?: string
   joinedByMe?: boolean
   isHost?: boolean

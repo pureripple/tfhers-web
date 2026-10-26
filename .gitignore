@@ -49,3 +49,9 @@ _revert_*.txt
 frontend/node_modules/
 frontend/dist/
 
+
+# Local API/Vue dump scratch (never commit)
+_art_*.txt
+_users_*.txt
+_mgmt_boot*.log
+_mgmt_boot*.err.log

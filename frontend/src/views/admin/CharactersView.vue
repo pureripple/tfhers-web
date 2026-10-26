@@ -1,10 +1,14 @@
 <template>
   <section class="page active">
     <div class="action-bar">
-      <p class="stats-page-desc">角色管理与官方连段</p>
+      <div></div>
       <div class="action-buttons">
-        <button type="button" class="btn btn-primary" @click="openCreate"><i class="fas fa-plus"></i> 新增角色</button>
-        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
+        <button type="button" class="btn btn-primary" @click="openCreate">
+          <i class="fas fa-plus"></i> 添加角色
+        </button>
+        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load">
+          <i class="fas fa-sync-alt"></i> 刷新
+        </button>
       </div>
     </div>
     <p v-if="loading" class="vue-state">加载中…</p>
@@ -13,29 +17,64 @@
     <div class="content-card">
       <div class="card-header">
         <h3 class="card-title">角色列表</h3>
-        <div class="card-actions"><span class="article-count">共 {{ items.length }} 个</span></div>
+        <div class="card-actions">
+          <span class="article-count">共 <span>{{ items.length }}</span> 个角色</span>
+        </div>
       </div>
       <div class="table-container">
         <p v-if="!loading && !error && !items.length" class="vue-state">暂无角色</p>
         <table v-else-if="items.length" class="data-table">
           <thead>
-            <tr><th>ID</th><th>中文名</th><th>英文名</th><th>难度</th><th>操作</th></tr>
+            <tr>
+              <th>ID</th>
+              <th>角色</th>
+              <th>难度</th>
+              <th>简介</th>
+              <th>操作</th>
+            </tr>
           </thead>
           <tbody>
             <tr
               v-for="c in items"
               :key="c.id"
               :class="{ 'is-selected': selectedId === c.id }"
-              style="cursor:pointer"
+              style="cursor: pointer"
               @click="selectCharacter(c)"
             >
               <td>{{ c.id }}</td>
-              <td>{{ c.nameZh || '-' }}</td>
-              <td>{{ c.nameEn || '-' }}</td>
-              <td>{{ c.difficultyLevel ?? '-' }}</td>
+              <td>
+                <div class="char-cell">
+                  <div class="char-avatar">
+                    <img v-if="c.avatarUrl" :src="String(c.avatarUrl)" alt="头像" />
+                    <div v-else class="char-avatar-empty">无头像</div>
+                  </div>
+                  <div style="max-width: 220px">
+                    <div style="font-weight: 500" :title="c.nameZh || ''">{{ c.nameZh || '未命名角色' }}</div>
+                    <div style="font-size: 12px; color: var(--text-muted)" :title="c.nameEn || ''">
+                      {{ c.nameEn || '' }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ c.difficultyLevel != null ? `难度 ${c.difficultyLevel}/5` : '未设置' }}</td>
+              <td>
+                <div class="cell-ellipsis" style="max-width: 260px" :title="String(c.intro || '')">
+                  {{ c.intro || '暂无简介' }}
+                </div>
+              </td>
               <td class="cell-actions" @click.stop>
-                <button type="button" class="btn btn-secondary btn-sm" @click="openEdit(c)">编辑</button>
-                <button type="button" class="btn btn-danger btn-sm" :disabled="busyId === c.id" @click="onDelete(c)">删除</button>
+                <button type="button" class="action-btn edit btn-sm" title="编辑角色" @click="openEdit(c)">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  type="button"
+                  class="action-btn delete btn-sm"
+                  title="删除角色"
+                  :disabled="busyId === c.id"
+                  @click="onDelete(c)"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
               </td>
             </tr>
           </tbody>
@@ -43,40 +82,69 @@
       </div>
     </div>
 
-    <div class="content-card" style="margin-top:1rem">
+    <div class="content-card" style="margin-top: 1rem">
       <div class="card-header">
         <h3 class="card-title">
-          官方连段
-          <span v-if="selected" style="font-weight:400;opacity:.75">— {{ selected.nameZh || selected.nameEn }}</span>
+          官方连招
+          <span v-if="selected" style="font-weight: 400; opacity: 0.75">
+            — {{ selected.nameZh || selected.nameEn }}
+          </span>
         </h3>
         <div class="card-actions">
           <button type="button" class="btn btn-primary btn-sm" :disabled="!selectedId" @click="openComboCreate">
-            <i class="fas fa-plus"></i> 新增官方连段
+            <i class="fas fa-plus"></i> 添加官方连招
           </button>
-          <button type="button" class="btn btn-secondary btn-sm" :disabled="!selectedId || comboLoading" @click="loadCombos">刷新</button>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            :disabled="!selectedId || comboLoading"
+            @click="loadCombos"
+          >
+            刷新
+          </button>
         </div>
       </div>
       <div class="table-container">
         <p v-if="!selectedId" class="vue-state">请先在上方选择一个角色</p>
         <p v-else-if="comboLoading" class="vue-state">加载中…</p>
         <p v-else-if="comboError" class="vue-state vue-state-error">{{ comboError }}</p>
-        <p v-else-if="!combos.length" class="vue-state">暂无官方连段</p>
+        <p v-else-if="!combos.length" class="vue-state">该角色暂无官方连招</p>
         <table v-else class="data-table">
           <thead>
-            <tr><th>ID</th><th>标题</th><th>排序</th><th>视频</th><th>操作</th></tr>
+            <tr>
+              <th>ID</th>
+              <th>标题</th>
+              <th>说明</th>
+              <th>视频</th>
+              <th>排序</th>
+              <th>操作</th>
+            </tr>
           </thead>
           <tbody>
             <tr v-for="oc in combos" :key="oc.id">
               <td>{{ oc.id }}</td>
-              <td class="cell-ellipsis">{{ oc.title || '-' }}</td>
-              <td>{{ oc.orderIndex ?? '-' }}</td>
-              <td class="cell-ellipsis">
-                <a v-if="oc.videoUrl" :href="String(oc.videoUrl)" target="_blank" rel="noopener">打开</a>
-                <span v-else>-</span>
+              <td>
+                <div class="cell-ellipsis" style="max-width: 220px" :title="oc.title || ''">{{ oc.title || '' }}</div>
               </td>
+              <td>
+                <div class="cell-ellipsis" style="max-width: 260px" :title="String(oc.description || '')">
+                  {{ oc.description || '暂无说明' }}
+                </div>
+              </td>
+              <td>
+                <div class="cell-ellipsis" style="max-width: 260px" :title="String(oc.videoUrl || '')">
+                  <a v-if="oc.videoUrl" :href="String(oc.videoUrl)" target="_blank" rel="noopener">{{ oc.videoUrl }}</a>
+                  <span v-else>-</span>
+                </div>
+              </td>
+              <td>{{ oc.orderIndex != null ? oc.orderIndex : '' }}</td>
               <td class="cell-actions">
-                <button type="button" class="btn btn-secondary btn-sm" @click="openComboEdit(oc)">编辑</button>
-                <button type="button" class="btn btn-danger btn-sm" @click="onDeleteCombo(oc)">删除</button>
+                <button type="button" class="action-btn edit btn-sm" title="编辑官方连招" @click="openComboEdit(oc)">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="action-btn delete btn-sm" title="删除官方连招" @click="onDeleteCombo(oc)">
+                  <i class="fas fa-trash"></i>
+                </button>
               </td>
             </tr>
           </tbody>
@@ -85,43 +153,143 @@
     </div>
     <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
 
-    <div v-if="showCharForm" class="modal" style="display:block" @click.self="showCharForm = false">
-      <div class="modal-content modal-large">
+    <!-- Character form -->
+    <div v-if="showCharForm" class="modal" style="display: block" @click.self="showCharForm = false">
+      <div class="modal-content large">
         <div class="modal-header">
-          <h3>{{ charForm.id ? '编辑角色' : '新增角色' }}</h3>
+          <h3>{{ charForm.id ? '编辑角色' : '添加角色' }}</h3>
           <button type="button" class="modal-close" @click="showCharForm = false"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-          <div class="form-group"><label>中文名 *</label><input v-model.trim="charForm.nameZh" type="text" /></div>
-          <div class="form-group"><label>英文名 *</label><input v-model.trim="charForm.nameEn" type="text" /></div>
-          <div class="form-group"><label>头像 URL</label><input v-model.trim="charForm.avatarUrl" type="text" /></div>
-          <div class="form-group"><label>简介</label><textarea v-model.trim="charForm.intro" rows="2" style="width:100%"></textarea></div>
-          <div class="form-group"><label>背景</label><textarea v-model.trim="charForm.background" rows="2" style="width:100%"></textarea></div>
-          <div class="form-group"><label>难度 (1-5)</label><input v-model.number="charForm.difficultyLevel" type="number" min="1" max="5" /></div>
-          <div class="form-group"><label>官方视频 URL</label><input v-model.trim="charForm.officialVideoUrl" type="text" /></div>
-          <div class="form-group"><label>出招表图片 URL</label><input v-model.trim="charForm.moveListImageUrl" type="text" /></div>
+          <div class="form-group">
+            <label>角色中文名 *</label>
+            <input v-model.trim="charForm.nameZh" type="text" placeholder="例如：丝绒" />
+          </div>
+          <div class="form-group">
+            <label>角色英文名 *</label>
+            <input v-model.trim="charForm.nameEn" type="text" placeholder="例如：Velvet" />
+          </div>
+          <div class="form-group">
+            <label>难度等级（1-5）</label>
+            <input
+              v-model.number="charForm.difficultyLevel"
+              type="number"
+              min="1"
+              max="5"
+              placeholder="1-5，数字越大难度越高"
+            />
+          </div>
+          <div class="form-group">
+            <label>角色简介</label>
+            <textarea v-model.trim="charForm.intro" rows="3" placeholder="用于列表展示的简短介绍"></textarea>
+          </div>
+          <div class="form-group">
+            <label>背景故事</label>
+            <textarea v-model.trim="charForm.background" rows="5" placeholder="详细的角色背景故事"></textarea>
+          </div>
+          <div class="form-group">
+            <label>官方教学视频链接</label>
+            <input v-model.trim="charForm.officialVideoUrl" type="url" placeholder="例如：https://.../tutorial.mp4" />
+          </div>
+          <div class="form-group">
+            <label>角色头像</label>
+            <div class="image-upload-container">
+              <input
+                ref="avatarFileInput"
+                type="file"
+                accept="image/*"
+                style="display: none"
+                @change="onAvatarFile"
+              />
+              <div
+                v-show="!charForm.avatarUrl"
+                class="image-upload-area"
+                :class="{ uploading: avatarUploading, dragover: avatarDragover }"
+                @click="avatarFileInput?.click()"
+                @dragover.prevent="avatarDragover = true"
+                @dragleave.prevent="avatarDragover = false"
+                @drop.prevent="onAvatarDrop"
+              >
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>{{ avatarUploading ? '上传中…' : '点击选择角色头像' }}</p>
+                <small>支持 JPG、PNG、GIF 格式，最大 5MB</small>
+              </div>
+              <div v-show="charForm.avatarUrl" class="image-preview">
+                <img :src="charForm.avatarUrl" alt="头像预览" />
+                <button type="button" class="remove-image-btn" @click="charForm.avatarUrl = ''">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>官方出招表图</label>
+            <div class="image-upload-container">
+              <input
+                ref="moveListFileInput"
+                type="file"
+                accept="image/*"
+                style="display: none"
+                @change="onMoveListFile"
+              />
+              <div
+                v-show="!charForm.moveListImageUrl"
+                class="image-upload-area"
+                :class="{ uploading: moveListUploading, dragover: moveListDragover }"
+                @click="moveListFileInput?.click()"
+                @dragover.prevent="moveListDragover = true"
+                @dragleave.prevent="moveListDragover = false"
+                @drop.prevent="onMoveListDrop"
+              >
+                <i class="fas fa-list-alt"></i>
+                <p>{{ moveListUploading ? '上传中…' : '点击上传出招表图' }}</p>
+                <small>支持 JPG、PNG 等图片，最大 10MB</small>
+              </div>
+              <div v-show="charForm.moveListImageUrl" class="image-preview">
+                <img :src="charForm.moveListImageUrl" alt="出招表图预览" />
+                <button type="button" class="remove-image-btn" @click="charForm.moveListImageUrl = ''">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline" @click="showCharForm = false">取消</button>
-          <button type="button" class="btn btn-primary" :disabled="savingChar" @click="onSaveChar">保存</button>
+          <button type="button" class="btn btn-secondary" @click="showCharForm = false">取消</button>
+          <button type="button" class="btn btn-primary" :disabled="savingChar" @click="onSaveChar">
+            {{ savingChar ? '保存中…' : '保存' }}
+          </button>
         </div>
       </div>
     </div>
 
-    <div v-if="showComboForm" class="modal" style="display:block" @click.self="showComboForm = false">
+    <!-- Official combo form -->
+    <div v-if="showComboForm" class="modal" style="display: block" @click.self="showComboForm = false">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>{{ comboForm.id ? '编辑官方连段' : '新增官方连段' }}</h3>
+          <h3>{{ comboForm.id ? '编辑官方连招' : '添加官方连招' }}</h3>
           <button type="button" class="modal-close" @click="showComboForm = false"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-          <div class="form-group"><label>标题 *</label><input v-model.trim="comboForm.title" type="text" /></div>
-          <div class="form-group"><label>描述</label><textarea v-model.trim="comboForm.description" rows="3" style="width:100%"></textarea></div>
-          <div class="form-group"><label>视频 URL</label><input v-model.trim="comboForm.videoUrl" type="text" /></div>
-          <div class="form-group"><label>排序</label><input v-model.number="comboForm.orderIndex" type="number" /></div>
+          <div class="form-group">
+            <label>连招标题 *</label>
+            <input v-model.trim="comboForm.title" type="text" />
+          </div>
+          <div class="form-group">
+            <label>说明</label>
+            <textarea v-model.trim="comboForm.description" rows="3" style="width: 100%"></textarea>
+          </div>
+          <div class="form-group">
+            <label>视频链接 *</label>
+            <input v-model.trim="comboForm.videoUrl" type="url" placeholder="https://..." />
+          </div>
+          <div class="form-group">
+            <label>排序</label>
+            <input v-model.number="comboForm.orderIndex" type="number" />
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline" @click="showComboForm = false">取消</button>
+          <button type="button" class="btn btn-secondary" @click="showComboForm = false">取消</button>
           <button type="button" class="btn btn-primary" :disabled="savingCombo" @click="onSaveCombo">保存</button>
         </div>
       </div>
@@ -140,6 +308,8 @@ import {
   fetchOfficialCombos,
   updateAdminCharacter,
   updateOfficialCombo,
+  uploadAdminCharacterAvatar,
+  uploadAdminCharacterMoveList,
   type OfficialCombo,
 } from '@/api/admin/characters'
 import { ApiError, type GameCharacter } from '@/api/types'
@@ -167,14 +337,21 @@ const charForm = ref({
   avatarUrl: '',
   intro: '',
   background: '',
-  difficultyLevel: 3,
+  difficultyLevel: 3 as number | null,
   officialVideoUrl: '',
   moveListImageUrl: '',
 })
 
+const avatarFileInput = ref<HTMLInputElement | null>(null)
+const moveListFileInput = ref<HTMLInputElement | null>(null)
+const avatarUploading = ref(false)
+const avatarDragover = ref(false)
+const moveListUploading = ref(false)
+const moveListDragover = ref(false)
+
 const showComboForm = ref(false)
 const savingCombo = ref(false)
-const comboForm = ref({ id: 0, title: '', description: '', videoUrl: '', orderIndex: 0 })
+const comboForm = ref({ id: 0, title: '', description: '', videoUrl: '', orderIndex: 0 as number | null })
 
 async function load() {
   loading.value = true
@@ -202,7 +379,7 @@ function openCreate() {
     avatarUrl: '',
     intro: '',
     background: '',
-    difficultyLevel: 3,
+    difficultyLevel: null,
     officialVideoUrl: '',
     moveListImageUrl: '',
   }
@@ -217,11 +394,65 @@ function openEdit(c: GameCharacter) {
     avatarUrl: String(c.avatarUrl || ''),
     intro: String(c.intro || ''),
     background: String(c.background || ''),
-    difficultyLevel: Number(c.difficultyLevel ?? 3),
+    difficultyLevel: c.difficultyLevel != null ? Number(c.difficultyLevel) : null,
     officialVideoUrl: String(c.officialVideoUrl || ''),
     moveListImageUrl: String(c.moveListImageUrl || ''),
   }
   showCharForm.value = true
+}
+
+async function uploadAvatar(file: File) {
+  avatarUploading.value = true
+  try {
+    charForm.value.avatarUrl = await uploadAdminCharacterAvatar(file)
+    actionMsg.value = '头像上传成功'
+    actionErr.value = false
+  } catch (e) {
+    actionMsg.value = e instanceof ApiError ? e.message : '头像上传失败'
+    actionErr.value = true
+  } finally {
+    avatarUploading.value = false
+    avatarDragover.value = false
+  }
+}
+
+function onAvatarFile(e: Event) {
+  const f = (e.target as HTMLInputElement).files?.[0]
+  ;(e.target as HTMLInputElement).value = ''
+  if (f) void uploadAvatar(f)
+}
+
+function onAvatarDrop(e: DragEvent) {
+  avatarDragover.value = false
+  const f = e.dataTransfer?.files?.[0]
+  if (f) void uploadAvatar(f)
+}
+
+async function uploadMoveList(file: File) {
+  moveListUploading.value = true
+  try {
+    charForm.value.moveListImageUrl = await uploadAdminCharacterMoveList(file)
+    actionMsg.value = '出招表图上传成功'
+    actionErr.value = false
+  } catch (e) {
+    actionMsg.value = e instanceof ApiError ? e.message : '出招表图上传失败'
+    actionErr.value = true
+  } finally {
+    moveListUploading.value = false
+    moveListDragover.value = false
+  }
+}
+
+function onMoveListFile(e: Event) {
+  const f = (e.target as HTMLInputElement).files?.[0]
+  ;(e.target as HTMLInputElement).value = ''
+  if (f) void uploadMoveList(f)
+}
+
+function onMoveListDrop(e: DragEvent) {
+  moveListDragover.value = false
+  const f = e.dataTransfer?.files?.[0]
+  if (f) void uploadMoveList(f)
 }
 
 async function onSaveChar() {
@@ -232,12 +463,20 @@ async function onSaveChar() {
   }
   savingChar.value = true
   try {
-    const payload = { ...charForm.value }
-    const { id, ...rest } = payload
-    if (id) await updateAdminCharacter(id, rest)
-    else await createAdminCharacter(rest)
+    const payload = {
+      nameZh: charForm.value.nameZh,
+      nameEn: charForm.value.nameEn,
+      avatarUrl: charForm.value.avatarUrl || null,
+      intro: charForm.value.intro || null,
+      background: charForm.value.background || null,
+      difficultyLevel: charForm.value.difficultyLevel != null ? Number(charForm.value.difficultyLevel) : null,
+      officialVideoUrl: charForm.value.officialVideoUrl || null,
+      moveListImageUrl: charForm.value.moveListImageUrl || null,
+    }
+    if (charForm.value.id) await updateAdminCharacter(charForm.value.id, payload)
+    else await createAdminCharacter(payload)
     showCharForm.value = false
-    actionMsg.value = '保存成功'
+    actionMsg.value = charForm.value.id ? '更新角色成功' : '添加角色成功'
     actionErr.value = false
     await load()
   } catch (e) {
@@ -249,11 +488,12 @@ async function onSaveChar() {
 }
 
 async function onDelete(c: GameCharacter) {
-  if (!confirm(`确认删除角色「${c.nameZh || c.id}」？`)) return
+  const name = c.nameZh || c.nameEn || String(c.id)
+  if (!confirm(`确定要删除角色「${name}」吗？此操作不可撤销，并将同时删除该角色的出招表与连招。`)) return
   busyId.value = c.id
   try {
     await deleteAdminCharacter(c.id)
-    actionMsg.value = '已删除'
+    actionMsg.value = '删除角色成功'
     actionErr.value = false
     if (selectedId.value === c.id) {
       selectedId.value = null
@@ -281,7 +521,7 @@ async function loadCombos() {
     const data = await fetchOfficialCombos(selectedId.value)
     combos.value = Array.isArray(data) ? data : []
   } catch (e) {
-    comboError.value = e instanceof ApiError ? e.message : '加载官方连段失败'
+    comboError.value = e instanceof ApiError ? e.message : '加载官方连招失败'
     combos.value = []
   } finally {
     comboLoading.value = false
@@ -290,11 +530,11 @@ async function loadCombos() {
 
 function openComboCreate() {
   if (!selectedId.value) {
-    actionMsg.value = '请先选择一个角色'
+    actionMsg.value = '请先选择一个角色再添加官方连招'
     actionErr.value = true
     return
   }
-  comboForm.value = { id: 0, title: '', description: '', videoUrl: '', orderIndex: combos.value.length }
+  comboForm.value = { id: 0, title: '', description: '', videoUrl: '', orderIndex: null }
   showComboForm.value = true
 }
 
@@ -304,7 +544,7 @@ function openComboEdit(oc: OfficialCombo) {
     title: oc.title || '',
     description: String(oc.description || ''),
     videoUrl: String(oc.videoUrl || ''),
-    orderIndex: Number(oc.orderIndex ?? 0),
+    orderIndex: oc.orderIndex != null ? Number(oc.orderIndex) : null,
   }
   showComboForm.value = true
 }
@@ -312,7 +552,12 @@ function openComboEdit(oc: OfficialCombo) {
 async function onSaveCombo() {
   if (!selectedId.value) return
   if (!comboForm.value.title) {
-    actionMsg.value = '请填写标题'
+    actionMsg.value = '请输入连招标题'
+    actionErr.value = true
+    return
+  }
+  if (!comboForm.value.videoUrl) {
+    actionMsg.value = '请输入视频链接'
     actionErr.value = true
     return
   }
@@ -320,14 +565,14 @@ async function onSaveCombo() {
   try {
     const payload = {
       title: comboForm.value.title,
-      description: comboForm.value.description,
+      description: comboForm.value.description || null,
       videoUrl: comboForm.value.videoUrl,
-      orderIndex: comboForm.value.orderIndex,
+      orderIndex: comboForm.value.orderIndex != null ? Number(comboForm.value.orderIndex) : null,
     }
     if (comboForm.value.id) await updateOfficialCombo(comboForm.value.id, payload)
     else await createOfficialCombo(selectedId.value, payload)
     showComboForm.value = false
-    actionMsg.value = '官方连段已保存'
+    actionMsg.value = comboForm.value.id ? '更新官方连招成功' : '添加官方连招成功'
     actionErr.value = false
     await loadCombos()
   } catch (e) {
@@ -339,10 +584,10 @@ async function onSaveCombo() {
 }
 
 async function onDeleteCombo(oc: OfficialCombo) {
-  if (!confirm(`确定删除官方连段「${oc.title || oc.id}」吗？`)) return
+  if (!confirm(`确定要删除官方连招「${oc.title || oc.id}」吗？此操作不可撤销。`)) return
   try {
     await deleteOfficialCombo(oc.id)
-    actionMsg.value = '已删除'
+    actionMsg.value = '删除官方连招成功'
     actionErr.value = false
     await loadCombos()
   } catch (e) {
@@ -353,3 +598,37 @@ async function onDeleteCombo(oc: OfficialCombo) {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.char-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.char-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-tertiary);
+}
+.char-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.char-avatar-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+tr.is-selected {
+  background: var(--bg-elevated);
+}
+</style>

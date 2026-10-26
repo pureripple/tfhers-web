@@ -70,12 +70,14 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { fetchCharacters } from '@/api/characters'
-import { createCombo, uploadComboFile, uploadComboVideo } from '@/api/user'
+import { COMBO_VIDEO_MAX_BYTES, createCombo, uploadComboFile, uploadComboVideo } from '@/api/user'
+import { useUserAuthStore } from '@/stores/auth'
 import { ApiError, type GameCharacter } from '@/api/types'
 
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ close: []; created: [] }>()
 
+const auth = useUserAuthStore()
 const characters = ref<GameCharacter[]>([])
 const characterId = ref(0)
 const title = ref('')
@@ -113,6 +115,12 @@ async function onVideoPick(ev: Event) {
   const input = ev.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
+  if (file.size > COMBO_VIDEO_MAX_BYTES) {
+    const mb = (file.size / (1024 * 1024)).toFixed(1)
+    error.value = `视频过大（${mb}MB），最大允许 2GB，请压缩后再上传`
+    input.value = ''
+    return
+  }
   uploadingVideo.value = true
   error.value = ''
   try {
@@ -142,6 +150,10 @@ async function onFilePick(ev: Event) {
 }
 
 async function submit() {
+  if (!auth.isLoggedIn || !auth.user?.token) {
+    error.value = '请先登录后再投稿'
+    return
+  }
   if (!characterId.value) {
     error.value = '请选择角色'
     return

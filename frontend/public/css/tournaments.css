@@ -1,10 +1,21 @@
-﻿/* 比赛页：左右分栏；卡片实色对齐教程角色卡 */
+/* Vue: tournaments fill main width — list flush left, detail to right edge */
+.page.active:has(.tournaments-page) {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+}
+.main-content:has(.tournaments-page) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+/* 比赛页：左右分栏；卡片实色对齐教程角色卡 */
 
 .tournaments-page {
   max-width: none;
   width: 100%;
   margin: 0;
-  padding: 20px 16px 48px 12px;
+  padding: 0 0 16px;
   box-sizing: border-box;
 }
 
@@ -14,20 +25,23 @@
 
 .tournaments-layout {
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
+  grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
   width: 100%;
+  min-height: calc(100dvh - var(--nav-height, 72px) - 24px);
 }
 
 .tournament-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-height: calc(100vh - 160px);
-  max-height: calc(100dvh - 160px);
+  gap: 10px;
+  max-height: calc(100dvh - var(--nav-height, 72px) - 24px);
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 0 10px 0 0;
+  margin: 0;
+  border-right: 1px solid var(--border-color);
+  box-sizing: border-box;
 }
 
 .tournament-card {
@@ -131,14 +145,15 @@
   display: block;
   min-height: 280px;
   min-width: 0;
-  max-width: 100%;
-  overflow-x: hidden;
+  max-width: none;
+  overflow-x: auto;
   background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  padding: 20px 18px 26px 16px;
-  box-shadow: 0 12px 32px var(--shadow-hover);
+  border: none;
+  border-radius: 0;
+  padding: 16px 16px 24px 14px;
+  box-shadow: none;
   box-sizing: border-box;
+  height: 100%;
 }
 
 .tournament-detail.active { display: block; }
@@ -353,29 +368,49 @@
 
 @media (max-width: 860px) {
   .tournaments-page {
-    padding: 16px 12px 48px 8px;
-  }
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 16px;
+  box-sizing: border-box;
+}
   .tournaments-layout {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
+  display: grid;
+  grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+  width: 100%;
+  min-height: calc(100dvh - var(--nav-height, 72px) - 24px);
+}
   .tournament-list {
-    max-height: none;
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
-    gap: 10px;
-    padding-bottom: 8px;
-    -webkit-overflow-scrolling: touch;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100dvh - var(--nav-height, 72px) - 24px);
+  overflow-y: auto;
+  padding: 0 10px 0 0;
+  margin: 0;
+  border-right: 1px solid var(--border-color);
+  box-sizing: border-box;
+}
   .tournament-card {
     min-width: 240px;
     flex: 0 0 auto;
   }
   .tournament-detail {
-    padding: 16px 14px 22px;
-    min-height: 0;
-  }
+  display: block;
+  min-height: 280px;
+  min-width: 0;
+  max-width: none;
+  overflow-x: auto;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: 0;
+  padding: 16px 16px 24px 14px;
+  box-shadow: none;
+  box-sizing: border-box;
+  height: 100%;
+}
   .tournament-detail-actions .btn {
     min-height: 44px;
     padding: 10px 14px;
@@ -455,7 +490,7 @@
 }
 
 .tournament-rules-box {
-  margin-top: 8px;
+  margin: 0 0 8px;
   padding: 12px 14px;
   border-radius: var(--radius-md);
   background: var(--bg-tertiary);

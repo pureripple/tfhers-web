@@ -88,7 +88,7 @@
                       class="user-combo-avatar"
                     />
                   </div>
-                  <span class="user-combo-author-name">{{ comboAuthor(c) }}</span>
+                  <button type="button" class="user-combo-author-name player-name-link" :class="adminNameClass(c)" @click.stop="goPlayerProfile(router, null, c)">{{ comboAuthor(c) }}</button>
                 </div>
                 <div class="user-combo-headline">{{ comboHeadline(c) }}</div>
                 <div v-if="comboDesc(c)" style="opacity:.75;font-size:0.9rem;margin-top:4px">{{ comboDesc(c) }}</div>
@@ -96,9 +96,9 @@
                   <button
                     v-if="comboVideo(c)"
                     type="button"
-                    class="user-combo-watch-btn"
+                    class="user-combo-watch-btn user-combo-text-action"
                     @click="playVideo(comboVideo(c), comboTitle(c))"
-                  >观看视频</button>
+                  ><i class="fas fa-play"></i> 观看视频</button>
                   <a
                     v-if="comboFile(c)"
                     class="user-combo-download-link"
@@ -131,8 +131,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { fetchCharacter, fetchCharacters } from '@/api/characters'
 import { ApiError, type CharacterDetail, type GameCharacter } from '@/api/types'
+import { adminNameClass } from '@/utils/adminName'
+import { goPlayerProfile } from '@/utils/playerProfile'
+
+const router = useRouter()
 
 const items = ref<GameCharacter[]>([])
 const loading = ref(false)

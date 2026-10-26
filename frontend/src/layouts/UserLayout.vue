@@ -14,8 +14,7 @@
           class="nav-link"
           active-class=""
           exact-active-class=""
-          :class="{ 'nav-link-ai': item.ai, active: isActive(item) && !overlay }"
-          @click="closeOverlay"
+          :class="{ 'nav-link-ai': item.ai, active: isActive(item) }"
         >
           <i :class="item.icon"></i><span>{{ item.label }}</span>
         </RouterLink>
@@ -49,12 +48,12 @@
             <img :src="avatarSrc" alt="" />
           </button>
           <div class="top-account-panel" role="menu" :aria-label="menuLabel" :hidden="!accountOpen">
-            <div class="tap-head"><img class="tap-avatar" :src="avatarSrc" alt="" /><div class="tap-names"><div class="tap-nickname">{{ displayName }}</div><div class="tap-username">@{{ userAuth.user?.username || dash }}</div></div></div>
-            <div class="tap-section tap-rating-row"><div class="tap-rating"><span class="tap-tier">{{ ratingTier }}</span><span class="tap-score">{{ ratingScore }}</span></div><div class="tap-rank">{{ ratingRank }}</div></div>
+            <div class="tap-head"><img class="tap-avatar" :src="avatarSrc" alt="" /><div class="tap-names"><button type="button" :class="['tap-nickname', 'tap-profile-link', adminNameClass(userAuth.user)]" title="查看个人主页" @click.stop="goPage('profile')">{{ displayName }}</button><div class="tap-username">@{{ userAuth.user?.username || dash }}</div></div></div>
+            <div class="tap-section tap-rating-row"><div class="tap-rating"><span class="tap-tier" :class="ratingTierClass">{{ ratingTier }}</span><span class="tap-score">{{ ratingScore }}</span></div><div class="tap-rank">{{ ratingRank }}</div></div>
             <div class="tap-actions">
-              <button type="button" class="tap-action-btn" @click="openOverlay('profile')"><i class="fas fa-chart-bar"></i><span>数据</span></button>
-              <button type="button" class="tap-action-btn" @click="openOverlay('manuscripts')"><i class="fas fa-folder-open"></i><span>稿件管理</span></button>
-              <button type="button" class="tap-action-btn" @click="openOverlay('settings')"><i class="fas fa-cog"></i><span>设置</span></button>
+              <button type="button" class="tap-action-btn" @click="goPage('data')"><i class="fas fa-chart-bar"></i><span>数据</span></button>
+              <button type="button" class="tap-action-btn" @click="goPage('manuscripts')"><i class="fas fa-folder-open"></i><span>稿件管理</span></button>
+              <button type="button" class="tap-action-btn" @click="goPage('settings')"><i class="fas fa-cog"></i><span>设置</span></button>
               <button type="button" class="tap-action-btn" @click="openFeedback"><i class="fas fa-comment-dots"></i><span>问题反馈</span><span class="tap-unread-dot" :hidden="feedbackUnread <= 0"></span></button>
             </div>
             <div class="tap-footer"><button type="button" class="tap-action-btn tap-logout-btn" role="menuitem" @click="onLogout"><i class="fas fa-sign-out-alt"></i><span>退出登录</span></button></div>
@@ -63,10 +62,7 @@
       </div></div>
     </header>
     <main class="main-content">
-      <RouterView v-show="!overlay" />
-      <ProfilePanel v-if="overlay === 'profile'" @open-settings="openOverlay('settings')" />
-      <ManuscriptsPanel v-if="overlay === 'manuscripts'" />
-      <SettingsPanel v-if="overlay === 'settings'" />
+      <RouterView />
     </main>
     <CreateArticleModal :open="createArticleOpen" @close="createArticleOpen = false" @created="onArticleCreated" />
     <CreateComboModal :open="createComboOpen" @close="createComboOpen = false" @created="onComboCreated" />
@@ -76,20 +72,20 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserAuthStore } from '@/stores/auth'
 import AuthEntry from '@/components/AuthEntry.vue'
 import CreateArticleModal from '@/components/CreateArticleModal.vue'
 import CreateComboModal from '@/components/CreateComboModal.vue'
 import FeedbackModal from '@/components/FeedbackModal.vue'
-import ProfilePanel from '@/components/ProfilePanel.vue'
-import ManuscriptsPanel from '@/components/ManuscriptsPanel.vue'
-import SettingsPanel from '@/components/SettingsPanel.vue'
 import { fetchFeedbackUnreadCount } from '@/api/user'
+import { fetchMyRating } from '@/api/rankings'
+import { adminNameClass } from '@/utils/adminName'
 
 const SIDEBAR_KEY = 'tfhers_sidebar_collapsed'
 const userAuth = useUserAuthStore()
 const route = useRoute()
+const router = useRouter()
 const dash = '\u2014'
 const dmLabel = '私信'
 const notifyLabel = '通知'
@@ -105,22 +101,63 @@ const nav = [
   { to: '/ai-chat', label: 'AI', icon: 'fas fa-robot', match: ['ai-chat'], ai: true },
 ] as const
 
-type Overlay = 'profile' | 'manuscripts' | 'settings' | null
 function readCollapsed(): boolean { try { return localStorage.getItem(SIDEBAR_KEY) === '1' } catch { return false } }
 const collapsed = ref(readCollapsed())
 const sidebarOpenMobile = ref(false)
 const accountOpen = ref(false)
 const postMenuOpen = ref(false)
-const overlay = ref<Overlay>(null)
 const createArticleOpen = ref(false)
 const createComboOpen = ref(false)
 const feedbackOpen = ref(false)
 const feedbackUnread = ref(0)
 const displayName = computed(() => userAuth.user?.nickname || userAuth.user?.username || '用户')
 const avatarSrc = computed(() => { const url = userAuth.user?.avatarUrl; return url ? String(url) : '/images/CSel3_LargePortTianhuo.png' })
-const ratingTier = computed(() => { const u = userAuth.user as Record<string, unknown> | null; const t = u?.tier ?? u?.ratingTier; return t != null && String(t) ? String(t) : dash })
-const ratingScore = computed(() => { const u = userAuth.user as Record<string, unknown> | null; const s = u?.rating ?? u?.score; return s != null && String(s) ? String(s) : dash })
-const ratingRank = computed(() => { const u = userAuth.user as Record<string, unknown> | null; const r = u?.rank ?? u?.ranking; return r != null && String(r) ? '#' + r : '#' + dash })
+function tierLetterOf(raw: unknown) {
+  const s = String(raw ?? '').trim().toUpperCase()
+  const m = s.match(/[SABCD]/)
+  return m ? m[0] : ''
+}
+const ratingTier = computed(() => {
+  const u = userAuth.user as Record<string, unknown> | null
+  const letter = tierLetterOf(u?.tier ?? u?.tierLabel ?? u?.ratingTier)
+  return letter || dash
+})
+const ratingTierClass = computed(() => {
+  const letter = tierLetterOf((userAuth.user as Record<string, unknown> | null)?.tier ?? (userAuth.user as Record<string, unknown> | null)?.tierLabel)
+  return letter ? ('tier-' + letter) : ''
+})
+const ratingScore = computed(() => {
+  const u = userAuth.user as Record<string, unknown> | null
+  const s = u?.rating ?? u?.score
+  return s != null && String(s) !== '' ? String(s) : dash
+})
+const ratingRank = computed(() => {
+  const u = userAuth.user as Record<string, unknown> | null
+  const r = u?.siteRank ?? u?.rank ?? u?.ranking
+  const ok = r != null && String(r) !== '' && String(r).toLowerCase() !== 'null' && String(r) !== dash
+  return ok ? '#' + r : '#' + dash
+})
+async function refreshMyRating() {
+  if (!userAuth.isLoggedIn || !userAuth.user?.token) return
+  try {
+    const d = await fetchMyRating()
+    if (!d || !userAuth.user) return
+    const rating = d.rating != null ? Number(d.rating) : 1000
+    const tier = tierLetterOf(d.tier || d.tierLabel) || 'C'
+    const rank = d.rank != null ? d.rank : d.siteRank
+    const next = {
+      ...userAuth.user,
+      rating,
+      tier,
+      tierLabel: d.tierLabel != null ? String(d.tierLabel) : tier,
+      siteRank: rank,
+      rank,
+    }
+    userAuth.persist(next as typeof userAuth.user)
+  } catch {
+    /* keep last known values */
+  }
+}
 function isActive(item: (typeof nav)[number]) { return item.match.includes(String(route.name || '')) }
 function applyHtmlClasses() { const rootEl = document.documentElement; rootEl.classList.toggle('tfhers-authed', userAuth.isLoggedIn); rootEl.classList.toggle('sidebar-collapsed', collapsed.value); rootEl.classList.toggle('sidebar-open', sidebarOpenMobile.value); document.title = "tfhers-\"Them's Fightin' Herds\"玩家们的社区" }
 function persistCollapsed() { try { localStorage.setItem(SIDEBAR_KEY, collapsed.value ? '1' : '0') } catch { /* ignore */ } }
@@ -134,28 +171,76 @@ function stubNoBackend(label: string) {
   accountOpen.value = false
   window.alert(label + '：后端暂无独立私信/通知接口，旧站也未接入，待后续补齐。')
 }
-function openOverlay(kind: Overlay) { if (!userAuth.isLoggedIn) return; accountOpen.value = false; postMenuOpen.value = false; overlay.value = kind; try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch { window.scrollTo(0, 0) } }
-function closeOverlay() { overlay.value = null }
-function openCreateArticle() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) return; createArticleOpen.value = true }
-function openCreateCombo() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) return; createComboOpen.value = true }
+function goPage(name: 'profile' | 'data' | 'manuscripts' | 'settings') {
+  if (!userAuth.isLoggedIn) return
+  accountOpen.value = false
+  postMenuOpen.value = false
+  if (name === 'data') {
+    router.push({ name: 'profile', query: { section: 'data' } })
+  } else if (name === 'profile') {
+    router.push({ name: 'profile' })
+  } else {
+    router.push({ name })
+  }
+  try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch { window.scrollTo(0, 0) }
+}
+function openCreateArticle() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) { window.alert('请先登录后再发布'); return }; createArticleOpen.value = true }
+function openCreateCombo() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) { window.alert('请先登录后再投稿'); return }; createComboOpen.value = true }
 function openFeedback() { accountOpen.value = false; if (!userAuth.isLoggedIn) return; feedbackOpen.value = true }
-function onArticleCreated() { refreshOverlay('manuscripts'); refreshOverlay('profile'); try { window.dispatchEvent(new CustomEvent('tfhers:articles-changed')) } catch { /* ignore */ } }
-function onComboCreated() { refreshOverlay('manuscripts'); refreshOverlay('profile') }
-function refreshOverlay(kind: Overlay) {
-  if (overlay.value === kind) {
-    const cur = overlay.value
-    overlay.value = null
-    requestAnimationFrame(() => { overlay.value = cur })
+function onArticleCreated() {
+  try { window.dispatchEvent(new CustomEvent('tfhers:articles-changed')) } catch { /* ignore */ }
+  if (route.name === 'manuscripts' || route.name === 'profile') {
+    router.replace({ name: String(route.name) })
   }
 }
+function onComboCreated() {
+  if (route.name === 'manuscripts' || route.name === 'profile') {
+    router.replace({ name: String(route.name) })
+  }
+}
+
 function onFeedbackUnread(n: number) { feedbackUnread.value = n }
 async function refreshFeedbackBadge() { if (!userAuth.isLoggedIn) { feedbackUnread.value = 0; return } try { const data = await fetchFeedbackUnreadCount(); feedbackUnread.value = Number(data?.count) || 0 } catch { feedbackUnread.value = 0 } }
-function onLogout() { accountOpen.value = false; postMenuOpen.value = false; overlay.value = null; createArticleOpen.value = false; createComboOpen.value = false; feedbackOpen.value = false; userAuth.logout(); applyHtmlClasses() }
+function onLogout() { accountOpen.value = false; postMenuOpen.value = false; createArticleOpen.value = false; createComboOpen.value = false; feedbackOpen.value = false; userAuth.logout(); applyHtmlClasses() }
 function onDocClick(e: MouseEvent) { const t = e.target as HTMLElement | null; if (!t?.closest('.top-avatar-wrap')) accountOpen.value = false; if (!t?.closest('.top-post-wrap')) postMenuOpen.value = false }
 function onKey(e: KeyboardEvent) { if (e.key === 'Escape') { postMenuOpen.value = false; accountOpen.value = false; feedbackOpen.value = false; createArticleOpen.value = false; createComboOpen.value = false } }
-onMounted(() => { userAuth.hydrate(); applyHtmlClasses(); document.addEventListener('click', onDocClick); document.addEventListener('keydown', onKey); refreshFeedbackBadge() })
+
+watch(accountOpen, (open) => {
+  if (open) refreshMyRating()
+})
+watch(
+  () => userAuth.isLoggedIn,
+  (ok) => {
+    if (ok) refreshMyRating()
+  },
+)
+onMounted(() => {
+  userAuth.hydrate()
+  applyHtmlClasses()
+  document.addEventListener('click', onDocClick)
+  document.addEventListener('keydown', onKey)
+  refreshFeedbackBadge()
+  if (userAuth.isLoggedIn) refreshMyRating()
+})
 onUnmounted(() => { document.documentElement.classList.remove('tfhers-authed', 'sidebar-collapsed', 'sidebar-open'); document.removeEventListener('click', onDocClick); document.removeEventListener('keydown', onKey) })
-watch(() => userAuth.isLoggedIn, () => { applyHtmlClasses(); if (!userAuth.isLoggedIn) { accountOpen.value = false; postMenuOpen.value = false; overlay.value = null; feedbackUnread.value = 0 } else { refreshFeedbackBadge() } })
+watch(() => userAuth.isLoggedIn, () => { applyHtmlClasses(); if (!userAuth.isLoggedIn) { accountOpen.value = false; postMenuOpen.value = false; feedbackUnread.value = 0 } else { refreshFeedbackBadge() } })
 watch([collapsed, sidebarOpenMobile], applyHtmlClasses)
-watch(() => route.fullPath, () => { overlay.value = null })
 </script>
+
+<style scoped>
+.tap-profile-link {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tap-profile-link:hover {
+  text-decoration: underline;
+}
+</style>

@@ -1,14 +1,14 @@
 <template>
-  <section class="page active">
+  <section id="lobby" class="page active">
     <div class="rooms-page">
-      <div class="rooms-layout">
+      <div class="rooms-layout" :class="{ 'lobby-mobile-view-room': !!selectedId }">
         <div class="rooms-list-col">
-          <header class="rooms-rail-head" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-            <button type="button" class="rooms-icon-btn" title="刷新" aria-label="刷新" :disabled="loading" @click="load">
+          <header class="rooms-rail-head">
+            <button type="button" class="rooms-icon-btn" :class="{ spinning: loading }" title="刷新" :aria-label="'刷新'" :disabled="loading" @click="load">
               <i class="fas fa-sync-alt"></i>
             </button>
-            <button type="button" class="btn btn-primary btn-sm" @click="openCreate">
-              <i class="fas fa-plus"></i> 创建房间
+            <button type="button" class="rooms-icon-btn rooms-icon-btn--create" title="创建房间" :aria-label="'创建房间'" @click="openCreate">
+              <i class="fas fa-plus"></i>
             </button>
           </header>
           <div class="room-list" aria-label="rooms">
@@ -23,119 +23,113 @@
               @click="selectRoom(room.id)"
             >
               <span class="room-tile-face">
-                <i v-if="room.hasPassword" class="fas fa-lock" style="position:absolute;top:8px;left:8px;font-size:0.7rem;opacity:0.8"></i>
-                <span v-if="room.joinedByMe" class="room-tile-mark room-tile-mark--joined">我</span>
-                <span class="room-tile-abbr">{{ abbrOf(room) }}</span>
+                <i v-if="room.hasPassword" class="fas fa-lock room-tile-lock" aria-hidden="true"></i>
+                <span v-if="room.isHost || room.joinedByMe" class="room-tile-mark" :class="room.isHost ? 'room-tile-mark--mine' : 'room-tile-mark--joined'">我</span>
+                <span class="room-tile-abbr">{{abbrOf(room)}}</span>
                 <span class="room-tile-count">
-                  {{ room.memberCount ?? 0 }}<template v-if="room.maxPlayers != null">/{{ room.maxPlayers }}</template>
+                  {{room.memberCount ?? 0}}<template v-if="room.maxPlayers != null">/{{room.maxPlayers}}</template>
                 </span>
               </span>
             </button>
           </div>
         </div>
 
-        <div class="room-detail" :class="detail ? 'has-room' : 'is-idle'" aria-label="detail">
+        <div
+          class="room-detail"
+          :class="[detail ? 'has-room' : 'is-idle', entered ? 'is-entered' : '']"
+          aria-label="detail"
+        >
           <div v-if="!detail" class="room-idle-panel" aria-hidden="true"></div>
           <div v-else class="room-detail-panel">
             <div class="room-detail-toolbar">
-              <div class="room-detail-toolbar-title">{{ detail.room?.title || ('#' + detail.room?.id) }}</div>
-              <div class="room-detail-toolbar-actions" style="display:flex;gap:8px;flex-wrap:wrap">
-                <button
-                  v-if="!closed && !joined"
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  :disabled="acting"
-                  @click="onJoin"
-                >
-                  <i class="fas fa-sign-in-alt"></i> 加入房间
-                </button>
-                <button
-                  v-if="!closed && joined && !entered"
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  @click="onEnter"
-                >
-                  <i class="fas fa-door-open"></i> 进入房间
-                </button>
-                <button
-                  v-if="!closed && joined && !isHost"
-                  type="button"
-                  class="btn btn-secondary btn-sm"
-                  :disabled="acting"
-                  @click="onLeave"
-                >
-                  <i class="fas fa-sign-out-alt"></i> 离开房间
-                </button>
-                <button
-                  v-if="!closed && isHost"
-                  type="button"
-                  class="btn btn-secondary btn-sm"
-                  :disabled="acting"
-                  @click="onClose"
-                >
-                  <i class="fas fa-times"></i> 关闭房间
-                </button>
+              <button type="button" class="btn btn-secondary room-back-btn" @click="backToList"><i class="fas fa-arrow-left" aria-hidden="true"></i> 返回</button>
+              <div class="room-detail-toolbar-title">{{detail.room?.title || ('#' + detail.room?.id)}}</div>
+              <div class="room-detail-toolbar-actions room-detail-actions room-detail-actions--mobile">
+                <button v-if="!closed && !joined" type="button" class="btn btn-primary btn-sm" :disabled="acting" @click="onJoin"><i class="fas fa-sign-in-alt"></i> 加入房间</button>
+                <button v-if="!closed && joined && !entered" type="button" class="btn btn-primary btn-sm" @click="onEnter"><i class="fas fa-door-open"></i> 进入房间</button>
+                <button v-if="!closed && joined && !isHost" type="button" class="btn btn-secondary btn-sm" :disabled="acting" @click="onLeave"><i class="fas fa-sign-out-alt"></i> 离开房间</button>
+                <button v-if="!closed && isHost" type="button" class="btn btn-secondary btn-sm" :disabled="acting" @click="onClose"><i class="fas fa-times"></i> 关闭房间</button>
               </div>
             </div>
 
-            <div class="room-info-panel">
-              <div class="room-info-block">
-                <div class="room-info-title">房间信息</div>
-                <div class="room-info-meta">
-                  <div class="room-info-row">
-                    <span class="room-info-label">状态</span>
-                    <span class="room-info-value room-status">{{ roomStatusLabel(roomStatus(detail.room!)) }}</span>
+            <div class="room-layout" :class="entered ? 'is-entered' : 'is-preview'">
+              <aside class="room-info-panel">
+                <div class="room-info-block">
+                  <h3 class="room-info-title">{{detail.room?.title || '未命名房间'}}</h3>
+                  <div class="room-info-meta">
+                    <span class="room-status" :class="roomStatus(detail.room!).toLowerCase()">{{roomStatusLabel(roomStatus(detail.room!))}}</span>
+                    <span class="room-info-count">{{members.length}}/{{detail.room?.maxPlayers || 4}}</span>
                   </div>
-                  <div class="room-info-row">
-                    <span class="room-info-label">房主</span>
-                    <span class="room-info-value">{{ detail.room?.hostNickname || '-' }}</span>
-                  </div>
-                  <div class="room-info-row">
-                    <span class="room-info-label">人数</span>
-                    <span class="room-info-value">{{ members.length }}/{{ detail.room?.maxPlayers || 4 }}</span>
-                  </div>
-                  <div v-if="entered && isHost && detail.room?.passwordPlain" class="room-info-row">
-                    <span class="room-info-label">密码</span>
-                    <span class="room-info-value room-info-pwd">{{ detail.room.passwordPlain }}</span>
-                  </div>
-                  <div v-else-if="!entered && detail.room?.hasPassword" class="room-info-row">
-                    <span class="room-info-label">权限</span>
-                    <span class="room-info-value">需要密码</span>
+                  <div class="room-info-row"><span class="room-info-label">房主</span><span class="room-info-value"><button type="button" class="player-name-link" :class="adminNameClass(detail.room)" @click="goPlayerProfile(router, detail.room?.hostUserId ?? detail.room?.host_user_id ?? detail.room?.userId, detail.room)">{{detail.room?.hostNickname || '-'}}</button></span></div>
+                  <div class="room-info-row"><span class="room-info-label">人数</span><span class="room-info-value">{{members.length}}/{{detail.room?.maxPlayers || 4}}</span></div>
+                  <div v-if="detail.room?.passwordPlain" class="room-info-row"><span class="room-info-label">密码</span><span class="room-info-value room-info-pwd">{{detail.room.passwordPlain}}</span></div>
+                  <div v-else-if="!entered && detail.room?.hasPassword" class="room-info-row"><span class="room-info-label">权限</span><span class="room-info-value">需要密码加入</span></div>
+                  <p class="room-info-tip">{{roomTip}}</p>
+                  <div class="room-info-actions room-detail-actions--desktop">
+                    <button v-if="!closed && !joined" type="button" class="btn btn-primary btn-sm" :disabled="acting" @click="onJoin"><i class="fas fa-sign-in-alt"></i> 加入房间</button>
+                    <button v-if="!closed && joined && !entered" type="button" class="btn btn-primary btn-sm" @click="onEnter"><i class="fas fa-door-open"></i> 进入房间</button>
+                    <button v-if="!closed && joined && !isHost" type="button" class="btn btn-secondary btn-sm" :disabled="acting" @click="onLeave"><i class="fas fa-sign-out-alt"></i> 离开房间</button>
+                    <button v-if="!closed && isHost" type="button" class="btn btn-secondary btn-sm" :disabled="acting" @click="onClose"><i class="fas fa-times"></i> 关闭房间</button>
                   </div>
                 </div>
-              </div>
-              <div class="room-info-block">
-                <div class="room-info-title">成员</div>
-                <ul class="plain-list" style="margin:0;padding-left:18px">
-                  <li v-for="(m, i) in members" :key="i">
-                    {{ m.nickname || m.username || ('用户' + m.userId) }}
-                    <span v-if="m.isHost" style="opacity:.7">（房主）</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+                <div class="room-info-members">
+                  <h4 class="room-panel-title room-members-title-desktop">成员</h4>
+                  <div class="room-member-list">
+                    <div v-for="(m, i) in members" :key="m.userId || i" class="room-member-chip">
+                      <img v-if="m.avatarUrl" :src="String(m.avatarUrl)" alt="" />
+                      <button type="button" class="room-member-name player-name-link" :class="adminNameClass(m)" @click="goPlayerProfile(router, m.userId, m)">{{m.nickname || m.username || ('用户' + m.userId)}}</button>
+                      <span v-if="m.isHost" class="room-member-role">房主</span>
+                    </div>
+                    <p v-if="!members.length" class="room-empty" style="padding:8px">暂无房间</p>
+                  </div>
+                </div>
+              </aside>
 
-            <div v-if="entered" class="room-chat-panel" style="margin-top:12px">
-              <div class="room-info-title">聊天</div>
-              <div class="room-chat-log" style="max-height:240px;overflow:auto;border:1px solid var(--border-color);border-radius:8px;padding:8px;margin:8px 0">
-                <p v-if="!messages.length" class="room-empty" style="padding:8px">暂无消息</p>
-                <div v-for="msg in messages" :key="msg.id || JSON.stringify(msg)" style="margin:4px 0">
-                  <strong>{{ msg.nickname || ('用户' + msg.userId) }}</strong>：
-                  <span>{{ msg.content }}</span>
+              <section class="room-chat-panel">
+                <h4 class="room-panel-title">聊天</h4>
+                <template v-if="entered">
+                  <div class="room-chat-messages" ref="chatBox">
+                    <div v-if="!messages.length" class="room-empty" style="padding:16px">暂无消息</div>
+                    <div
+                      v-for="msg in messages"
+                      :key="msg.id || JSON.stringify(msg)"
+                      class="room-chat-item"
+                      :class="isMine(msg) ? 'room-chat-item--mine' : 'room-chat-item--other'"
+                    >
+                      <img class="room-chat-avatar" :src="msg.avatarUrl || DEFAULT_AVATAR" alt="" @error="onAvatarError" />
+                      <div class="room-chat-bubble">
+                        <div class="room-chat-meta">
+                          <button type="button" class="room-chat-name player-name-link" :class="adminNameClass(msg)" @click="goPlayerProfile(router, msg.userId, msg)">{{msg.nickname || ('用户' + msg.userId)}}</button>
+                        </div>
+                        <img
+                          v-if="msgTypeOf(msg) === 'image'"
+                          class="room-chat-image"
+                          :src="String(msg.content || '')"
+                          alt="图片"
+                          @click="openImage(String(msg.content || ''))"
+                        />
+                        <div v-else class="room-chat-text">{{msg.content}}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <form class="room-chat-form" @submit.prevent="onSend">
+                    <button type="button" class="room-chat-img-btn" title="发送图片" :aria-label="'发送图片'" :disabled="closed || imageUploading" @click="pickImage"><i class="fas fa-image"></i></button>
+                    <input ref="imageInput" type="file" accept="image/*" style="display:none" @change="onImagePicked" />
+                    <input v-model.trim="chatInput" type="text" maxlength="500" :placeholder="closed ? '房间已关闭' : '输入消息…'" :disabled="closed || sending" />
+                    <button type="submit" class="btn btn-primary" :disabled="closed || !chatInput || sending">发送</button>
+                  </form>
+                </template>
+                <div v-else class="room-empty" style="padding:24px;text-align:center">
+                  <template v-if="joined">已加入，点击「进入房间」可聊天</template>
+                  <template v-else>加入并进入房间后可聊天</template>
                 </div>
-              </div>
-              <form style="display:flex;gap:8px" @submit.prevent="onSend">
-                <input v-model.trim="chatInput" type="text" placeholder="说点什么…" style="flex:1" />
-                <button type="submit" class="btn btn-primary btn-sm" :disabled="!chatInput || sending">发送</button>
-              </form>
+              </section>
             </div>
-            <p v-else-if="joined" class="room-empty" style="text-align:left;padding:8px 0">已加入，点击「进入房间」可聊天</p>
-            <p v-else class="room-empty" style="text-align:left;padding:8px 0">加入房间后可进入聊天</p>
           </div>
         </div>
       </div>
     </div>
-    <p v-if="toast" class="vue-state">{{ toast }}</p>
+    <div v-if="toast" class="room-app-toast" role="status" aria-live="polite">{{ toast }}</div>
 
     <div v-if="showCreate" class="modal" style="display:block" @click.self="showCreate = false">
       <div class="modal-content">
@@ -166,28 +160,59 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   closeRoom,
   createRoom,
   fetchRoomDetail,
   fetchRoomMessages,
+  unwrapRoomMessages,
   fetchRooms,
   joinRoom,
   leaveRoom,
   postRoomMessage,
+  uploadRoomChatImage,
   type RoomDetailPayload,
   type RoomMessage,
 } from '@/api/rooms'
 import { ApiError, type Room } from '@/api/types'
 import { useUserAuthStore } from '@/stores/auth'
+import { adminNameClass } from '@/utils/adminName'
+import { goPlayerProfile } from '@/utils/playerProfile'
 
+const router = useRouter()
+
+
+const DEFAULT_AVATAR = '/images/CSel3_LargePortTianhuo.png'
+const ROOM_TIP = "本房间仅用于互相联系、约定上线对战；对局请自行在 Steam 启动《Them's Fightin' Herds》。"
 const auth = useUserAuthStore()
 const rooms = ref<Room[]>([])
 const loading = ref(false)
-const selectedId = ref<number | null>(null)
+
+const ENTERED_KEY = 'tfhers.lobby.enteredRoomId'
+const SELECTED_KEY = 'tfhers.lobby.selectedRoomId'
+function readStoredRoomId(key: string): number | null {
+  try {
+    const v = sessionStorage.getItem(key)
+    if (!v) return null
+    const n = Number(v)
+    return Number.isFinite(n) ? n : null
+  } catch {
+    return null
+  }
+}
+function writeStoredRoomId(key: string, id: number | null) {
+  try {
+    if (id == null) sessionStorage.removeItem(key)
+    else sessionStorage.setItem(key, String(id))
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+const selectedId = ref<number | null>(readStoredRoomId(SELECTED_KEY))
 const detail = ref<RoomDetailPayload | null>(null)
-const enteredRoomId = ref<number | null>(null)
+const enteredRoomId = ref<number | null>(readStoredRoomId(ENTERED_KEY))
 const messages = ref<RoomMessage[]>([])
 const chatInput = ref('')
 const sending = ref(false)
@@ -196,6 +221,9 @@ const toast = ref('')
 const showCreate = ref(false)
 const creating = ref(false)
 const createForm = ref({ title: '', maxPlayers: 4, password: '' })
+const imageUploading = ref(false)
+const imageInput = ref<HTMLInputElement | null>(null)
+const chatBox = ref<HTMLElement | null>(null)
 
 let listTimer: number | null = null
 let msgTimer: number | null = null
@@ -206,6 +234,10 @@ const joined = computed(() => !!(detail.value?.room?.joinedByMe || detail.value?
 const isHost = computed(() => !!detail.value?.room?.isHost)
 const closed = computed(() => String(detail.value?.room?.status || '').toLowerCase() === 'closed')
 const entered = computed(() => !!selectedId.value && enteredRoomId.value === selectedId.value && joined.value)
+const roomTip = computed(() => {
+  const tip = (detail.value as RoomDetailPayload & { tip?: string })?.tip
+  return tip || ROOM_TIP
+})
 
 function roomStatus(room: Room) {
   const st = String(room.status || '').toLowerCase()
@@ -234,6 +266,77 @@ function flash(msg: string) {
   }, 2500)
 }
 
+
+function msgTypeOf(msg: RoomMessage) {
+  return String(msg.msgType || msg.type || 'text').toLowerCase()
+}
+function isMine(msg: RoomMessage) {
+  const u = auth.user as { id?: number; userId?: number } | null
+  let me = u?.id ?? u?.userId
+  if (me == null) {
+    try {
+      const raw = localStorage.getItem('user')
+      const parsed = raw ? (JSON.parse(raw) as { id?: number; userId?: number }) : null
+      me = parsed?.id ?? parsed?.userId
+    } catch {
+      me = undefined
+    }
+  }
+  return me != null && msg.userId != null && String(me) === String(msg.userId)
+}
+function onAvatarError(e: Event) {
+  const el = e.target as HTMLImageElement
+  if (!el || el.dataset.imgFailed) return
+  el.dataset.imgFailed = '1'
+  el.src = DEFAULT_AVATAR
+}
+function openImage(url: string) {
+  if (url) window.open(url, '_blank')
+}
+function pickImage() {
+  imageInput.value?.click()
+}
+async function onImagePicked(ev: Event) {
+  const input = ev.target as HTMLInputElement
+  const file = input.files && input.files[0]
+  input.value = ''
+  if (!file || !selectedId.value) return
+  if (!file.type || file.type.indexOf('image/') !== 0) {
+    flash('\u8bf7\u9009\u62e9\u56fe\u7247\u6587\u4ef6')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    flash('\u56fe\u7247\u4e0d\u80fd\u8d85\u8fc7 5MB')
+    return
+  }
+  imageUploading.value = true
+  try {
+    const url = await uploadRoomChatImage(file)
+    const msg = await postRoomMessage(selectedId.value, url, 'image')
+    if (msg) {
+      messages.value = [...messages.value, msg]
+      const mid = Number(msg.id || 0)
+      if (mid > lastMsgId) lastMsgId = mid
+      await scrollChat()
+    } else {
+      await loadMessages(selectedId.value, false)
+    }
+  } catch (e) {
+    flash(e instanceof ApiError ? e.message : '\u53d1\u9001\u5931\u8d25')
+  } finally {
+    imageUploading.value = false
+  }
+}
+async function scrollChat() {
+  await nextTick()
+  const box = chatBox.value
+  if (box) box.scrollTop = box.scrollHeight
+}
+function backToList() {
+  selectedId.value = null
+  detail.value = null
+}
+
 async function load() {
   loading.value = true
   try {
@@ -258,9 +361,12 @@ async function selectRoom(id: number) {
 async function refreshDetail(id: number) {
   try {
     detail.value = await fetchRoomDetail(id)
-    if (enteredRoomId.value === id && (detail.value?.room?.joinedByMe || detail.value?.room?.isHost)) {
+    const stillMember = !!(detail.value?.room?.joinedByMe || detail.value?.room?.isHost)
+    if (stillMember && (enteredRoomId.value === id || readStoredRoomId(ENTERED_KEY) === id)) {
+      enteredRoomId.value = id
       await loadMessages(id, false)
       startMsgPoll(id)
+      await scrollChat()
     } else if (enteredRoomId.value === id) {
       enteredRoomId.value = null
       stopMsgPoll()
@@ -379,18 +485,32 @@ async function onClose() {
 async function loadMessages(id: number, incremental: boolean) {
   try {
     const data = await fetchRoomMessages(id, incremental ? lastMsgId : 0)
-    const list = Array.isArray(data) ? data : []
+    const { messages: list, roomStatus } = unwrapRoomMessages(data)
     if (!incremental) {
+      lastMsgId = 0
       messages.value = list
     } else if (list.length) {
-      messages.value = [...messages.value, ...list]
+      const known = new Set(messages.value.map((m) => Number(m.id || 0)))
+      const fresh = list.filter((m) => {
+        const mid = Number(m.id || 0)
+        return !mid || !known.has(mid)
+      })
+      if (fresh.length) messages.value = [...messages.value, ...fresh]
     }
     for (const m of list) {
       const mid = Number(m.id || 0)
       if (mid > lastMsgId) lastMsgId = mid
     }
-  } catch {
-    /* ignore poll errors */
+    if (roomStatus && String(roomStatus).toUpperCase() === 'CLOSED') {
+      stopMsgPoll()
+      await load()
+    }
+  } catch (e) {
+    /* Poll errors stay quiet; initial load should surface membership/API issues. */
+    if (!incremental) {
+      const msg = e instanceof ApiError ? e.message : '加载聊天记录失败'
+      flash(msg)
+    }
   }
 }
 
@@ -404,6 +524,7 @@ async function onSend() {
       messages.value = [...messages.value, msg]
       const mid = Number(msg.id || 0)
       if (mid > lastMsgId) lastMsgId = mid
+      await scrollChat()
     } else {
       await loadMessages(selectedId.value, false)
     }
@@ -439,10 +560,15 @@ function stopMsgPoll() {
   }
 }
 
+
+watch(enteredRoomId, (id) => writeStoredRoomId(ENTERED_KEY, id))
+watch(selectedId, (id) => writeStoredRoomId(SELECTED_KEY, id))
 watch(
   () => auth.isLoggedIn,
   (ok) => {
     if (!ok) {
+      writeStoredRoomId(ENTERED_KEY, null)
+      writeStoredRoomId(SELECTED_KEY, null)
       enteredRoomId.value = null
       detail.value = null
       selectedId.value = null
@@ -453,10 +579,23 @@ watch(
 )
 
 onMounted(async () => {
+  document.body.classList.add('lobby-page')
   await load()
   startListPoll()
+  const restoreId = selectedId.value || enteredRoomId.value
+  if (restoreId) {
+    await selectRoom(restoreId)
+    // Still a member after leaving the page → stay "entered", no second click
+    if (detail.value?.room?.joinedByMe || detail.value?.room?.isHost) {
+      if (enteredRoomId.value !== restoreId) enteredRoomId.value = restoreId
+      await loadMessages(restoreId, false)
+      startMsgPoll(restoreId)
+      await scrollChat()
+    }
+  }
 })
 onUnmounted(() => {
+  document.body.classList.remove('lobby-page')
   stopListPoll()
   stopMsgPoll()
 })

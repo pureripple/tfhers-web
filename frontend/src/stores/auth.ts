@@ -54,7 +54,7 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     localStorage.removeItem(USER_KEY)
   }
 
-  return { user, token, isLoggedIn, hydrate, login, register, logout }
+  return { user, token, isLoggedIn, hydrate, persist, login, register, logout }
 })
 
 export const useAdminAuthStore = defineStore('adminAuth', () => {

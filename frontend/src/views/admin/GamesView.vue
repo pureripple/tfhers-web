@@ -1,19 +1,35 @@
 <template>
   <section class="page active">
-    <div class="action-bar">
-      <p class="stats-page-desc">游戏管理：Steam 成就 schema 同步（与旧站一致，仅此操作）</p>
-      <div class="action-buttons">
-        <button type="button" class="btn btn-secondary" :disabled="syncing" @click="onSync">
-          <i class="fas fa-sync-alt"></i> {{ syncing ? '同步中…' : '刷新/同步' }}
-        </button>
-      </div>
-    </div>
-    <p v-if="error" class="vue-state vue-state-error">{{ error }}</p>
     <div class="content-card">
-      <div class="card-header"><h3 class="card-title">同步结果</h3></div>
-      <div class="table-container" style="padding:1rem">
-        <pre v-if="result" style="white-space:pre-wrap;margin:0;color:var(--text-secondary)">{{ typeof result === 'string' ? result : JSON.stringify(result, null, 2) }}</pre>
-        <p v-else class="vue-state">点击上方按钮同步</p>
+      <div class="card-header">
+        <h3 class="card-title">游戏管理</h3>
+        <div class="card-actions">
+          <button type="button" class="btn btn-primary" :disabled="syncing" @click="onSync">
+            <i class="fas fa-cloud-download-alt"></i>
+            {{ syncing ? '同步中…' : '同步 Steam 全部成就（转存 OSS）' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" style="padding: 16px">
+        <p style="color: rgba(255, 255, 255, 0.75); margin-bottom: 10px">
+          说明：此操作会从 Steam 拉取本游戏的全部成就 schema（名称/描述/图标），并将图标转存到对象存储 OSS 后写入数据库。
+        </p>
+        <p v-if="error" class="vue-state vue-state-error">{{ error }}</p>
+        <p v-if="msg" class="vue-state">{{ msg }}</p>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap">
+          <div>
+            <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px">上次同步</div>
+            <div style="font-weight: 700">{{ lastSync }}</div>
+          </div>
+          <div>
+            <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px">本次写入条数</div>
+            <div style="font-weight: 700">{{ upserted }}</div>
+          </div>
+          <div>
+            <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px">成就总数</div>
+            <div style="font-weight: 700">{{ total }}</div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -22,22 +38,28 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { syncSteamAchievements } from '@/api/admin/games'
-import type { SteamSyncResult } from '@/api/admin/types'
 import { ApiError } from '@/api/types'
 
 const syncing = ref(false)
 const error = ref('')
-const result = ref<SteamSyncResult | null>(null)
+const msg = ref('')
+const lastSync = ref('—')
+const upserted = ref('—')
+const total = ref('—')
 
 async function onSync() {
-  if (!confirm('确认同步 Steam 成就 schema？可能需要较长时间。')) return
+  if (!confirm('确认同步 Steam 成就 schema？此操作可能需要较长时间。')) return
   syncing.value = true
   error.value = ''
-  result.value = null
+  msg.value = ''
   try {
-    result.value = await syncSteamAchievements()
+    const data = await syncSteamAchievements()
+    lastSync.value = data?.updatedAt ? String(data.updatedAt) : '刚刚'
+    upserted.value = data?.upserted != null ? String(data.upserted) : '—'
+    total.value = data?.total != null ? String(data.total) : '—'
+    msg.value = '同步成功'
   } catch (e) {
-    error.value = e instanceof ApiError ? e.message : '同步失败'
+    error.value = e instanceof ApiError ? e.message : '同步失败，请稍后再试'
   } finally {
     syncing.value = false
   }

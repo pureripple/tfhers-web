@@ -45,6 +45,30 @@ body.lobby-page .main-content {
   display: flex;
 }
 
+
+/* Vue shell: even without body class, lobby page fills main */
+.page.active:has(.rooms-page) {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.main-content:has(.rooms-page) {
+  padding: 0 !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: calc(100dvh - var(--nav-height, 72px));
+  max-height: calc(100dvh - var(--nav-height, 72px));
+}
 .rooms-page {
   width: 100%;
   max-width: none;
@@ -64,10 +88,11 @@ body.lobby-page .main-content {
 .rooms-header,
 .rooms-toolbar {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0;
-  margin: 0 0 8px;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0 0 10px;
   padding: 0 2px;
   min-height: 0;
   flex-shrink: 0;
@@ -75,6 +100,19 @@ body.lobby-page .main-content {
   border: none;
   background: transparent;
   box-shadow: none;
+}
+
+.rooms-icon-btn--create {
+  border-color: rgba(255, 122, 122, 0.55);
+  background:
+    linear-gradient(135deg, rgba(255, 122, 122, 0.12), transparent 55%),
+    var(--bg-tertiary);
+  color: var(--accent-primary);
+}
+
+.rooms-icon-btn--create:hover {
+  border-color: rgba(255, 122, 122, 0.85);
+  color: var(--accent-primary);
 }
 
 .rooms-header-text { display: none; }
@@ -158,7 +196,7 @@ body.lobby-page .main-content {
   box-sizing: border-box;
   border-right: 1px solid var(--border-color);
   background: var(--bg-secondary);
-  padding: 8px 0 10px;
+  padding: 6px 0 0;
 }
 
 .room-list {
@@ -502,11 +540,11 @@ body.lobby-page .main-content {
 
 /* Preview (not entered): info only, no chat column */
 .room-layout.is-preview {
-  grid-template-columns: minmax(280px, 420px);
+  grid-template-columns: 280px minmax(0, 1fr);
 }
 
 .room-layout.is-preview .room-chat-panel {
-  display: none !important;
+  display: flex !important;
 }
 
 .room-detail.has-room:not(.is-entered) .room-info-panel {
@@ -516,6 +554,12 @@ body.lobby-page .main-content {
 
 .room-detail.has-room .room-detail-panel {
   gap: 0;
+  height: 100%;
+}
+
+.room-detail.has-room .room-layout {
+  flex: 1 1 auto;
+  min-height: 0;
   height: 100%;
 }
 
@@ -1291,4 +1335,24 @@ body.lobby-page .main-content {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Corner toast — do not push lobby layout */
+.room-app-toast {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 1200;
+  max-width: min(280px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(24, 24, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
 }

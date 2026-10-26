@@ -51,23 +51,28 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 
+  const rawText = await res.text()
   let payload: ApiResult<T> & { message?: string; error?: string; status?: number }
   try {
-    payload = (await res.json()) as ApiResult<T> & { message?: string; error?: string; status?: number }
+    payload = (rawText ? JSON.parse(rawText) : {}) as ApiResult<T> & { message?: string; error?: string; status?: number }
   } catch {
-    throw new ApiError(res.status, res.statusText || `请求失败（HTTP ${res.status}）`)
+    throw new ApiError(res.status, (rawText && rawText.trim()) || res.statusText || ('HTTP ' + res.status))
   }
 
   const code = typeof payload.code === 'number' ? payload.code : res.status
   if (code !== 200) {
+    const springMsg = payload.message && String(payload.message).trim()
+    const apiMsg = payload.msg && String(payload.msg).trim()
+    const errLabel = payload.error && String(payload.error).trim()
+    // Prefer concrete message; avoid bare Spring "Bad Request" when message exists
     const msg =
-      (payload.msg && String(payload.msg).trim()) ||
-      (payload.message && String(payload.message).trim()) ||
-      (payload.error && String(payload.error).trim()) ||
-      `请求失败（${code}）`
+      apiMsg ||
+      springMsg ||
+      (errLabel && errLabel.toLowerCase() !== 'bad request' ? errLabel : '') ||
+      errLabel ||
+      ('HTTP ' + code)
     throw new ApiError(code, msg)
   }
-
   return payload.data
 }
 

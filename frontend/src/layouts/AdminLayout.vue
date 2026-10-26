@@ -57,7 +57,7 @@
               <div class="tap-head">
                 <img class="tap-avatar" :src="avatarSrc" alt="" />
                 <div class="tap-names">
-                  <div class="tap-nickname">{{ adminName }}</div>
+                  <div class="tap-nickname user-name--admin">{{ adminName }}</div>
                   <div class="tap-username">@{{ adminAuth.userInfo?.username || 'admin' }}</div>
                 </div>
               </div>
@@ -85,6 +85,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminAuthStore } from '@/stores/auth'
+import { adminNameClass } from '@/utils/adminName'
 
 const SIDEBAR_KEY = 'tfhers_sidebar_collapsed'
 

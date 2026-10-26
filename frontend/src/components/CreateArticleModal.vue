@@ -38,7 +38,13 @@
           </div>
           <div class="form-group">
             <label for="createArticleContent">内容 *</label>
-            <textarea
+                        <div style="margin-bottom:8px;">
+              <input ref="contentImageInput" type="file" accept="image/*" style="display:none;" @change="onContentImagePick" />
+              <button type="button" class="btn btn-outline btn-sm" :disabled="uploading" @click="contentImageInput && contentImageInput.click()">
+                <i class="fas fa-image"></i> 插入正文图片
+              </button>
+            </div>
+<textarea
               id="createArticleContent"
               v-model.trim="content"
               rows="8"
@@ -60,7 +66,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { createArticle } from '@/api/articles'
+import { createArticle, uploadArticleContentImage } from '@/api/articles'
 import { uploadArticleCover } from '@/api/user'
 import { useUserAuthStore } from '@/stores/auth'
 import { ApiError } from '@/api/types'
@@ -75,6 +81,8 @@ const content = ref('')
 const coverUrl = ref('')
 const submitting = ref(false)
 const coverInput = ref<HTMLInputElement | null>(null)
+const contentImageInput = ref<HTMLInputElement | null>(null)
+const uploading = ref(false)
 
 watch(
   () => props.open,
@@ -106,6 +114,30 @@ async function onCoverPick(e: Event) {
     coverUrl.value = await uploadArticleCover(file)
   } catch (err) {
     window.alert(err instanceof ApiError ? err.message : '上传失败')
+  }
+}
+
+
+async function onContentImagePick(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files && input.files[0]
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    window.alert('请选择图片文件')
+    input.value = ''
+    return
+  }
+  uploading.value = true
+  try {
+    const url = await uploadArticleContentImage(file)
+    const tag = '<img src="' + url + '" alt="" />'
+    content.value = content.value ? content.value + '\n' + tag + '\n' : tag + '\n'
+    window.alert('图片已插入')
+  } catch (err) {
+    window.alert(err instanceof ApiError ? err.message : '图片上传失败')
+  } finally {
+    uploading.value = false
+    input.value = ''
   }
 }
 

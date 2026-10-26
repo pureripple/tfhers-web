@@ -2,31 +2,118 @@
   <section class="page active">
     <div class="ai-chat-layout grok-layout">
       <div class="grok-chat-panel">
-        <header class="grok-head">
+        <header class="grok-head" style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap">
           <div class="grok-head-left">
-            <span class="grok-model-badge">蹄斗 AI（管理）</span>
+            <span class="grok-model-badge">豆包 AI（管理员）</span>
             <span class="status-indicator grok-status-dot">
               <i class="fas fa-circle"></i>
               <span class="grok-status-text">{{ statusLabel }}</span>
             </span>
           </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <div style="position: relative">
+              <button type="button" class="btn btn-secondary btn-sm" @click="historyOpen = !historyOpen">
+                历史
+              </button>
+              <div
+                v-if="historyOpen"
+                style="
+                  position: absolute;
+                  right: 0;
+                  top: 110%;
+                  z-index: 20;
+                  min-width: 260px;
+                  max-height: 320px;
+                  overflow: auto;
+                  background: var(--bg-elevated, #1a1a22);
+                  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+                  border-radius: 10px;
+                  padding: 8px;
+                "
+              >
+                <button type="button" class="btn btn-secondary btn-sm" style="width: 100%; margin-bottom: 8px" @click="clearChat">
+                  清空历史
+                </button>
+                <p v-if="!chatHistory.length" class="vue-state">暂无历史</p>
+                <button
+                  v-for="(h, i) in recentHistory"
+                  :key="i"
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  style="width: 100%; margin-bottom: 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
+                  :title="h.user"
+                  @click="reuseHistory(h)"
+                >
+                  {{ h.user }}
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" @click="clearChat">清空对话</button>
+            <button type="button" class="btn btn-secondary btn-sm" @click="exportChat">导出</button>
+          </div>
         </header>
-        <div ref="listEl" class="grok-messages" style="flex:1;overflow:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;min-height:360px">
+        <div
+          ref="listEl"
+          class="grok-messages"
+          style="flex: 1; overflow: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; min-height: 360px"
+        >
           <div
             v-for="(m, i) in messages"
             :key="i"
-            :style="m.role === 'user'
-              ? { alignSelf: 'flex-end', background: 'rgba(255,122,122,0.18)', maxWidth: '85%', padding: '0.65rem 0.85rem', borderRadius: '12px' }
-              : { alignSelf: 'flex-start', background: 'var(--bg-secondary,rgba(255,255,255,0.06))', maxWidth: '85%', padding: '0.65rem 0.85rem', borderRadius: '12px' }"
+            :style="
+              m.role === 'user'
+                ? {
+                    alignSelf: 'flex-end',
+                    background: 'rgba(255,122,122,0.18)',
+                    maxWidth: '85%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '12px',
+                  }
+                : {
+                    alignSelf: 'flex-start',
+                    background: 'var(--bg-secondary,rgba(255,255,255,0.06))',
+                    maxWidth: '85%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '12px',
+                  }
+            "
           >
-            <div style="font-size:0.75rem;opacity:0.7;margin-bottom:0.2rem">{{ m.role === 'user' ? '我' : '助手' }}</div>
-            <div style="white-space:pre-wrap;word-break:break-word">{{ m.text }}</div>
+            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.2rem">
+              {{ m.role === 'user' ? '你' : '助手' }}
+            </div>
+            <div style="white-space: pre-wrap; word-break: break-word">{{ m.text }}</div>
           </div>
           <p v-if="sending" class="vue-state">助手正在回复…</p>
         </div>
-        <form style="display:flex;gap:0.5rem;padding:0.75rem;border-top:1px solid var(--border-color,rgba(255,255,255,0.08))" @submit.prevent="onSend">
-          <input v-model.trim="input" type="text" maxlength="1000" placeholder="问运营/内容相关问题…" :disabled="sending"
-            style="flex:1;border:1px solid var(--border-color,rgba(255,255,255,0.14));border-radius:10px;padding:0.55rem 0.7rem;background:var(--bg-tertiary,#0f0f14);color:inherit;font:inherit" />
+        <form
+          style="
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+            align-items: center;
+            flex-wrap: wrap;
+          "
+          @submit.prevent="onSend"
+        >
+          <input
+            v-model.trim="input"
+            type="text"
+            maxlength="1000"
+            placeholder="问运营/角色/招式/资讯…"
+            :disabled="sending"
+            style="
+              flex: 1;
+              min-width: 200px;
+              border: 1px solid var(--border-color, rgba(255, 255, 255, 0.14));
+              border-radius: 10px;
+              padding: 0.55rem 0.7rem;
+              background: var(--bg-tertiary, #0f0f14);
+              color: inherit;
+              font: inherit;
+            "
+          />
+          <span :style="{ opacity: 0.7, fontSize: '12px', color: charColor }">{{ input.length }} / 1000</span>
           <button type="submit" class="btn btn-primary" :disabled="sending || !input">发送</button>
         </form>
         <p v-if="error" class="vue-state vue-state-error">{{ error }}</p>
@@ -45,14 +132,23 @@ interface ChatMsg {
   text: string
 }
 
-const messages = ref<ChatMsg[]>([
-  { role: 'ai', text: '你好，我是 TFHers 管理端 AI 助手。可以问我角色、招式、赛事等问题。' },
-])
+interface HistoryEntry {
+  user: string
+  ai: string
+  time: number
+}
+
+const HISTORY_KEY = 'aiChatHistory'
+const WELCOME = '你好，我是 TFHers 管理员 AI 助手。可以问我角色、招式、资讯等问题。'
+
+const messages = ref<ChatMsg[]>([{ role: 'ai', text: WELCOME }])
 const input = ref('')
 const sending = ref(false)
 const error = ref('')
 const status = ref<'unknown' | 'online' | 'offline' | 'warn'>('unknown')
 const listEl = ref<HTMLElement | null>(null)
+const chatHistory = ref<HistoryEntry[]>([])
+const historyOpen = ref(false)
 
 const statusLabel = computed(() => {
   if (status.value === 'online') return '在线'
@@ -60,7 +156,15 @@ const statusLabel = computed(() => {
   if (status.value === 'warn') return '异常'
   return '检测中'
 })
-const statusClass = computed(() => 'status-' + status.value)
+
+const recentHistory = computed(() => [...chatHistory.value].slice(-10).reverse())
+
+const charColor = computed(() => {
+  const n = input.value.length
+  if (n > 900) return '#ff6b6b'
+  if (n > 700) return '#ffb020'
+  return 'inherit'
+})
 
 async function probeStatus() {
   try {
@@ -69,6 +173,60 @@ async function probeStatus() {
   } catch {
     status.value = 'offline'
   }
+}
+
+function loadChatHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY)
+    chatHistory.value = raw ? (JSON.parse(raw) as HistoryEntry[]) : []
+  } catch {
+    chatHistory.value = []
+  }
+}
+
+function persistHistory() {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(chatHistory.value))
+}
+
+function saveToHistory(user: string, ai: string) {
+  chatHistory.value.push({ user, ai, time: Date.now() })
+  persistHistory()
+}
+
+function reuseHistory(h: HistoryEntry) {
+  input.value = h.user
+  historyOpen.value = false
+}
+
+function clearChat() {
+  if (!confirm('确认清空当前对话与历史记录？')) return
+  messages.value = [{ role: 'ai', text: WELCOME }]
+  chatHistory.value = []
+  localStorage.removeItem(HISTORY_KEY)
+  historyOpen.value = false
+  error.value = ''
+}
+
+function exportChat() {
+  if (!chatHistory.value.length) {
+    error.value = '暂无历史可导出'
+    return
+  }
+  let exportText = '豆包社区AI助手对话记录\n' + '='.repeat(50) + '\n\n'
+  chatHistory.value.forEach((entry, index) => {
+    const time = new Date(entry.time).toLocaleString('zh-CN')
+    exportText += `对话 ${index + 1} - ${time}\n`
+    exportText += `用户: ${entry.user}\n`
+    exportText += `AI: ${entry.ai}\n`
+    exportText += '-'.repeat(30) + '\n\n'
+  })
+  const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `ai-chat-${Date.now()}.txt`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 async function scrollBottom() {
@@ -86,7 +244,9 @@ async function onSend() {
   await scrollBottom()
   try {
     const answer = await postAiChat(q)
-    messages.value.push({ role: 'ai', text: answer || '（空回复）' })
+    const text = answer || '（空回复）'
+    messages.value.push({ role: 'ai', text })
+    saveToHistory(q, text)
   } catch (e) {
     const msg = e instanceof ApiError ? e.message : 'AI 服务暂时不可用'
     error.value = msg
@@ -97,5 +257,8 @@ async function onSend() {
   }
 }
 
-onMounted(probeStatus)
+onMounted(() => {
+  loadChatHistory()
+  probeStatus()
+})
 </script>

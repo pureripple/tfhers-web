@@ -18,14 +18,14 @@
           </div>
           <img class="ranking-avatar" :src="row.avatarUrl || '/images/CSel3_LargePortTianhuo.png'" alt="" />
           <div class="ranking-info">
-            <div class="ranking-name">{{ row.nickname || row.username || ('#' + row.userId) }}</div>
+            <button type="button" class="ranking-name player-name-link" :class="adminNameClass(row)" @click="goPlayerProfile(router, row.userId, row)">{{ row.nickname || row.username || ('#' + row.userId) }}</button>
             <div class="ranking-meta">
               战绩 {{ row.wins ?? 0 }}胜 / {{ row.losses ?? 0 }}负 · {{ (row.wins ?? 0) + (row.losses ?? 0) }} 场
             </div>
           </div>
-          <div class="ranking-score-box">
+                    <div class="ranking-score-box">
+            <span class="ranking-tier" :class="'tier-' + String(row.tier || 'C').toUpperCase().charAt(0)">{{ String(row.tier || 'C').toUpperCase().charAt(0) }}</span>
             <div class="ranking-score">{{ row.rating ?? '-' }}</div>
-            <span class="ranking-tier">{{ String(row.tier || 'C').toUpperCase().charAt(0) }}</span>
           </div>
         </div>
       </div>
@@ -35,8 +35,13 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { fetchRankings } from '@/api/rankings'
 import { ApiError, type RankingRow } from '@/api/types'
+import { adminNameClass } from '@/utils/adminName'
+import { goPlayerProfile } from '@/utils/playerProfile'
+
+const router = useRouter()
 
 const rows = ref<RankingRow[]>([])
 const loading = ref(false)

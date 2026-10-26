@@ -208,3 +208,27 @@ html, body, #app {
 }
 
 /* auth-entry lives outside .main-content; do not force display:block on it */
+
+/* Clickable nicknames (legacy player-name-link as <button>) */
+button.player-name-link,
+button.ranking-name.player-name-link,
+button.bracket-name.player-name-link,
+button.comment-author.player-name-link,
+button.article-author-name.player-name-link,
+button.article-detail-author-name.player-name-link,
+button.user-combo-author-name.player-name-link,
+button.room-member-name.player-name-link,
+button.room-chat-name.player-name-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
+button.player-name-link:hover {
+  text-decoration: underline;
+}
+

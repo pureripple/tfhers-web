@@ -1,4 +1,4 @@
-﻿/* 蹄斗族群助手 - 暗色主题主样式文件 */
+/* 蹄斗族群助手 - 暗色主题主样式文件 */
 
 /* 重置和基础样式 */
 * {
@@ -1929,7 +1929,8 @@ html.tfhers-authed.sidebar-collapsed .app-sidebar {
 }
 
 /* 资讯弹窗：加宽容器 + 内部分栏各自滚动，整体不再滚动 */
-#articleModal .modal-content.article-modal-content {
+#articleModal .modal-content.article-modal-content,
+#profileArticleModal .modal-content.article-modal-content {
     position: relative;
     width: min(1180px, 96vw);
     max-width: 96vw;
@@ -1941,7 +1942,8 @@ html.tfhers-authed.sidebar-collapsed .app-sidebar {
     transform: translate(-50%, -50%);
 }
 
-#articleModal .modal-body.article-modal-body {
+#articleModal .modal-body.article-modal-body,
+#profileArticleModal .modal-body.article-modal-body {
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
@@ -6336,3 +6338,33 @@ a.player-name-link.user-name--admin:hover {
   opacity: 0.55;
   font-weight: 400;
 }
+
+/* Merged profile: 主页/数据 section tabs sit under identity underline */
+.profile-home > .profile-section-tabs.profile-home-tabs {
+    margin-bottom: 20px;
+}
+.profile-section-home .profile-home-header {
+    margin-top: 4px;
+}
+.profile-section-data.data-page-wrap {
+    max-width: none;
+    margin: 0;
+}
+
+/* grok-admin-gold-extra */
+.ranking-name.user-name--admin,
+.comment-author.user-name--admin,
+.user-combo-author-name.user-name--admin,
+.room-member-name.user-name--admin,
+.room-chat-name.user-name--admin,
+.bracket-name.user-name--admin,
+.article-author-name.user-name--admin,
+.article-detail-author-name.user-name--admin,
+.pinned-news-item-meta .user-name--admin,
+.room-info-value .user-name--admin,
+.tournament-reg-chip .user-name--admin {
+    color: #f5c542 !important;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(245, 197, 66, 0.35);
+}
+

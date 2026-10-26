@@ -1,31 +1,67 @@
 <template>
   <section class="page active">
-    <div class="action-bar">
-      <div class="action-buttons" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <select v-model="status" class="inline-select" @change="page=1; load()">
-          <option value="0">待审核</option>
-          <option value="1">已通过</option>
-          <option value="2">已拒绝</option>
-          <option value="">全部</option>
-        </select>
-        <input v-model.trim="articleId" class="inline-select" style="max-width:120px" placeholder="文章ID" @keyup.enter="page=1; load()" />
-        <button type="button" class="btn btn-secondary" :disabled="loading" @click="load"><i class="fas fa-sync-alt"></i> 刷新</button>
-      </div>
-    </div>
-    <p v-if="loading" class="vue-state">加载中…</p>
-    <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
     <div class="content-card">
-      <div class="card-header"><h3 class="card-title">评论审核</h3><div class="card-actions"><span class="article-count">共 {{ total }} 条</span></div></div>
+      <div class="card-header">
+        <h3 class="card-title">评论审核</h3>
+        <div class="card-actions">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+            <select v-model="status" class="select-input" @change="page = 1; load()">
+              <option value="0">待审核</option>
+              <option value="1">已通过</option>
+              <option value="2">已拒绝</option>
+              <option value="">全部</option>
+            </select>
+            <input
+              v-model.trim="articleId"
+              type="number"
+              class="select-input"
+              placeholder="资讯 ID（可选）"
+              style="width: 140px"
+              min="1"
+              step="1"
+              @keyup.enter="page = 1; load()"
+            />
+            <button type="button" class="btn btn-secondary" :disabled="loading" @click="load">
+              <i class="fas fa-sync-alt"></i> 刷新
+            </button>
+          </div>
+        </div>
+      </div>
+      <p style="padding: 0 16px 8px; color: rgba(255, 255, 255, 0.65); font-size: 13px; margin: 0">
+        说明：用户发表的评论会默认进入审核；未通过审核的评论也不会在前端对访客展示。
+      </p>
       <div class="table-container">
-        <p v-if="!loading && !error && !items.length" class="vue-state">暂无评论</p>
-        <table v-else-if="items.length" class="data-table">
-          <thead><tr><th>ID</th><th>文章</th><th>内容</th><th>状态</th><th>操作</th></tr></thead>
+        <p v-if="loading" class="vue-state">加载中…</p>
+        <p v-else-if="error" class="vue-state vue-state-error">{{ error }}</p>
+        <p v-else-if="!items.length" class="vue-state">暂无评论</p>
+        <table v-else class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>资讯ID</th>
+              <th>用户</th>
+              <th>内容</th>
+              <th>状态</th>
+              <th>提交时间</th>
+              <th>备注</th>
+              <th>操作</th>
+            </tr>
+          </thead>
           <tbody>
             <tr v-for="c in items" :key="c.id">
               <td>{{ c.id }}</td>
-              <td>{{ c.articleId ?? '-' }}</td>
-              <td class="cell-ellipsis" :title="c.content">{{ c.content || '-' }}</td>
+              <td>{{ c.articleId ?? c.article_id ?? '-' }}</td>
+              <td><span :class="adminNameClass(c)">{{ c.authorName || c.author_name || c.userId || c.user_id || '-' }}</span></td>
+              <td>
+                <div class="cell-ellipsis" style="max-width: 260px" :title="c.content || ''">{{ c.content || '-' }}</div>
+              </td>
               <td>{{ statusText[Number(c.status)] || c.status || '-' }}</td>
+              <td>{{ c.createdAt || c.created_at || '-' }}</td>
+              <td>
+                <div class="cell-ellipsis" style="max-width: 160px" :title="String(c.adminRemark || c.admin_remark || '')">
+                  {{ c.adminRemark || c.admin_remark || '-' }}
+                </div>
+              </td>
               <td class="cell-actions">
                 <button type="button" class="btn btn-secondary btn-sm" @click="openReview(c)">审核</button>
               </td>
@@ -33,25 +69,45 @@
           </tbody>
         </table>
       </div>
+      <div v-if="totalPages > 1" class="pagination" style="padding: 12px; display: flex; gap: 8px; align-items: center">
+        <button type="button" class="btn btn-secondary btn-sm" :disabled="page <= 1 || loading" @click="page--; load()">
+          上一页
+        </button>
+        <span>{{ page }} / {{ totalPages }}</span>
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          :disabled="page >= totalPages || loading"
+          @click="page++; load()"
+        >
+          下一页
+        </button>
+      </div>
     </div>
     <p v-if="actionMsg" class="vue-state" :class="actionErr ? 'vue-state-error' : ''">{{ actionMsg }}</p>
-    <div v-if="reviewOpen" class="vue-drawer-mask" @click.self="reviewOpen=false">
+
+    <div v-if="reviewOpen" class="vue-drawer-mask" @click.self="reviewOpen = false">
       <aside class="vue-drawer">
-        <header class="vue-drawer-head"><h2>审核评论 #{{ reviewItem?.id }}</h2>
-          <button type="button" class="btn btn-secondary btn-sm" @click="reviewOpen=false">关闭</button>
+        <header class="vue-drawer-head">
+          <h2>评论审核 #{{ reviewItem?.id }}</h2>
+          <button type="button" class="btn btn-secondary btn-sm" @click="reviewOpen = false">关闭</button>
         </header>
         <p class="vue-detail-block">{{ reviewItem?.content }}</p>
-        <div class="form-field"><label>状态</label>
-          <select v-model="reviewStatus">
+        <div class="form-field">
+          <label>状态</label>
+          <select v-model.number="reviewStatus">
             <option :value="1">通过</option>
             <option :value="2">拒绝</option>
             <option :value="0">待审核</option>
           </select>
         </div>
-        <div class="form-field"><label>备注</label>
+        <div class="form-field">
+          <label>备注</label>
           <textarea v-model="reviewRemark" rows="3"></textarea>
         </div>
-        <button type="button" class="btn btn-primary" :disabled="busyId === reviewItem?.id" @click="confirmReview">提交</button>
+        <button type="button" class="btn btn-primary" :disabled="busyId === reviewItem?.id" @click="confirmReview">
+          提交
+        </button>
       </aside>
     </div>
   </section>
@@ -62,6 +118,7 @@ import { computed, onMounted, ref } from 'vue'
 import { fetchAdminComments, updateCommentStatus } from '@/api/admin/comments'
 import type { AdminComment } from '@/api/admin/types'
 import { ApiError } from '@/api/types'
+import { adminNameClass } from '@/utils/adminName'
 
 const statusText: Record<number, string> = { 0: '待审核', 1: '已通过', 2: '已拒绝' }
 const items = ref<AdminComment[]>([])
@@ -104,7 +161,8 @@ async function load() {
 
 function openReview(c: AdminComment) {
   reviewItem.value = c
-  reviewStatus.value = 1
+  const cur = Number(c.status ?? 0)
+  reviewStatus.value = cur === 0 ? 1 : cur
   reviewRemark.value = String(c.adminRemark || c.admin_remark || '')
   actionMsg.value = ''
   reviewOpen.value = true

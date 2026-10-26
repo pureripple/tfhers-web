@@ -1117,3 +1117,34 @@ body.ai-chat-page .grok-msg--user.user-message {
     }
 
 }
+
+/* Scrollbar flush to viewport right; content keeps side inset */
+body.ai-chat-page #ai-chat .ai-chat-layout.grok-layout {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+body.ai-chat-page .grok-head,
+body.ai-chat-page .grok-composer,
+body.ai-chat-page .grok-composer-wrap,
+body.ai-chat-page .ai-chat-composer {
+    padding-left: clamp(16px, 3vw, 28px);
+    padding-right: clamp(16px, 3vw, 28px);
+    box-sizing: border-box;
+}
+body.ai-chat-page .grok-messages.messages-container {
+    padding-left: clamp(16px, 3vw, 28px);
+    padding-right: clamp(16px, 3vw, 28px);
+    scrollbar-gutter: stable;
+    box-sizing: border-box;
+}
+body.ai-chat-page .grok-messages.messages-container::-webkit-scrollbar {
+    width: 8px;
+}
+body.ai-chat-page .grok-messages.messages-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+body.ai-chat-page .main-content,
+body.ai-chat-page #ai-chat.page.page-ai-chat.active {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}

@@ -55,10 +55,16 @@ public class OssUtil {
         }
 
         try (InputStream inputStream = file.getInputStream()) {
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(file.getSize());
+            if (file.getContentType() != null && !file.getContentType().isBlank()) {
+                metadata.setContentType(file.getContentType());
+            }
             PutObjectRequest putObjectRequest = new PutObjectRequest(
                     ossConfig.getBucketName(),
                     objectKey,
-                    inputStream
+                    inputStream,
+                    metadata
             );
             ossClient.putObject(putObjectRequest);
             return ossConfig.getDomain() + "/" + objectKey;

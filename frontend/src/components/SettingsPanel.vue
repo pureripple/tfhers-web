@@ -75,7 +75,6 @@
               <input id="settingsNotifyComment" v-model="notifyComment" type="checkbox" role="switch" @change="persistNotify" />
             </label>
           </div>
-          <p class="form-hint" style="margin-top:8px">站内私信/通知推送后端尚未提供独立接口，此处偏好仅保存在本机。</p>
         </section>
 
         <hr class="settings-divider" />

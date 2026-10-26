@@ -254,12 +254,18 @@ public class FileUploadController {
                 return results.error("请选择要上传的视频");
             }
             String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("video/")) {
+            String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
+            boolean looksVideoExt = originalName.endsWith(".mp4") || originalName.endsWith(".webm")
+                    || originalName.endsWith(".mov") || originalName.endsWith(".mkv")
+                    || originalName.endsWith(".avi") || originalName.endsWith(".m4v");
+            boolean typeOk = contentType != null && contentType.startsWith("video/");
+            boolean octetOk = contentType != null && contentType.equals("application/octet-stream") && looksVideoExt;
+            if (!typeOk && !octetOk && !looksVideoExt) {
                 return results.error("只能上传视频文件");
             }
-            long maxSize = 100 * 1024 * 1024; // 100MB
+            long maxSize = 2048L * 1024 * 1024; // 2GB
             if (file.getSize() > maxSize) {
-                return results.error("视频大小不能超过100MB");
+                return results.error("视频大小不能超过2GB");
             }
             String fileUrl = ossUtil.uploadFile(file, "combos/videos");
             Map<String, Object> data = new HashMap<>();

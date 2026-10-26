@@ -92,11 +92,13 @@ public class ComboPublicController {
             Long userId = jwtUtil.getUserIdFromToken(token);
 
             Long characterId = body.get("characterId") != null ? Long.valueOf(body.get("characterId").toString()) : null;
-            String title = (String) body.get("title");
-            String description = body.get("description") != null ? (String) body.get("description") : null;
+            String title = body.get("title") != null ? String.valueOf(body.get("title")) : null;
+            String description = body.get("description") != null ? String.valueOf(body.get("description")) : null;
             Integer damageTotal = body.get("damageTotal") != null ? Integer.valueOf(body.get("damageTotal").toString()) : null;
-            String videoUrl = (String) body.get("videoUrl");
-            String comboFileUrl = body.get("comboFileUrl") != null ? (String) body.get("comboFileUrl") : null;
+            String videoUrl = body.get("videoUrl") != null ? String.valueOf(body.get("videoUrl")) : null;
+            String comboFileUrl = body.get("comboFileUrl") != null ? String.valueOf(body.get("comboFileUrl")) : null;
+            if (description != null && ("null".equals(description) || description.isBlank())) description = null;
+            if (comboFileUrl != null && ("null".equals(comboFileUrl) || comboFileUrl.isBlank())) comboFileUrl = null;
 
             if (characterId == null) {
                 return results.error("请选择角色");

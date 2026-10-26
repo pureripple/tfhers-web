@@ -66,12 +66,14 @@ public class articles {
         this.content = content;
     }
     
-    @JsonProperty("cover_url")
+    @JsonProperty("coverUrl")
+    @JsonAlias({"cover_url"})
     public String getCoverUrl() {
         return coverUrl;
     }
-    
+
     @JsonProperty("coverUrl")
+    @JsonAlias({"cover_url"})
     public void setCoverUrl(String coverUrl) {
         this.coverUrl = coverUrl;
     }
@@ -122,12 +124,14 @@ public class articles {
         this.authorAvatarUrl = authorAvatarUrl;
     }
     
-    @JsonProperty("view_count")
+    @JsonProperty("viewCount")
+    @JsonAlias({"view_count"})
     public int getViewCount() {
         return viewCount;
     }
-    
+
     @JsonProperty("viewCount")
+    @JsonAlias({"view_count"})
     public void setViewCount(int viewCount) {
         this.viewCount = viewCount;
     }

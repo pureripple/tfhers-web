@@ -85,7 +85,7 @@
           <h4 style="margin:1rem 0 0.5rem;font-size:1rem">报名选手（{{ regs.length }}）</h4>
           <ul v-if="regs.length" style="margin:8px 0 0;padding-left:18px">
             <li v-for="(r, i) in regs" :key="i" style="margin:4px 0">
-              {{ r.nickname || r.username || ('用户' + r.userId) }}
+              <span :class="adminNameClass(r)">{{ r.nickname || r.username || ('用户' + r.userId) }}</span>
               <template v-if="r.rating != null"> · Elo {{ r.rating }}</template>
               <template v-if="r.seed != null"> · 签位{{ r.seed }}</template>
               <template v-if="r.finalPlacement != null"> · 名次 #{{ r.finalPlacement }}</template>
@@ -114,7 +114,7 @@
                 style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px;border:1px solid var(--border-color);border-radius:8px"
               >
                 <span style="min-width:120px">{{ matchLabel(m) }}</span>
-                <span>{{ m.player1Nickname || (m.player1UserId ? '用户' + m.player1UserId : '待定') }}</span>
+                <span :class="adminNameClass({ isAdmin: m.player1IsAdmin })">{{ m.player1Nickname || (m.player1UserId ? '用户' + m.player1UserId : '待定') }}</span>
                 <input
                   v-model.number="scoreDraft[matchKey(m)].s1"
                   type="number"
@@ -130,7 +130,7 @@
                   style="width:64px"
                   :disabled="isMatchDone(m)"
                 />
-                <span>{{ m.player2Nickname || (m.player2UserId ? '用户' + m.player2UserId : '待定') }}</span>
+                <span :class="adminNameClass({ isAdmin: m.player2IsAdmin })">{{ m.player2Nickname || (m.player2UserId ? '用户' + m.player2UserId : '待定') }}</span>
                 <button
                   v-if="!isMatchDone(m)"
                   type="button"
@@ -207,6 +207,7 @@ import {
   type TournamentRegistration,
 } from '@/api/admin/tournaments'
 import { ApiError, type Tournament } from '@/api/types'
+import { adminNameClass } from '@/utils/adminName'
 
 const statusOptions = ['draft', 'registration', 'closed', 'ongoing', 'finished', 'cancelled']
 const statusLabel: Record<string, string> = {

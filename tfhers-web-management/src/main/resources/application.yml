@@ -3,8 +3,8 @@ spring:
     name: tfhers-web-management
   servlet:
     multipart:
-      max-file-size: 150MB
-      max-request-size: 150MB
+      max-file-size: 2048MB
+      max-request-size: 2048MB
   datasource:
     url: ${TFHERS_DB_URL:jdbc:mysql://localhost:3306/tfhers}
     username: ${TFHERS_DB_USERNAME:root}
@@ -38,6 +38,9 @@ mybatis:
 # 服务器配置
 server:
   port: 8081
+  tomcat:
+    connection-timeout: 600000
+    max-swallow-size: -1
 
 # JWT配置（JWT_SECRET 必须通过环境变量提供，勿提交明文）
 jwt:

@@ -1,5 +1,5 @@
 import { get, post } from './http'
-import type { Room } from './types'
+import { ApiError, type Room } from './types'
 
 export interface RoomDetailPayload {
   room?: Room & {
@@ -61,11 +61,62 @@ export function fetchRoomMembers(id: number) {
   return get<unknown[]>(`/api/rooms/${id}/members`, { auth: 'user' })
 }
 
+export type RoomMessagesPayload = {
+  messages?: RoomMessage[]
+  roomStatus?: string
+  [key: string]: unknown
+}
+
+/** Backend returns { messages, roomStatus } (not a bare array). */
 export function fetchRoomMessages(id: number, afterId = 0) {
   const q = afterId ? `?afterId=${afterId}` : ''
-  return get<RoomMessage[]>(`/api/rooms/${id}/messages${q}`, { auth: 'user' })
+  return get<RoomMessagesPayload | RoomMessage[]>(`/api/rooms/${id}/messages${q}`, { auth: 'user' })
+}
+
+export function unwrapRoomMessages(data: RoomMessagesPayload | RoomMessage[] | null | undefined): {
+  messages: RoomMessage[]
+  roomStatus?: string
+} {
+  if (Array.isArray(data)) return { messages: data }
+  if (data && typeof data === 'object') {
+    const msgs = Array.isArray(data.messages) ? data.messages : []
+    return { messages: msgs, roomStatus: data.roomStatus != null ? String(data.roomStatus) : undefined }
+  }
+  return { messages: [] }
 }
 
 export function postRoomMessage(id: number, content: string, msgType = 'text') {
   return post<RoomMessage>(`/api/rooms/${id}/messages`, { content, msgType }, { auth: 'user' })
+}
+
+export async function uploadRoomChatImage(file: File): Promise<string> {
+  const raw = localStorage.getItem('user')
+  let token = ''
+  try {
+    token = raw ? (JSON.parse(raw) as { token?: string }).token || '' : ''
+  } catch {
+    token = ''
+  }
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('folder', 'rooms/chat')
+  const res = await fetch('/api/file/upload', {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: fd,
+  })
+  let payload: { code?: number; msg?: string; message?: string; data?: { url?: string } | string }
+  try {
+    payload = await res.json()
+  } catch {
+    throw new ApiError(res.status, res.statusText || 'Invalid JSON response')
+  }
+  if (!payload || payload.code !== 200) {
+    throw new ApiError(payload?.code || res.status, payload?.msg || payload?.message || '图片上传失败')
+  }
+  const data = payload.data
+  if (typeof data === 'string') return data
+  const url = data && typeof data === 'object' ? data.url : ''
+  if (!url) throw new ApiError(500, '图片上传失败')
+  return String(url)
 }

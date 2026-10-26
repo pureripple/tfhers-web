@@ -23,6 +23,11 @@ const router = createRouter({
         { path: 'tournaments', name: 'tournaments', component: () => import('@/views/user/TournamentsView.vue') },
         { path: 'characters', name: 'characters', component: () => import('@/views/user/CharactersView.vue') },
         { path: 'ai-chat', name: 'ai-chat', component: () => import('@/views/user/AiChatView.vue') },
+        { path: 'profile', name: 'profile', component: () => import('@/views/user/ProfileView.vue') },
+        { path: 'profile/:userId', name: 'profile-user', component: () => import('@/views/user/ProfileView.vue') },
+        { path: 'data', name: 'data', component: () => import('@/views/user/DataView.vue') },
+        { path: 'manuscripts', name: 'manuscripts', component: () => import('@/views/user/ManuscriptsView.vue') },
+        { path: 'settings', name: 'settings', component: () => import('@/views/user/SettingsView.vue') },
         {
           path: 'login',
           name: 'login',
