@@ -51,12 +51,6 @@
                         </div>
                       </div>
                     </div>
-                            </div>
-                            <div class="hot-news-title">{{ a.title || '无标题' }}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                   <button type="button" class="hot-news-nav hot-news-nav-next" aria-label="下一条" @click="stepHot(1)">
                     <i class="fas fa-chevron-right"></i>
