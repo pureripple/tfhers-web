@@ -343,6 +343,14 @@
     display: none;
 }
 
+.character-detail--tutorial-dark .user-combo-title {
+    font-size: 0.98rem;
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--ctd-text, #e8eaed);
+    word-break: break-word;
+}
+
 .character-detail--tutorial-dark .user-combo-actions-row {
     display: flex;
     align-items: center;

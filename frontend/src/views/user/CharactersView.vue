@@ -108,6 +108,7 @@
                     <span v-else class="user-combo-download-link user-combo-download-link--disabled">下载连段文件</span>
                   </div>
                 </div>
+                <div class="user-combo-title">{{ comboTitle(c) }}</div>
                 <div v-if="comboDesc(c)" class="user-combo-desc">{{ comboDesc(c) }}</div>
               </div>
             </div>

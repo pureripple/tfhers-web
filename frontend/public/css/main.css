@@ -5213,6 +5213,54 @@ html.theme-light .settings-toggle-row input[type="checkbox"] {
     background: rgba(0, 0, 0, 0.12);
 }
 
+/* Light theme: chrome that still used hardcoded dark surfaces */
+html.theme-light .sidebar-float-toggle,
+html.theme-light.tfhers-authed .sidebar-float-toggle {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+html.theme-light.tfhers-authed .sidebar-float-toggle:hover {
+    background: #ffffff;
+    border-color: var(--border-strong);
+}
+
+html.theme-light .sidebar-float-brand {
+    text-shadow: none;
+    color: var(--text-primary);
+}
+
+html.theme-light .top-post-menu {
+    background: #ffffff;
+    border-color: var(--border-color);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+html.theme-light .top-post-item:hover {
+    background: rgba(255, 122, 122, 0.12);
+    color: #d94848;
+}
+
+html.theme-light .article-modal-pane--comments {
+    background: rgba(244, 244, 247, 0.92);
+}
+
+html.theme-light .comment-replies {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.theme-light .profile-works-empty {
+    border-color: rgba(0, 0, 0, 0.12);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+html.theme-light .mobile-topbar {
+    background: rgba(255, 255, 255, 0.94);
+}
+
 
 /* ========== Manuscripts page ========== */
 .page-manuscripts {

@@ -159,7 +159,9 @@
               <div class="profile-home-panel" :class="{ 'is-active': tab === 'tournaments' }" role="tabpanel" :hidden="tab !== 'tournaments'">
                 <div class="profile-works-list">
                   <div v-if="histLoading" class="profile-works-empty">加载中…</div>
-                  <div v-else-if="!history.length" class="profile-works-empty">暂无比赛记录</div>
+                  <div v-else-if="!history.length" class="profile-works-empty">
+                    <div class="profile-works-empty-title">还没有比赛记录</div>
+                  </div>
                   <div v-for="(h, i) in history" :key="i" class="profile-works-item">
                     <div class="profile-works-item-title">{{ histTitle(h) }}</div>
                     <div class="profile-works-item-meta">{{ histMeta(h) }}</div>
