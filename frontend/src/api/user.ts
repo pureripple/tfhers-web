@@ -11,8 +11,14 @@ export interface UserProfile {
   coverUrl?: string
   gender?: string
   birthday?: string
-  steamId?: string
+  steamId?: string | number
   steamName?: string
+  steamPersonaName?: string
+  steamAvatarUrl?: string
+  steamLevel?: number
+  steamPlaytimeMinutes?: number
+  steamAchievementsCount?: number
+  steamAchievementsTotal?: number
   role?: string | number
   isAdmin?: boolean
   [key: string]: unknown

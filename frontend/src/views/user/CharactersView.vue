@@ -80,32 +80,35 @@
               class="combo-item user-combo-item"
             >
               <div class="user-combo-main">
-                <div class="user-combo-author">
-                  <div class="user-combo-avatar-wrap">
-                    <img
-                      :src="comboAuthorAvatar(c)"
-                      alt=""
-                      class="user-combo-avatar"
-                    />
+                <div class="user-combo-top-row">
+                  <div class="user-combo-author">
+                    <div class="user-combo-avatar-wrap">
+                      <img
+                        :src="comboAuthorAvatar(c)"
+                        alt=""
+                        class="user-combo-avatar"
+                      />
+                    </div>
+                    <button type="button" class="user-combo-author-name player-name-link" :class="adminNameClass(c)" @click.stop="goPlayerProfile(router, null, c)">{{ comboAuthor(c) }}</button>
                   </div>
-                  <button type="button" class="user-combo-author-name player-name-link" :class="adminNameClass(c)" @click.stop="goPlayerProfile(router, null, c)">{{ comboAuthor(c) }}</button>
+                  <div class="user-combo-actions-row">
+                    <button
+                      v-if="comboVideo(c)"
+                      type="button"
+                      class="user-combo-watch-btn user-combo-text-action"
+                      @click="playVideo(comboVideo(c), comboTitle(c))"
+                    ><i class="fas fa-play"></i> 观看视频</button>
+                    <span v-else class="user-combo-watch-btn user-combo-watch-btn--disabled">观看视频</span>
+                    <a
+                      v-if="comboFile(c)"
+                      class="user-combo-download-link"
+                      :href="comboFile(c)"
+                      :download="comboDownloadName(c)"
+                    ><i class="fas fa-download"></i> 下载连段文件</a>
+                    <span v-else class="user-combo-download-link user-combo-download-link--disabled">下载连段文件</span>
+                  </div>
                 </div>
-                <div class="user-combo-headline">{{ comboHeadline(c) }}</div>
-                <div v-if="comboDesc(c)" style="opacity:.75;font-size:0.9rem;margin-top:4px">{{ comboDesc(c) }}</div>
-                <div class="user-combo-actions-row">
-                  <button
-                    v-if="comboVideo(c)"
-                    type="button"
-                    class="user-combo-watch-btn user-combo-text-action"
-                    @click="playVideo(comboVideo(c), comboTitle(c))"
-                  ><i class="fas fa-play"></i> 观看视频</button>
-                  <a
-                    v-if="comboFile(c)"
-                    class="user-combo-download-link"
-                    :href="comboFile(c)"
-                    :download="comboDownloadName(c)"
-                  >下载连段</a>
-                </div>
+                <div v-if="comboDesc(c)" class="user-combo-desc">{{ comboDesc(c) }}</div>
               </div>
             </div>
           </div>

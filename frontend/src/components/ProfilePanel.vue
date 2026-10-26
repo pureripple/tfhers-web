@@ -61,7 +61,7 @@
           <div v-show="section === 'home'" class="profile-section-home">
             <header class="profile-home-header">
               <h2 id="profileHomeHeading" class="profile-home-title">主页</h2>
-              <p class="profile-home-desc">你发布的资讯、连招等作品</p>
+              <p v-if="isOwnProfile" class="profile-home-desc">你发布的资讯、连招等作品</p>
             </header>
             <div class="profile-home-tabs" role="tablist" aria-label="主页内容">
               <button
@@ -102,7 +102,7 @@
                   <div v-else-if="error" class="profile-works-empty">{{ error }}</div>
                   <div v-else-if="!articles.length" class="profile-works-empty">
                     <div class="profile-works-empty-title">还没有资讯作品</div>
-                    <p class="profile-works-empty-desc">去资讯页发布后，会出现在这里</p>
+                    <p v-if="isOwnProfile" class="profile-works-empty-desc">去资讯页发布后，会出现在这里</p>
                   </div>
                   <article
                     v-for="a in articles"
@@ -131,7 +131,7 @@
                   <div v-if="loading" class="profile-works-empty">加载中…</div>
                   <div v-else-if="!combos.length" class="profile-works-empty">
                     <div class="profile-works-empty-title">还没有连招作品</div>
-                    <p class="profile-works-empty-desc">去角色页发布连招后，会出现在这里</p>
+                    <p v-if="isOwnProfile" class="profile-works-empty-desc">去角色页发布连招后，会出现在这里</p>
                   </div>
                   <article
                     v-for="c in combos"
@@ -177,7 +177,7 @@
                 <p class="data-page-desc">已绑定的 Steam 账号与游戏数据</p>
               </div>
               <button
-                v-if="steamBound"
+                v-if="steamBound && isOwnProfile"
                 type="button"
                 class="btn btn-outline btn-sm data-refresh-btn"
                 :disabled="steamLoading"
@@ -670,8 +670,13 @@ function setSection(kind: 'home' | 'data') {
   const q = { ...route.query } as Record<string, string>
   if (kind === 'data') q.section = 'data'
   else delete q.section
-  router.replace({ name: 'profile', query: q })
-  if (kind === 'data' && steamBound.value && !steamLoaded.value) refreshSteam()
+  // Keep profile-user/:userId when viewing someone else — do not jump to own /profile
+  router.replace({
+    name: route.name === 'profile-user' ? 'profile-user' : 'profile',
+    params: route.name === 'profile-user' ? { ...route.params } : {},
+    query: q,
+  })
+  if (kind === 'data' && isOwnProfile.value && steamBound.value && !steamLoaded.value) refreshSteam()
 }
 
 function syncSectionFromRoute() {
@@ -692,6 +697,11 @@ async function loadHistory() {
 
 async function refreshSteam(force = false) {
   if (!steamBound.value) return
+  // Self Steam APIs only; other profiles use public profile fields
+  if (!isOwnProfile.value) {
+    steamLoaded.value = true
+    return
+  }
   steamLoading.value = true
   steamError.value = ''
   try {
@@ -761,9 +771,33 @@ async function load() {
       if (p.signature) profileBio.value = String(p.signature)
       gender.value = String(p.gender || '')
       birthday.value = normalizeBday(p.birthday)
-      steamBound.value = !!(p.steamId || (p as { steam_id?: string }).steam_id)
-      steamName.value = String(p.steamName || (p as { steamPersonaName?: string }).steamPersonaName || '')
-      steamAvatar.value = String((p as { steamAvatarUrl?: string }).steamAvatarUrl || p.avatarUrl || '')
+      const pr = p as Record<string, unknown>
+      steamBound.value = !!(p.steamId || pr.steam_id || pr.steamId)
+      steamName.value = String(p.steamName || pr.steamPersonaName || pr.steam_persona_name || '')
+      steamAvatar.value = String(pr.steamAvatarUrl || pr.steam_avatar_url || p.avatarUrl || '')
+      if (pr.steamLevel != null || pr.steam_level != null) {
+        steamLevel.value = Number(pr.steamLevel ?? pr.steam_level)
+      } else {
+        steamLevel.value = null
+      }
+      if (pr.steamPlaytimeMinutes != null || pr.steam_playtime_minutes != null) {
+        playtimeMinutes.value = Number(pr.steamPlaytimeMinutes ?? pr.steam_playtime_minutes)
+      } else {
+        playtimeMinutes.value = null
+      }
+      if (pr.steamAchievementsCount != null || pr.steam_achievements_count != null) {
+        achCount.value = Number(pr.steamAchievementsCount ?? pr.steam_achievements_count)
+      } else {
+        achCount.value = null
+      }
+      if (pr.steamAchievementsTotal != null || pr.steam_achievements_total != null) {
+        achTotal.value = Number(pr.steamAchievementsTotal ?? pr.steam_achievements_total)
+      } else {
+        achTotal.value = null
+      }
+      friendCode.value = String(pr.friendCode || pr.friend_code || '')
+      achievements.value = []
+      steamLoaded.value = true
       const uid = viewingUserId.value
       const [allArts, c] = await Promise.all([
         fetchArticles().catch(() => [] as Article[]),

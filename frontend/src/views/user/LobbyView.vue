@@ -56,12 +56,7 @@
               <aside class="room-info-panel">
                 <div class="room-info-block">
                   <h3 class="room-info-title">{{detail.room?.title || '未命名房间'}}</h3>
-                  <div class="room-info-meta">
-                    <span class="room-status" :class="roomStatus(detail.room!).toLowerCase()">{{roomStatusLabel(roomStatus(detail.room!))}}</span>
-                    <span class="room-info-count">{{members.length}}/{{detail.room?.maxPlayers || 4}}</span>
-                  </div>
                   <div class="room-info-row"><span class="room-info-label">房主</span><span class="room-info-value"><button type="button" class="player-name-link" :class="adminNameClass(detail.room)" @click="goPlayerProfile(router, detail.room?.hostUserId ?? detail.room?.host_user_id ?? detail.room?.userId, detail.room)">{{detail.room?.hostNickname || '-'}}</button></span></div>
-                  <div class="room-info-row"><span class="room-info-label">人数</span><span class="room-info-value">{{members.length}}/{{detail.room?.maxPlayers || 4}}</span></div>
                   <div v-if="detail.room?.passwordPlain" class="room-info-row"><span class="room-info-label">密码</span><span class="room-info-value room-info-pwd">{{detail.room.passwordPlain}}</span></div>
                   <div v-else-if="!entered && detail.room?.hasPassword" class="room-info-row"><span class="room-info-label">权限</span><span class="room-info-value">需要密码加入</span></div>
                   <p class="room-info-tip">{{roomTip}}</p>

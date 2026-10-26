@@ -13,32 +13,49 @@
                   </button>
                   <div class="hot-news-slider-outer">
                     <div class="hot-news-slider">
-                      <article
-                        class="article-card article-card--glass"
-                        @click="openDetail(hotItems[hotIndex].id)"
+                      <div
+                        v-for="(a, idx) in hotItems"
+                        :key="'hot-' + a.id"
+                        class="hot-news-item"
+                        :class="{ active: idx === hotIndex }"
+                        role="group"
+                        aria-roledescription="slide"
+                        :aria-label="(idx + 1) + ' / ' + hotItems.length"
+                        @click="openDetail(a.id)"
                       >
-                        <div class="article-card-media">
+                        <img
+                          v-if="coverOf(a)"
+                          class="hot-news-cover"
+                          :src="coverOf(a)"
+                          alt=""
+                        />
+                        <div v-else class="hot-news-cover hot-news-cover--empty" aria-hidden="true"></div>
+                        <div class="hot-news-overlay">
                           <img
-                            v-if="coverOf(hotItems[hotIndex])"
-                            class="article-cover"
-                            :src="coverOf(hotItems[hotIndex])"
+                            class="hot-news-author-avatar"
+                            :src="authorAvatarOf(a)"
                             alt=""
                           />
-                          <div v-else class="article-cover-placeholder" style="display:flex">
-                            <i class="fas fa-image"></i>
-                            
-                          </div>
-                          <div class="article-card-glass">
-                            <div class="article-card-author">
-                              <div class="article-card-author-meta">
-                                <button type="button" class="article-author-name player-name-link" :class="adminNameClass(hotItems[hotIndex])" @click.stop="goPlayerProfile(router, null, hotItems[hotIndex])">{{ hotItems[hotIndex].author || '作者' }}</button>
-                              </div>
+                          <div class="hot-news-meta">
+                            <div class="hot-news-author-line">
+                              <button
+                                type="button"
+                                class="hot-news-author player-name-link"
+                                :class="adminNameClass(a)"
+                                @click.stop="goPlayerProfile(router, null, a)"
+                              >{{ a.author || '作者' }}</button>
+                              <span> · {{ viewsOf(a) }} 阅读</span>
                             </div>
-                            <h3 class="article-title article-card-title">{{ hotItems[hotIndex].title || '无标题' }}</h3>
-                            <p class="article-excerpt article-card-summary">{{ hotItems[hotIndex].summary || '' }}</p>
+                            <div class="hot-news-title">{{ a.title || '无标题' }}</div>
                           </div>
                         </div>
-                      </article>
+                      </div>
+                    </div>
+                            </div>
+                            <div class="hot-news-title">{{ a.title || '无标题' }}</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <button type="button" class="hot-news-nav hot-news-nav-next" aria-label="下一条" @click="stepHot(1)">
@@ -190,9 +207,9 @@
               <div class="article-comments-section article-comments-section--pane">
                 <h4 class="comments-title">评论</h4>
                 <div class="article-comment-editor">
-                  <div v-if="replyParentId" class="article-comment-reply-hint" style="margin-bottom:6px;font-size:13px;color:var(--text-muted)">
+                  <div v-if="replyParentId" class="article-comment-reply-hint">
                     <span>回复 <span class="reply-hint-name">{{ replyToName || 'user' }}</span></span>
-                    <button type="button" class="link-btn" style="margin-left:8px" @click="clearReply">取消</button>
+                    <button type="button" class="link-btn" @click="clearReply">取消</button>
                   </div>
                   <textarea
                     v-model.trim="commentText"
@@ -200,19 +217,31 @@
                     :placeholder="commentPlaceholder"
                     rows="3"
                   ></textarea>
-                  <div class="article-comment-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                    <input ref="commentImageInput" type="file" accept="image/*" style="display:none" @change="onCommentImage" />
-                    <button type="button" class="btn btn-outline btn-sm" :disabled="acting || !auth.isLoggedIn" @click="commentImageInput && commentImageInput.click()">
-                      <i class="fas fa-image"></i> Image
+                  <input
+                    ref="commentImageInput"
+                    type="file"
+                    accept="image/*"
+                    class="article-comment-image-input"
+                    @change="onCommentImage"
+                  />
+                  <div class="article-comment-actions">
+                    <button
+                      type="button"
+                      class="article-comment-image-btn"
+                      title="上传图片"
+                      :disabled="acting || !auth.isLoggedIn"
+                      @click="commentImageInput && commentImageInput.click()"
+                    >
+                      <i class="fas fa-image"></i>
                     </button>
-                    <span v-if="commentImageName" style="font-size:12px;color:var(--text-muted)">{{ commentImageName }}</span>
+                    <span v-if="commentImageName" class="article-comment-image-name">{{ commentImageName }}</span>
                     <button
                       type="button"
                       class="btn btn-primary btn-sm article-comment-submit-btn"
                       :disabled="acting || (!commentText && !commentImageFile)"
                       @click="onComment"
                     >
-                      Post
+                      发布
                     </button>
                   </div>
                 </div>
@@ -223,34 +252,43 @@
                     :key="c.id || idx"
                     class="comment-item comment-item--root"
                   >
-                    <button type="button" class="comment-author player-name-link" :class="adminNameClass(c)" @click.stop="goPlayerProfile(router, null, c)">{{ commentAuthor(c) }}</button>
-                    <div class="comment-time">{{ c.createdAt || c.created_at || '' }}</div>
-                    <div class="comment-content" v-html="formatCommentContentHtml(c.content)"></div>
-                    <div class="comment-actions" style="margin-top:4px">
-                      <button type="button" class="link-btn comment-reply-btn" @click="setReply(c)">回复</button>
-                      <button type="button" class="link-btn comment-report-btn" style="margin-left:10px" @click="onReportComment(c)">举报</button>
+                    <div class="comment-avatar-wrap">
+                      <img class="comment-avatar" :src="commentAvatar(c)" alt="" />
                     </div>
-                    <div v-if="Array.isArray(c.replies) && c.replies.length" class="comment-replies" style="margin-left:16px;margin-top:8px;border-left:2px solid var(--border-color);padding-left:10px">
-                      <div
-                        v-for="(r, ri) in visibleReplies(c)"
-                        :key="r.id || ri"
-                        class="comment-item comment-item--reply"
-                        style="margin-bottom:8px"
-                      >
-                        <button type="button" class="comment-author player-name-link" :class="adminNameClass(r)" @click.stop="goPlayerProfile(router, null, r)">{{ commentAuthor(r) }}</button>
-                        <div class="comment-time">{{ r.createdAt || r.created_at || '' }}</div>
-                        <div class="comment-content" v-html="formatCommentContentHtml(r.content)"></div>
-                        <div class="comment-actions" style="margin-top:4px">
-                          <button type="button" class="link-btn comment-reply-btn" @click="setReply(r)">回复</button>
-                          <button type="button" class="link-btn comment-report-btn" style="margin-left:10px" @click="onReportComment(r)">举报</button>
-                        </div>
+                    <div class="comment-body">
+                      <button type="button" class="comment-author player-name-link" :class="adminNameClass(c)" @click.stop="goPlayerProfile(router, null, c)">{{ commentAuthor(c) }}</button>
+                      <span class="comment-time">{{ c.createdAt || c.created_at || '' }}</span>
+                      <div class="comment-content" v-html="formatCommentContentHtml(c.content)"></div>
+                      <div class="comment-actions">
+                        <button type="button" class="link-btn comment-reply-btn" @click="setReply(c)">回复</button>
+                        <button type="button" class="link-btn comment-report-btn" @click="onReportComment(c)">举报</button>
                       </div>
-                      <button
-                        v-if="replyExtra(c) > 0 && !expandedRoots[c.id]"
-                        type="button"
-                        class="link-btn"
-                        @click="expandedRoots[c.id] = true"
-                      >展开更多回复（{{ replyExtra(c) }})</button>
+                      <div v-if="Array.isArray(c.replies) && c.replies.length" class="comment-replies">
+                        <div
+                          v-for="(r, ri) in visibleReplies(c)"
+                          :key="r.id || ri"
+                          class="comment-item comment-item--reply"
+                        >
+                          <div class="comment-avatar-wrap comment-avatar-wrap--sm">
+                            <img class="comment-avatar" :src="commentAvatar(r)" alt="" />
+                          </div>
+                          <div class="comment-body">
+                            <button type="button" class="comment-author player-name-link" :class="adminNameClass(r)" @click.stop="goPlayerProfile(router, null, r)">{{ commentAuthor(r) }}</button>
+                            <span class="comment-time">{{ r.createdAt || r.created_at || '' }}</span>
+                            <div class="comment-content" v-html="formatCommentContentHtml(r.content)"></div>
+                            <div class="comment-actions">
+                              <button type="button" class="link-btn comment-reply-btn" @click="setReply(r)">回复</button>
+                              <button type="button" class="link-btn comment-report-btn" @click="onReportComment(r)">举报</button>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          v-if="replyExtra(c) > 0 && !expandedRoots[c.id]"
+                          type="button"
+                          class="comment-expand-replies link-btn"
+                          @click="expandedRoots[c.id] = true"
+                        >展开更多回复（{{ replyExtra(c) }})</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -369,6 +407,17 @@ function authorAvatarOf(a: Article) {
 }
 function commentAuthor(c: Record<string, unknown>) {
   return String(c.authorName || c.author_name || c.nickname || c.username || '用户')
+}
+function commentAvatar(c: Record<string, unknown>) {
+  return String(
+    c.authorAvatar ||
+      c.author_avatar ||
+      c.authorAvatarUrl ||
+      c.author_avatar_url ||
+      c.avatarUrl ||
+      c.avatar_url ||
+      '/images/CSel3_LargePortTianhuo.png',
+  )
 }
 
 const commentPlaceholder = computed(() => {

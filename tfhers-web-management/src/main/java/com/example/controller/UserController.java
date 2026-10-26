@@ -292,6 +292,17 @@ public class UserController {
             data.put("role", user.getRole());
             data.put("isAdmin", user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole()));
             data.put("createdAt", user.getCreatedAt());
+            // Public Steam summary for other-user profile data tab
+            if (user.getSteamId() != null) {
+                data.put("steamId", user.getSteamId());
+                data.put("steamName", user.getSteamPersonaName());
+                data.put("steamPersonaName", user.getSteamPersonaName());
+                data.put("steamAvatarUrl", user.getSteamAvatarUrl());
+                data.put("steamLevel", user.getSteamLevel());
+                data.put("steamPlaytimeMinutes", user.getSteamPlaytimeMinutes());
+                data.put("steamAchievementsCount", user.getSteamAchievementsCount());
+                data.put("steamAchievementsTotal", user.getSteamAchievementsTotal());
+            }
             Map<String, Object> response = new HashMap<>();
             response.put("code", 200);
             response.put("msg", "获取成功");
