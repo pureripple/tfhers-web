@@ -19,8 +19,8 @@ echo.
 echo Open after Maven/Vite are ready:
 echo   Vue UI:    http://127.0.0.1:5173/
 echo   Vue admin: http://127.0.0.1:5173/admin/login
-echo   Old app:   http://127.0.0.1:8080/
-echo   Old admin: http://127.0.0.1:8081/
+echo   App API:   http://127.0.0.1:8080/
+echo   Mgmt API:  http://127.0.0.1:8081/
 echo.
 echo Vite proxies /api to 8080 and admin APIs to 8081.
 echo Do not also Run the same ports in IDEA.
