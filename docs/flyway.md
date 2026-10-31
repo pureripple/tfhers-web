@@ -5,7 +5,7 @@
 `tfhers-web-management/src/main/resources/db/migration/`
 
 由 Spring Boot 启动时自动执行（与 `spring.datasource` 同一套 `TFHERS_DB_*` 环境变量）。  
-`database/*.sql` 与 `src/main/resources/sql/*.sql` **保留作历史参考**，Deploy / Actions **不会**整目录盲跑它们。
+历史手工脚本已归档到 `docs/legacy-sql/`（原先的 `database/*.sql` 与 `src/main/resources/sql/*.sql`）。Deploy / Actions **不会**整目录执行它们，发版时也不要手工批量跑。
 
 ## 配置（application.yml）
 
@@ -52,7 +52,7 @@ SHOW TABLES LIKE 'user_feedback';
 
 ## 不要自动跑的历史脚本
 
-下列 `database/`（及部分 `resources/sql/`）属于**一次性 / 已在生产执行过 / 不可重复**的手工脚本，**不要**整目录交给 Flyway。若某环境缺某一项，应单独写成新的 `Vn__`（并做成幂等或先检查列是否存在）：
+下列 `docs/legacy-sql/` 脚本属于**一次性 / 已在生产执行过 / 不可重复**的手工脚本，**不要**整目录交给 Flyway，也不要在部署时批量执行。若某环境缺某一项，应单独写成新的 `Vn__`（并做成幂等或先检查列是否存在）：
 
 | 脚本 | 说明 |
 |------|------|
@@ -66,7 +66,7 @@ SHOW TABLES LIKE 'user_feedback';
 | `upgrade_steam_*.sql` | Steam 缓存/时长 |
 | `upgrade_users_signature.sql` | 用户签名字段 |
 | `backfill_articles_author_id_optional.sql` | 数据回填 |
-| `cleanup_indexes.sql` | 运维索引，见 CLEANUP_OPS.md |
+| `cleanup_indexes.sql` | 运维索引，见 `docs/cleanup-ops.md` |
 
 ## 本地验证建议
 

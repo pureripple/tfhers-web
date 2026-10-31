@@ -32,11 +32,10 @@ node_modules/
 .env.*
 !.env.example
 
-# SQL dumps at repo root (keep curated migrations under database/ and Flyway)
+# SQL dumps at repo root (keep Flyway migrations and archived legacy scripts)
 *.sql
-!tfhers-web-management/database/**/*.sql
 !tfhers-web-management/src/main/resources/db/migration/**/*.sql
-!tfhers-web-management/src/main/resources/sql/**/*.sql
+!docs/legacy-sql/**/*.sql
 _localhost*.sql
 
 # Runtime logs

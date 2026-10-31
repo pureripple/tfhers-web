@@ -102,7 +102,7 @@ systemctl status tfhers-management
 
 - 工作流里的静态目录名若和你本地模块不一致，第一次 push 前让助手对照 `pom.xml` 改一下路径
 - 纯静态更新通常**不用** `nginx reload`；只有改了 nginx 配置才 reload
-- 数据库 SQL 变更仍要单独执行（Actions 默认不跑 DDL）
+- 表结构变更放进 Flyway（`tfhers-web-management/src/main/resources/db/migration/`），随 jar 重启执行。不要整目录跑 `docs/legacy-sql/`。Actions 不会单独执行 SQL 文件。
 
 ## Vue 前端
 

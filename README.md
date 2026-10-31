@@ -13,10 +13,14 @@
 | `deploy/nginx/` | Nginx 站点配置。`tfhers.conf` 的 `root` 是 `/opt/tfhers/frontend/www-vue`。 |
 | `.github/workflows/deploy.yml` | 推送到 `main` 后构建 management jar 和 Vue，再通过 SSH 发布。 |
 | `docs/` | 环境变量、Flyway、部署说明。 |
+| `docs/legacy-sql/` | 归档的手工 SQL，只供查阅。部署和 Actions 不要整目录执行。 |
+| `tfhers-web-management/src/main/resources/db/migration/` | 模块内唯一的库结构演进（Flyway）。 |
 | `scripts/` | 服务器一次性引导脚本。 |
 | `ENV.example` | 环境变量清单。复制后填写，不要提交真实密钥。 |
 
 `groupId` 仍是 `com.example`。仓库里已经去掉旧的 Spring `classpath` 静态站（`src/main/resources/static`）。服务器上的回滚目录 `/opt/tfhers/frontend/www` 和 `/opt/tfhers/backend/www` 不在本仓库的删除范围内；对应源码目录不存在时，Actions 不会去清空它们。
+
+库结构只由 Flyway 迁移演进。`docs/legacy-sql/` 里的脚本是历史手工 SQL，不要在发版时批量执行。清理任务的现行说明在 `docs/cleanup-ops.md`。
 
 ## 本地运行
 
