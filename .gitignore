@@ -1,12 +1,22 @@
 # Build outputs
-tfhers-web-app/target/
-tfhers-web-management/target/
+target/
+**/target/
 
 # IDE
 .idea/
 .vscode/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
 
-# Node
+# OS
+.DS_Store
+Thumbs.db
+
+# Node — dependencies live under frontend/ only
 node_modules/
 **/node_modules/
 
@@ -22,15 +32,17 @@ node_modules/
 .env.*
 !.env.example
 
-# SQL dumps at repo root (keep curated migrations under database/)
+# SQL dumps at repo root (keep curated migrations under database/ and Flyway)
 *.sql
 !tfhers-web-management/database/**/*.sql
 !tfhers-web-management/src/main/resources/db/migration/**/*.sql
+!tfhers-web-management/src/main/resources/sql/**/*.sql
 _localhost*.sql
 
 # Runtime logs
 logs/
 **/logs/
+*.log
 
 # Deploy / CI private keys (never commit)
 secrets/
@@ -40,7 +52,8 @@ secrets/
 tfhers-gha-deploy
 tfhers-gha-deploy.pub
 
-# Local scratch helpers
+# Local scratch helpers (repo-root names starting with underscore)
+/_*
 _tmp_*.py
 _patch_*/
 _revert_*.txt
@@ -48,7 +61,7 @@ _revert_*.txt
 # Vue frontend
 frontend/node_modules/
 frontend/dist/
-
+frontend/.vite/
 
 # Local API/Vue dump scratch (never commit)
 _art_*.txt
