@@ -102,16 +102,16 @@ systemctl status tfhers-management
 
 - 工作流里的静态目录名若和你本地模块不一致，第一次 push 前让助手对照 `pom.xml` 改一下路径
 - 纯静态更新通常**不用** `nginx reload`；只有改了 nginx 配置才 reload
-- 数据库 SQL 变更仍要单独执行（Actions 默认不跑 DDL）
+- 表结构变更放进 Flyway（`tfhers-web-management/src/main/resources/db/migration/`），随 jar 重启执行。不要整目录跑 `docs/legacy-sql/`。Actions 不会单独执行 SQL 文件。
 
-## Vue 前端（2026-10-25）
+## Vue 前端
 
-- 源码：仓库 `frontend/`（Vue3 + Vite），用户端 `/` 与管理端 `/admin` 同一 SPA。
-- CI：变更 `frontend/` 或本 workflow 时，Node 20 → `npm ci && npm run build`，再 rsync `frontend/dist/` → **`/opt/tfhers/frontend/www`**（`--delete`，只换服务器站点目录）。
-- **不会**删除仓库内 `tfhers-web-app` / `tfhers-web-management` 的旧 static；也不再把旧 app static 同步到 `frontend/www`（避免盖住 Vue）。
-- 旧管理端静态仍可同步到 `/opt/tfhers/backend/www`（回滚用）；线上主站以 Vue 为准。
-- Nginx 样例：`deploy/nginx/tfhers.conf` → 服务器暂存 `/opt/tfhers/deploy/nginx/`；判定 nginx 变更时拷到 `/etc/nginx/conf.d/tfhers.conf` 并 `nginx -t && reload`。
-- SPA：`try_files $uri $uri/ /index.html`；`/api/` 按 Vite 代理规则拆到 8080 / 8081。
+- 源码：仓库 `frontend/`（Vue 3 + Vite），用户端 `/` 与管理端 `/admin` 同一 SPA。
+- CI：变更 `frontend/` 或本 workflow 时，Node 20 → `npm ci && npm run build`，再 rsync `frontend/dist/` → **`/opt/tfhers/frontend/www-vue`**。
+- 仓库内旧的 Spring `src/main/resources/static` 已删除。工作流里的 legacy rsync 只有在检出目录仍存在时才会执行，因此不会清空服务器上的 `/opt/tfhers/frontend/www` 或 `/opt/tfhers/backend/www`。
+- Java：变更 `pom.xml`、`*.java` 或 `tfhers-web-management/` 时，`mvn -B -DskipTests -f tfhers-web-management/pom.xml package`，jar 发布到 `/opt/tfhers/backend/`。根目录聚合 `pom.xml` 不改变这条命令。
+- Nginx 样例：`deploy/nginx/tfhers.conf`（`root` 为 `www-vue`）→ 服务器暂存 `/opt/tfhers/deploy/nginx/`。线上 `/api/` 反代到 management `:8081`。本地 Vite 仍按 `frontend/vite.config.ts` 拆到 `:8080` / `:8081`。
+- SPA：`try_files $uri $uri/ /index.html`。
 
 首次启用 SPA 	ry_files：把 deploy/nginx/tfhers.conf 里的 location 合并进现有 HTTPS server，或在服务器执行：
 

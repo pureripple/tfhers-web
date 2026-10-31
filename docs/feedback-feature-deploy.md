@@ -1,13 +1,11 @@
 > **更新：** 表结构已改由 Flyway 管理（见 [flyway.md](./flyway.md)）。下次部署含 Flyway 的 jar 并 restart 后，会自动 baseline + 执行 `V2__create_user_feedback`（`IF NOT EXISTS`）。下列手工步骤仅作历史说明。
+>
+> **静态页：** 仓库内 Spring `src/main/resources/static` 已删除，页面在 `frontend/`。下面第 3、4 节的 html/js/css 路径只作历史记录，不要再按那些路径拷贝。
 # 问题反馈功能 — 手动部署说明
 
-## 1. 数据库（先做）
+## 1. 数据库（历史步骤，不要在部署时再跑）
 
-在 MySQL（tfhers 库）执行：
-
-`tfhers-web-management/database/create_user_feedback.sql`
-
-（与 `src/main/resources/sql/create_user_feedback.sql` 内容相同。）
+反馈表现在由 Flyway `V2__create_user_feedback.sql` 创建。手工脚本已归档到 `docs/legacy-sql/create_user_feedback.sql`，只供查阅，不要在发版时执行，更不要整目录跑 `docs/legacy-sql/`。
 
 ## 2. 后端 jar
 

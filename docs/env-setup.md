@@ -43,14 +43,9 @@
 
 仅改当前文件**不能**从旧 commit 里抹掉已泄露的明文。
 
-## 从 Git 索引移除已跟踪的 node_modules（本任务未执行）
+## node_modules
 
-`.gitignore` 已忽略 `node_modules/`，但若历史上已提交，需稍后执行：
-
-```text
-git rm -r --cached node_modules
-git commit -m "Stop tracking node_modules"
-```
+根目录曾经误提交过一份 `node_modules/`（旧前端残留，没有配套的 `package.json`）。它已从 Git 索引移除。`.gitignore` 忽略根目录和 `frontend/` 下的 `node_modules/`。依赖只安装在 `frontend/`。
 
 ## Linux 生产（systemd EnvironmentFile）
 

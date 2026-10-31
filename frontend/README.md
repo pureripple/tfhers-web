@@ -32,5 +32,6 @@ npm run build
 
 Dev: http://localhost:5173
 
-No legacy static HTML/CSS/JS/images are copied here. Old resources stay in
-`tfhers-web-app` / `tfhers-web-management` until the Vue migration is finished.
+Static assets for this app live in `frontend/public`. The old Spring classpath
+sites under `tfhers-web-app` / `tfhers-web-management` `src/main/resources/static`
+have been removed; do not copy them back here.

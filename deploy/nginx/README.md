@@ -3,9 +3,12 @@
 - `tfhers.conf`: production site config (Vue SPA + API reverse proxy).
 - Actions syncs this directory to `/opt/tfhers/deploy/nginx/` on every deploy.
 - **Live root (after cutover):** `/opt/tfhers/frontend/www-vue` (Vue `dist` from Actions).
-- **Rollback root (kept until purge):** `/opt/tfhers/frontend/www` (legacy static). Do not delete
-  legacy www or repo Spring static under `tfhers-web-app` / `tfhers-web-management` until
-  live Vue is stable and Qinglin explicitly asks to purge.
+- **Server rollback dirs (not in git):** `/opt/tfhers/frontend/www` and
+  `/opt/tfhers/backend/www` may still exist on the ECS. Repo Spring static under
+  `tfhers-web-app` / `tfhers-web-management` `src/main/resources/static` has been
+  removed. Actions only rsyncs those trees when the directories exist in the
+  checkout, so a deploy does not wipe the server copies. Do not purge the server
+  dirs until Qinglin asks.
 - `/api/` proxies to management `:8081`. `/admin` is SPA history mode (`try_files` → `index.html`),
   not `/opt/tfhers/backend/www`.
 - This ECS listens on HTTP `:80` only (`server_name tfhers.cn www.tfhers.cn`).
