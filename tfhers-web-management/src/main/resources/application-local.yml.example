@@ -37,3 +37,8 @@ steam:
   api-key: 在此填写
   return-url: http://localhost:8081/api/user/steam/callback
   realm: http://localhost:8081
+
+tfhers:
+  frontend:
+    # Steam 绑定成功后跳回的前端根（本地 Vite）。生产用环境变量 FRONTEND_BASE_URL。
+    base-url: http://localhost:5173

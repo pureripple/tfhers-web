@@ -80,7 +80,15 @@ langchain4j:
       api-key: ${LANGCHAIN4J_API_KEY}
       model-name: qwen-plus
 
+# 前端站点根。Steam 绑定成功后的 Location 为 {base}/settings。
+# 本地默认 Vite；生产必须设置 FRONTEND_BASE_URL（例如 http://tfhers.cn），否则浏览器会被送回本机。
+tfhers:
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+
 # Steam 接口配置
+# return-url / realm 本地默认 localhost:8081。生产必须设置 STEAM_RETURN_URL、STEAM_REALM，
+# 否则 OpenID return_to 仍指向本机，Steam 跳回后浏览器 connection refused。
 steam:
   api-key: ${STEAM_API_KEY}
   app-id: 574980
