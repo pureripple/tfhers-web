@@ -126,6 +126,7 @@
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { fetchAiStatus, postAiChat } from '@/api/ai'
 import { ApiError } from '@/api/types'
+import { useAdminAuthStore } from '@/stores/auth'
 
 interface ChatMsg {
   role: 'user' | 'ai'
@@ -140,6 +141,8 @@ interface HistoryEntry {
 
 const HISTORY_KEY = 'aiChatHistory'
 const WELCOME = '你好，我是 TFHers 管理员 AI 助手。可以问我角色、招式、资讯等问题。'
+
+const adminAuth = useAdminAuthStore()
 
 const messages = ref<ChatMsg[]>([{ role: 'ai', text: WELCOME }])
 const input = ref('')
@@ -168,7 +171,7 @@ const charColor = computed(() => {
 
 async function probeStatus() {
   try {
-    const data = await fetchAiStatus()
+    const data = await fetchAiStatus('admin')
     status.value = data?.status === 'online' ? 'online' : 'warn'
   } catch {
     status.value = 'offline'
@@ -237,13 +240,17 @@ async function scrollBottom() {
 async function onSend() {
   const q = input.value.trim()
   if (!q || sending.value) return
+  if (!adminAuth.isLoggedIn) {
+    error.value = '请先登录后再使用 AI'
+    return
+  }
   error.value = ''
   messages.value.push({ role: 'user', text: q })
   input.value = ''
   sending.value = true
   await scrollBottom()
   try {
-    const answer = await postAiChat(q)
+    const answer = await postAiChat(q, 'admin')
     const text = answer || '（空回复）'
     messages.value.push({ role: 'ai', text })
     saveToHistory(q, text)

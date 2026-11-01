@@ -80,6 +80,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { fetchAiStatus, postAiChat } from '@/api/ai'
 import { ApiError } from '@/api/types'
+import { useUserAuthStore } from '@/stores/auth'
 
 /** Same key as legacy tfhers-web-app static/js/ai-chat.js */
 const HISTORY_KEY = 'aiChatHistoryApp'
@@ -96,6 +97,8 @@ interface HistoryEntry {
   timestamp?: string
   time?: number
 }
+
+const auth = useUserAuthStore()
 
 const messages = ref<ChatMsg[]>([{ role: 'ai', text: WELCOME }])
 const input = ref('')
@@ -134,7 +137,7 @@ function formatTime(h: HistoryEntry) {
 
 async function probeStatus() {
   try {
-    const data = await fetchAiStatus()
+    const data = await fetchAiStatus('user')
     status.value = data?.status === 'online' ? 'online' : 'warn'
   } catch {
     status.value = 'offline'
@@ -203,13 +206,17 @@ async function scrollBottom() {
 async function onSend() {
   const q = input.value.trim()
   if (!q || sending.value) return
+  if (!auth.isLoggedIn) {
+    error.value = '请先登录后再使用 AI'
+    return
+  }
   error.value = ''
   messages.value.push({ role: 'user', text: q })
   input.value = ''
   sending.value = true
   await scrollBottom()
   try {
-    const answer = await postAiChat(q)
+    const answer = await postAiChat(q, 'user')
     const text = answer || '（空回复）'
     messages.value.push({ role: 'ai', text })
     saveToHistory(q, text)

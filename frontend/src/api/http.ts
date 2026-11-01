@@ -26,7 +26,8 @@ function readAdminToken(): string | null {
   return localStorage.getItem(ADMIN_TOKEN_KEY)
 }
 
-function resolveAuthHeader(auth: AuthMode = 'none'): string | null {
+/** Resolve JWT for Authorization header; shared by non-JSON / alternate-envelope clients (e.g. AI). */
+export function resolveAuthHeader(auth: AuthMode = 'none'): string | null {
   if (auth === 'user') return readUserToken()
   if (auth === 'admin') return readAdminToken()
   return null
