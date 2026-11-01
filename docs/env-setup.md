@@ -17,7 +17,27 @@
 
 ## 可选（有安全默认值）
 
-`TFHERS_DB_URL`、`TFHERS_DB_USERNAME`、`ALIYUN_OSS_BUCKET`、`ALIYUN_OSS_ENDPOINT`、`ALIYUN_OSS_DOMAIN`、`STEAM_RETURN_URL`、`STEAM_REALM`、`TFHERS_MANAGEMENT_BASE_URL`、Green 的 region/endpoint/service/fail-open。
+`TFHERS_DB_URL`、`TFHERS_DB_USERNAME`、`ALIYUN_OSS_BUCKET`、`ALIYUN_OSS_ENDPOINT`、`ALIYUN_OSS_DOMAIN`、`STEAM_RETURN_URL`、`STEAM_REALM`、`FRONTEND_BASE_URL`、`TFHERS_MANAGEMENT_BASE_URL`、Green 的 region/endpoint/service/fail-open。
+
+未设置时 `STEAM_RETURN_URL` / `STEAM_REALM` 默认为 `http://localhost:8081`，`FRONTEND_BASE_URL`（`tfhers.frontend.base-url`）默认为 `http://localhost:5173`。这只适合本机。生产若留空，Steam 跳回和绑定成功后的 `Location` 都会指向 localhost，浏览器显示 connection refused。
+
+## 生产 Steam 绑定（tfhers.cn）
+
+写入 `/etc/tfhers/tfhers.env`（或等价的 systemd `EnvironmentFile`）：
+
+```
+STEAM_RETURN_URL=http://tfhers.cn/api/user/steam/callback
+STEAM_REALM=http://tfhers.cn
+FRONTEND_BASE_URL=http://tfhers.cn
+```
+
+| 变量 | 配置键 | 作用 |
+|------|--------|------|
+| `STEAM_RETURN_URL` | `steam.return-url` | OpenID `return_to`，须是外网能访问的回调 |
+| `STEAM_REALM` | `steam.realm` | OpenID `realm`，须与站点源一致 |
+| `FRONTEND_BASE_URL` | `tfhers.frontend.base-url` | 绑定成功后 `Location` 为 `{FRONTEND_BASE_URL}/settings` |
+
+Nginx 把 `http://tfhers.cn/api/` 反代到 management `:8081`，所以上面的回调路径不用带端口。`FRONTEND_BASE_URL` 只写站点根，不要带 `/settings`。
 
 ## 两种本地做法（二选一或混用）
 
