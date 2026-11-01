@@ -55,8 +55,8 @@ public class LoginInterceptor implements HandlerInterceptor {
             // 将用户信息存储到请求属性中，供后续使用
             Long userId = jwtUtil.getUserIdFromToken(token);
             String username = jwtUtil.getUsernameFromToken(token);
-            
-            System.out.println("LoginInterceptor - userId: " + userId + ", username: " + username);
+            // type：user|admin；缺省按 user（不为 admin）。旧 Token 建议强制重登。
+            String tokenType = jwtUtil.getTokenType(token);
 
             if (userId == null) {
                 sendUnauthorizedResponse(response, "令牌中缺少用户ID，请重新登录");
@@ -65,6 +65,8 @@ public class LoginInterceptor implements HandlerInterceptor {
             
             request.setAttribute("userId", userId);
             request.setAttribute("username", username);
+            request.setAttribute("tokenType", tokenType);
+            request.setAttribute("userType", tokenType);
             
             return true;
             
@@ -105,10 +107,7 @@ public class LoginInterceptor implements HandlerInterceptor {
             return true;
         }
         
-        // AI对话接口（不需要登录验证）
-        if (path.startsWith("/api/ai/")) {
-            return true;
-        }
+        // P0卡⑤：/api/ai 需登录，不再匿名放行
 
                 // 前台角色教程接口（不需要登录验证）
         if (path.startsWith("/api/characters")) {
@@ -159,18 +158,7 @@ public class LoginInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // 前台/后台正文图片上传接口（允许跨域调用）
-        if (path.startsWith("/api/file/upload/article-content")) {
-            return true;
-        }
-        // 用户端发布资讯封面上传（允许跨域调用）
-        if (path.startsWith("/api/file/upload/article-cover")) {
-            return true;
-        }
-        // 用户端发布连段：连段文件、连段视频上传（允许跨域调用）
-        if (path.startsWith("/api/file/upload/combo-file") || path.startsWith("/api/file/upload/combo-video")) {
-            return true;
-        }
+        // P0卡⑤：article/combo 上传需登录，不再匿名放行
         
         // 静态资源
         if (path.startsWith("/static/") || path.startsWith("/css/") || 

@@ -2,313 +2,297 @@ package com.example.controller;
 
 import com.example.pojo.results;
 import com.example.util.OssUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * 文件上传控制器
- */
 @RestController
-@RequestMapping("/api/file")
-@CrossOrigin(origins = "*")
+@RequestMapping(value={"/api/file"})
 public class FileUploadController {
-    
+    private static final Logger log = LoggerFactory.getLogger(FileUploadController.class);
     @Autowired
     private OssUtil ossUtil;
-    
-    /**
-     * 上传头像
-     * @param file 头像文件
-     * @return 上传结果
-     */
-    @PostMapping("/upload/avatar")
-    public results uploadAvatar(@RequestParam("file") MultipartFile file) {
+
+    private Long requireUserId(HttpServletRequest request) {
+        Object attr = request.getAttribute("userId");
+        if (!(attr instanceof Long)) {
+            return null;
+        }
+        return (Long)attr;
+    }
+
+    @PostMapping(value={"/upload/avatar"})
+    public results uploadAvatar(@RequestParam(value="file") MultipartFile file, HttpServletRequest request) {
         try {
-            // 验证文件
-            if (file == null || file.isEmpty()) {
-                return results.error("请选择要上传的文件");
+            Long userId = this.requireUserId(request);
+            if (userId == null) {
+                return results.error("\u672a\u767b\u5f55\u6216\u4ee4\u724c\u65e0\u6548\uff0c\u8bf7\u5148\u767b\u5f55");
             }
-            
-            // 验证文件类型
+            if (file == null || file.isEmpty()) {
+                return results.error("\u8bf7\u9009\u62e9\u8981\u4e0a\u4f20\u7684\u6587\u4ef6");
+            }
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
-                return results.error("只能上传图片文件");
+                return results.error("\u53ea\u80fd\u4e0a\u4f20\u56fe\u7247\u6587\u4ef6");
             }
-            
-            // 验证文件大小（限制为5MB）
-            long maxSize = 5 * 1024 * 1024; // 5MB
+            long maxSize = 0x500000L;
             if (file.getSize() > maxSize) {
-                return results.error("文件大小不能超过5MB");
+                return results.error("\u6587\u4ef6\u5927\u5c0f\u4e0d\u80fd\u8d85\u8fc75MB");
             }
-            
-            // 上传文件
-            String fileUrl = ossUtil.uploadAvatar(file);
-            
-            // 准备返回数据
-            Map<String, Object> data = new HashMap<>();
+            log.info("[upload] userId={} action=avatar name={} size={}", new Object[]{userId, file.getOriginalFilename(), file.getSize()});
+            String fileUrl = this.ossUtil.uploadAvatar(file);
+            HashMap<String, Object> data = new HashMap<String, Object>();
             data.put("url", fileUrl);
             data.put("originalName", file.getOriginalFilename());
             data.put("size", file.getSize());
             data.put("contentType", contentType);
-            
-            return results.success("头像上传成功", data);
-            
-        } catch (Exception e) {
+            data.put("userId", userId);
+            return results.success("\u5934\u50cf\u4e0a\u4f20\u6210\u529f", data);
+        }
+        catch (Exception e) {
             e.printStackTrace();
-            return results.error("头像上传失败：" + e.getMessage());
+            return results.error("\u5934\u50cf\u4e0a\u4f20\u5931\u8d25\uff1a" + e.getMessage());
         }
     }
-    
-    /**
-     * 上传通用文件
-     * @param file 文件
-     * @param folder 文件夹路径（可选）
-     * @return 上传结果
-     */
-    @PostMapping("/upload")
-    public results uploadFile(@RequestParam("file") MultipartFile file,
-                                                  @RequestParam(value = "folder", required = false) String folder) {
+
+    @PostMapping(value={"/upload"})
+    public results uploadFile(@RequestParam(value="file") MultipartFile file, @RequestParam(value="folder", required=false) String folder, HttpServletRequest request) {
         try {
-            // 验证文件
+            Long userId = this.requireUserId(request);
+            if (userId == null) {
+                return results.error("\u672a\u767b\u5f55\u6216\u4ee4\u724c\u65e0\u6548\uff0c\u8bf7\u5148\u767b\u5f55");
+            }
             if (file == null || file.isEmpty()) {
-                return results.error("请选择要上传的文件");
+                return results.error("\u8bf7\u9009\u62e9\u8981\u4e0a\u4f20\u7684\u6587\u4ef6");
             }
-            
-            // 验证文件大小（限制为10MB）
-            long maxSize = 10 * 1024 * 1024; // 10MB
+            long maxSize = 0xA00000L;
             if (file.getSize() > maxSize) {
-                return results.error("文件大小不能超过10MB");
+                return results.error("\u6587\u4ef6\u5927\u5c0f\u4e0d\u80fd\u8d85\u8fc710MB");
             }
-            
-            // 上传文件
-            String fileUrl = ossUtil.uploadFile(file, folder);
-            
-            // 准备返回数据
-            Map<String, Object> data = new HashMap<>();
+            log.info("[upload] userId={} action=generic folder={} name={} size={}", new Object[]{userId, folder, file.getOriginalFilename(), file.getSize()});
+            String fileUrl = this.ossUtil.uploadFile(file, folder);
+            HashMap<String, Object> data = new HashMap<String, Object>();
             data.put("url", fileUrl);
             data.put("originalName", file.getOriginalFilename());
             data.put("size", file.getSize());
             data.put("contentType", file.getContentType());
             data.put("folder", folder);
-            
-            return results.success("文件上传成功", data);
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            return results.error("文件上传失败：" + e.getMessage());
+            data.put("userId", userId);
+            return results.success("\u6587\u4ef6\u4e0a\u4f20\u6210\u529f", data);
         }
-    }
-    
-    /**
-     * 上传文章封面图片
-     * @param file 封面图片文件
-     * @return 上传结果
-     */
-    @PostMapping("/upload/article-cover")
-    public results uploadArticleCover(@RequestParam("file") MultipartFile file) {
-        try {
-            // 验证文件
-            if (file == null || file.isEmpty()) {
-                return results.error("请选择要上传的图片");
-            }
-            
-            // 验证文件类型
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                return results.error("只能上传图片文件");
-            }
-            
-            // 验证文件大小（限制为5MB）
-            long maxSize = 5 * 1024 * 1024; // 5MB
-            if (file.getSize() > maxSize) {
-                return results.error("图片大小不能超过5MB");
-            }
-            
-            // 上传文件到articles文件夹
-            String fileUrl = ossUtil.uploadFile(file, "articles");
-            
-            // 准备返回数据
-            Map<String, Object> data = new HashMap<>();
-            data.put("url", fileUrl);
-            data.put("originalName", file.getOriginalFilename());
-            data.put("size", file.getSize());
-            data.put("contentType", contentType);
-            
-            return results.success("封面图片上传成功", data);
-            
-        } catch (Exception e) {
+        catch (Exception e) {
             e.printStackTrace();
-            return results.error("封面图片上传失败：" + e.getMessage());
-        }
-    }
-    
-    /**
-     * 上传文章正文内容中的图片
-     * @param file 图片文件
-     * @return 上传结果（返回可直接用于正文中的图片URL）
-     */
-    @PostMapping("/upload/article-content")
-    public results uploadArticleContentImage(@RequestParam("file") MultipartFile file) {
-        try {
-            if (file == null || file.isEmpty()) {
-                return results.error("请选择要上传的图片");
-            }
-            
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                return results.error("只能上传图片文件");
-            }
-            
-            long maxSize = 5 * 1024 * 1024; // 5MB
-            if (file.getSize() > maxSize) {
-                return results.error("图片大小不能超过5MB");
-            }
-            
-            // 上传到 articles/content 目录，便于区分
-            String fileUrl = ossUtil.uploadFile(file, "articles/content");
-            
-            Map<String, Object> data = new HashMap<>();
-            data.put("url", fileUrl);
-            data.put("originalName", file.getOriginalFilename());
-            data.put("size", file.getSize());
-            data.put("contentType", contentType);
-            
-            return results.success("正文图片上传成功", data);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return results.error("正文图片上传失败：" + e.getMessage());
+            return results.error("\u6587\u4ef6\u4e0a\u4f20\u5931\u8d25\uff1a" + e.getMessage());
         }
     }
 
-    /**
-     * 上传角色官方出招表图（仅图片）
-     */
-    @PostMapping("/upload/character-move-list")
-    public results uploadCharacterMoveList(@RequestParam("file") MultipartFile file) {
+    @PostMapping(value={"/upload/article-cover"})
+    public results uploadArticleCover(@RequestParam(value="file") MultipartFile file, HttpServletRequest request) {
         try {
+            Long userId = this.requireUserId(request);
+            if (userId == null) {
+                return results.error("\u672a\u767b\u5f55\u6216\u4ee4\u724c\u65e0\u6548\uff0c\u8bf7\u5148\u767b\u5f55");
+            }
             if (file == null || file.isEmpty()) {
-                return results.error("请选择要上传的图片");
+                return results.error("\u8bf7\u9009\u62e9\u8981\u4e0a\u4f20\u7684\u56fe\u7247");
             }
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
-                return results.error("只能上传图片文件");
+                return results.error("\u53ea\u80fd\u4e0a\u4f20\u56fe\u7247\u6587\u4ef6");
             }
-            long maxSize = 10 * 1024 * 1024; // 10MB
+            long maxSize = 0x500000L;
             if (file.getSize() > maxSize) {
-                return results.error("图片大小不能超过10MB");
+                return results.error("\u56fe\u7247\u5927\u5c0f\u4e0d\u80fd\u8d85\u8fc75MB");
             }
-            String fileUrl = ossUtil.uploadFile(file, "characters/move-list");
-            Map<String, Object> data = new HashMap<>();
+            log.info("[upload] userId={} action=article-cover name={} size={}", new Object[]{userId, file.getOriginalFilename(), file.getSize()});
+            String fileUrl = this.ossUtil.uploadFile(file, "articles");
+            HashMap<String, Object> data = new HashMap<String, Object>();
             data.put("url", fileUrl);
             data.put("originalName", file.getOriginalFilename());
             data.put("size", file.getSize());
             data.put("contentType", contentType);
-            return results.success("出招表图上传成功", data);
-        } catch (Exception e) {
+            data.put("userId", userId);
+            return results.success("\u5c01\u9762\u56fe\u7247\u4e0a\u4f20\u6210\u529f", data);
+        }
+        catch (Exception e) {
             e.printStackTrace();
-            return results.error("出招表图上传失败：" + e.getMessage());
+            return results.error("\u5c01\u9762\u56fe\u7247\u4e0a\u4f20\u5931\u8d25\uff1a" + e.getMessage());
         }
     }
 
-    /**
-     * 上传用户连段文件（仅允许 .tfhc 游戏连段文件）
-     */
-    @PostMapping("/upload/combo-file")
-    public results uploadComboFile(@RequestParam("file") MultipartFile file) {
+    @PostMapping(value={"/upload/article-content"})
+    public results uploadArticleContentImage(@RequestParam(value="file") MultipartFile file, HttpServletRequest request) {
         try {
+            Long userId = this.requireUserId(request);
+            if (userId == null) {
+                return results.error("\u672a\u767b\u5f55\u6216\u4ee4\u724c\u65e0\u6548\uff0c\u8bf7\u5148\u767b\u5f55");
+            }
             if (file == null || file.isEmpty()) {
-                return results.error("请选择要上传的连段文件");
+                return results.error("\u8bf7\u9009\u62e9\u8981\u4e0a\u4f20\u7684\u56fe\u7247");
+            }
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return results.error("\u53ea\u80fd\u4e0a\u4f20\u56fe\u7247\u6587\u4ef6");
+            }
+            long maxSize = 0x500000L;
+            if (file.getSize() > maxSize) {
+                return results.error("\u56fe\u7247\u5927\u5c0f\u4e0d\u80fd\u8d85\u8fc75MB");
+            }
+            log.info("[upload] userId={} action=article-content name={} size={}", new Object[]{userId, file.getOriginalFilename(), file.getSize()});
+            String fileUrl = this.ossUtil.uploadFile(file, "articles/content");
+            HashMap<String, Object> data = new HashMap<String, Object>();
+            data.put("url", fileUrl);
+            data.put("originalName", file.getOriginalFilename());
+            data.put("size", file.getSize());
+            data.put("contentType", contentType);
+            data.put("userId", userId);
+            return results.success("\u6b63\u6587\u56fe\u7247\u4e0a\u4f20\u6210\u529f", data);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return results.error("\u6b63\u6587\u56fe\u7247\u4e0a\u4f20\u5931\u8d25\uff1a" + e.getMessage());
+        }
+    }
+
+    @PostMapping(value={"/upload/character-move-list"})
+    public results uploadCharacterMoveList(@RequestParam(value="file") MultipartFile file, HttpServletRequest request) {
+        try {
+            Long userId = this.requireUserId(request);
+            if (userId == null) {
+                return results.error("\u672a\u767b\u5f55\u6216\u4ee4\u724c\u65e0\u6548\uff0c\u8bf7\u5148\u767b\u5f55");
+            }
+            if (file == null || file.isEmpty()) {
+                return results.error("\u8bf7\u9009\u62e9\u8981\u4e0a\u4f20\u7684\u56fe\u7247");
+            }
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return results.error("\u53ea\u80fd\u4e0a\u4f20\u56fe\u7247\u6587\u4ef6");
+            }
+            long maxSize = 0xA00000L;
+            if (file.getSize() > maxSize) {
+                return results.error("\u56fe\u7247\u5927\u5c0f\u4e0d\u80fd\u8d85\u8fc710MB");
+            }
+            log.info("[upload] userId={} action=character-move-list name={} size={}", new Object[]{userId, file.getOriginalFilename(), file.getSize()});
+            String fileUrl = this.ossUtil.uploadFile(file, "characters/move-list");
+            HashMap<String, Object> data = new HashMap<String, Object>();
+            data.put("url", fileUrl);
+            data.put("originalName", file.getOriginalFilename());
+            data.put("size", file.getSize());
+            data.put("contentType", contentType);
+            data.put("userId", userId);
+            return results.success("\u51fa\u62db\u8868\u56fe\u4e0a\u4f20\u6210\u529f", data);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return results.error("\u51fa\u62db\u8868\u56fe\u4e0a\u4f20\u5931\u8d25\uff1a" + e.getMessage());
+        }
+    }
+
+    @PostMapping(value={"/upload/combo-file"})
+    public results uploadComboFile(@RequestParam(value="file") MultipartFile file, HttpServletRequest request) {
+        try {
+            Long userId = this.requireUserId(request);
+            if (userId == null) {
+                return results.error("\u672a\u767b\u5f55\u6216\u4ee4\u724c\u65e0\u6548\uff0c\u8bf7\u5148\u767b\u5f55");
+            }
+            if (file == null || file.isEmpty()) {
+                return results.error("\u8bf7\u9009\u62e9\u8981\u4e0a\u4f20\u7684\u8fde\u6bb5\u6587\u4ef6");
             }
             String name = file.getOriginalFilename();
             if (name == null || !name.toLowerCase().endsWith(".tfhc")) {
-                return results.error("仅支持 .tfhc 连段文件");
+                return results.error("\u4ec5\u652f\u6301 .tfhc \u8fde\u6bb5\u6587\u4ef6");
             }
-            long maxSize = 20 * 1024 * 1024; // 20MB
+            long maxSize = 0x1400000L;
             if (file.getSize() > maxSize) {
-                return results.error("文件大小不能超过20MB");
+                return results.error("\u6587\u4ef6\u5927\u5c0f\u4e0d\u80fd\u8d85\u8fc720MB");
             }
-            String fileUrl = ossUtil.uploadFile(file, "combos/files");
-            Map<String, Object> data = new HashMap<>();
+            log.info("[upload] userId={} action=combo-file name={} size={}", new Object[]{userId, file.getOriginalFilename(), file.getSize()});
+            String fileUrl = this.ossUtil.uploadFile(file, "combos/files");
+            HashMap<String, Object> data = new HashMap<String, Object>();
             data.put("url", fileUrl);
             data.put("originalName", file.getOriginalFilename());
             data.put("size", file.getSize());
             data.put("contentType", file.getContentType());
-            return results.success("连段文件上传成功", data);
-        } catch (Exception e) {
+            data.put("userId", userId);
+            return results.success("\u8fde\u6bb5\u6587\u4ef6\u4e0a\u4f20\u6210\u529f", data);
+        }
+        catch (Exception e) {
             e.printStackTrace();
-            return results.error("连段文件上传失败：" + e.getMessage());
+            return results.error("\u8fde\u6bb5\u6587\u4ef6\u4e0a\u4f20\u5931\u8d25\uff1a" + e.getMessage());
         }
     }
 
-    /**
-     * 上传用户连段视频
-     */
-    @PostMapping("/upload/combo-video")
-    public results uploadComboVideo(@RequestParam("file") MultipartFile file) {
+    @PostMapping(value={"/upload/combo-video"})
+    public results uploadComboVideo(@RequestParam(value="file") MultipartFile file, HttpServletRequest request) {
         try {
+            boolean octetOk;
+            Long userId = this.requireUserId(request);
+            if (userId == null) {
+                return results.error("\u672a\u767b\u5f55\u6216\u4ee4\u724c\u65e0\u6548\uff0c\u8bf7\u5148\u767b\u5f55");
+            }
             if (file == null || file.isEmpty()) {
-                return results.error("请选择要上传的视频");
+                return results.error("\u8bf7\u9009\u62e9\u8981\u4e0a\u4f20\u7684\u89c6\u9891");
             }
             String contentType = file.getContentType();
             String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
-            boolean looksVideoExt = originalName.endsWith(".mp4") || originalName.endsWith(".webm")
-                    || originalName.endsWith(".mov") || originalName.endsWith(".mkv")
-                    || originalName.endsWith(".avi") || originalName.endsWith(".m4v");
+            boolean looksVideoExt = originalName.endsWith(".mp4") || originalName.endsWith(".webm") || originalName.endsWith(".mov") || originalName.endsWith(".mkv") || originalName.endsWith(".avi") || originalName.endsWith(".m4v");
             boolean typeOk = contentType != null && contentType.startsWith("video/");
-            boolean octetOk = contentType != null && contentType.equals("application/octet-stream") && looksVideoExt;
-            if (!typeOk && !octetOk && !looksVideoExt) {
-                return results.error("只能上传视频文件");
+            boolean bl = octetOk = contentType != null && contentType.equals("application/octet-stream") && looksVideoExt;
+            if (!(typeOk || octetOk || looksVideoExt)) {
+                return results.error("\u53ea\u80fd\u4e0a\u4f20\u89c6\u9891\u6587\u4ef6");
             }
-            long maxSize = 2048L * 1024 * 1024; // 2GB
+            long maxSize = 0x6400000L;
             if (file.getSize() > maxSize) {
-                return results.error("视频大小不能超过2GB");
+                return results.error("\u89c6\u9891\u5927\u5c0f\u4e0d\u80fd\u8d85\u8fc7100MB");
             }
-            String fileUrl = ossUtil.uploadFile(file, "combos/videos");
-            Map<String, Object> data = new HashMap<>();
+            log.info("[upload] userId={} action=combo-video name={} size={}", new Object[]{userId, file.getOriginalFilename(), file.getSize()});
+            String fileUrl = this.ossUtil.uploadFile(file, "combos/videos");
+            HashMap<String, Object> data = new HashMap<String, Object>();
             data.put("url", fileUrl);
             data.put("originalName", file.getOriginalFilename());
             data.put("size", file.getSize());
             data.put("contentType", contentType);
-            return results.success("连段视频上传成功", data);
-        } catch (Exception e) {
+            data.put("userId", userId);
+            return results.success("\u8fde\u6bb5\u89c6\u9891\u4e0a\u4f20\u6210\u529f", data);
+        }
+        catch (Exception e) {
             e.printStackTrace();
-            return results.error("连段视频上传失败：" + e.getMessage());
+            return results.error("\u8fde\u6bb5\u89c6\u9891\u4e0a\u4f20\u5931\u8d25\uff1a" + e.getMessage());
         }
     }
-    
-    /**
-     * 删除文件
-     * @param url 文件URL
-     * @return 删除结果
-     */
-    @DeleteMapping("/delete")
-    public results deleteFile(@RequestParam("url") String url) {
+
+    @DeleteMapping(value={"/delete"})
+    public results deleteFile(@RequestParam(value="url") String url, HttpServletRequest request) {
         try {
+            Long userId = this.requireUserId(request);
+            if (userId == null) {
+                return results.error("\u672a\u767b\u5f55\u6216\u4ee4\u724c\u65e0\u6548\uff0c\u8bf7\u5148\u767b\u5f55");
+            }
             if (url == null || url.isEmpty()) {
-                return results.error("文件URL不能为空");
+                return results.error("\u6587\u4ef6URL\u4e0d\u80fd\u4e3a\u7a7a");
             }
-            
-            // 提取对象键
-            String objectKey = ossUtil.extractObjectKeyFromUrl(url);
+            String objectKey = this.ossUtil.extractObjectKeyFromUrl(url);
             if (objectKey == null) {
-                return results.error("无效的文件URL");
+                return results.error("\u65e0\u6548\u7684\u6587\u4ef6URL");
             }
-            
-            // 删除文件
-            boolean success = ossUtil.deleteFile(objectKey);
+            log.info("[upload] userId={} action=delete url={}", (Object)userId, (Object)url);
+            boolean success = this.ossUtil.deleteFile(objectKey);
             if (success) {
-                return results.success("文件删除成功", null);
-            } else {
-                return results.error("文件删除失败");
+                return results.success("\u6587\u4ef6\u5220\u9664\u6210\u529f", null);
             }
-            
-        } catch (Exception e) {
+            return results.error("\u6587\u4ef6\u5220\u9664\u5931\u8d25");
+        }
+        catch (Exception e) {
             e.printStackTrace();
-            return results.error("文件删除失败：" + e.getMessage());
+            return results.error("\u6587\u4ef6\u5220\u9664\u5931\u8d25\uff1a" + e.getMessage());
         }
     }
 }

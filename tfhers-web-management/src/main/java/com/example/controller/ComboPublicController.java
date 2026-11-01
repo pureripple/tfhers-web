@@ -16,7 +16,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/combos")
-@CrossOrigin(origins = "*")
 public class ComboPublicController {
 
     @Autowired

@@ -1,0 +1,5 @@
+# Local / IDE: --spring.profiles.active=dev
+# Allows wildcard Origin for Apifox / Vite local unless CORS_ALLOWED_ORIGINS overrides.
+tfhers:
+  cors:
+    allowed-origins: "${CORS_ALLOWED_ORIGINS:*}"

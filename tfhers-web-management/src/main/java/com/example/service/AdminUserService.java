@@ -38,16 +38,25 @@ public interface AdminUserService {
     boolean updateLastLoginInfo(Long id, String lastLoginIp);
     
     /**
-     * 更新用户信息
+     * 更新用户信息（若含明文密码则存 BCrypt）
      * @param adminUser 管理员用户信息
      * @return 是否更新成功
      */
     boolean updateAdminUser(AdminUser adminUser);
     
     /**
-     * 更新用户个人信息
+     * 更新用户个人信息（若含明文密码则存 BCrypt；禁止打印密码）
      * @param adminUser 管理员用户信息
      * @return 是否更新成功
      */
     boolean updateProfile(AdminUser adminUser);
+
+    /**
+     * 修改管理员密码：校验旧密码（兼容明文/BCrypt），新密码仅存 BCrypt
+     * @param id 管理员ID
+     * @param oldPassword 当前密码明文
+     * @param newPassword 新密码明文
+     * @return 是否修改成功
+     */
+    boolean changePassword(Long id, String oldPassword, String newPassword);
 }

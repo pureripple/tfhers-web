@@ -20,7 +20,6 @@ import java.util.Map;
  * 便于本地只打开 8080、或 Nginx 同源反代时前端 managementApiUrl 留空。
  */
 @RestController
-@CrossOrigin(origins = "*")
 public class ManagementApiProxyController {
 
     @Autowired

@@ -1,7 +1,11 @@
 package com.example.config;
 
+import java.util.Arrays;
+
+import com.example.interceptor.AdminInterceptor;
 import com.example.interceptor.LoginInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
@@ -15,20 +19,36 @@ public class WebConfig implements WebMvcConfigurer {
     
     @Autowired
     private LoginInterceptor loginInterceptor;
+
+    @Autowired
+    private AdminInterceptor adminInterceptor;
+
+    /** Comma-separated Origins from tfhers.cors.allowed-origins / CORS_ALLOWED_ORIGINS */
+    @Value("${tfhers.cors.allowed-origins}")
+    private String corsAllowedOrigins;
     
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
-                .addPathPatterns("/api/**")  // 拦截所有API请求
+                .addPathPatterns("/api/**")  // 鎷︽埅鎵€鏈堿PI璇锋眰
                 .excludePathPatterns(
-                    "/api/admin/login",      // 排除管理员登录接口
-                    "/api/user/register",    // 排除用户注册接口
-                    "/api/user/login",       // 排除用户登录接口
-                    "/api/ai/**",            // 排除AI对话接口
-                    "/static/**",            // 排除静态资源
-                    "/css/**",               // 排除CSS
-                    "/js/**",                // 排除JS
-                    "/images/**"             // 排除图片
+                    "/api/admin/login",      // 鎺掗櫎绠＄悊鍛樼櫥褰曟帴鍙?
+                    "/api/user/register",    // 鎺掗櫎鐢ㄦ埛娉ㄥ唽鎺ュ彛
+                    "/api/user/login",       // 鎺掗櫎鐢ㄦ埛鐧诲綍鎺ュ彛
+                    "/static/**",            // 鎺掗櫎闈欐€佽祫婧?
+                    "/css/**",               // 鎺掗櫎CSS
+                    "/js/**",                // 鎺掗櫎JS
+                    "/images/**"             // 鎺掗櫎鍥剧墖
+                );
+        // 绠＄悊绔厹搴曪細鐧诲綍涔嬪悗鍐嶅己鍒?admin_users锛圲SER Token 鈫?403锛?
+        registry.addInterceptor(adminInterceptor)
+                .addPathPatterns(
+                    "/api/admin/**",
+                    "/api/user-management/**",
+                    "/api/profile/**"  // 绠＄悊绔釜浜鸿祫鏂欙紝鍚岀被绠＄悊鍐欐帴鍙?
+                )
+                .excludePathPatterns(
+                    "/api/admin/login"
                 );
     }
     
@@ -42,11 +62,28 @@ public class WebConfig implements WebMvcConfigurer {
     
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                .allowedOrigins("*")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        String[] origins = Arrays.stream(corsAllowedOrigins == null ? new String[0] : corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
+        if (origins.length == 0) {
+            // Fail closed: no Origin allowed until configured
+            return;
+        }
+        var mapping = registry.addMapping("/api/**")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(false);
+                .exposedHeaders("Authorization")
+                .maxAge(3600);
+        boolean wildcard = Arrays.asList(origins).contains("*");
+        if (wildcard) {
+            // Dev only: * cannot pair with allowCredentials(true)
+            mapping.allowedOriginPatterns("*")
+                    .allowCredentials(false);
+        } else {
+            mapping.allowedOrigins(origins)
+                    .allowCredentials(false);
+        }
     }
     
     @Override

@@ -41,6 +41,11 @@ public interface articlesService {
      * @return 更新结果
      */
     results updateArticle(articles article);
+
+    /**
+     * 更新文章（带权限）：仅作者或管理员；非管理员保留原置顶状态
+     */
+    results updateArticleForUser(articles article, Long userId, boolean isAdmin);
     
     /**
      * 搜索文章

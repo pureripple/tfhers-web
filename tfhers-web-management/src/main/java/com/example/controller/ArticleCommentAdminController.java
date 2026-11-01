@@ -15,7 +15,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/article-comments")
-@CrossOrigin(origins = "*")
 public class ArticleCommentAdminController {
 
     @Autowired

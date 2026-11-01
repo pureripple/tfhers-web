@@ -16,7 +16,6 @@ import java.util.Map;
  * 站内排位积分排行榜（公开）与个人积分（需登录）
  */
 @RestController
-@CrossOrigin(origins = "*")
 public class RankingController {
 
     @Autowired

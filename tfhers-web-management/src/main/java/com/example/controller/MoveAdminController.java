@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/moves")
-@CrossOrigin(origins = "*")
 public class MoveAdminController {
 
     @Autowired

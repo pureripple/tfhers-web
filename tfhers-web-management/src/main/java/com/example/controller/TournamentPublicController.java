@@ -16,7 +16,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/tournaments")
-@CrossOrigin(origins = "*")
 public class TournamentPublicController {
 
     @Autowired

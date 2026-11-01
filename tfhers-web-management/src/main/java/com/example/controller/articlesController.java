@@ -12,6 +12,7 @@ import com.example.service.ArticleLikeService;
 import com.example.service.ContentReportService;
 import com.example.service.articlesService;
 import com.example.util.JwtUtil;
+import com.example.util.AdminAuthHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,6 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/articles")
-@CrossOrigin(origins = "*")
 public class articlesController {
 
     @Autowired
@@ -36,6 +36,9 @@ public class articlesController {
     private ContentReportService contentReportService;
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private AdminAuthHelper adminAuthHelper;
     @Autowired
     private UserMapper userMapper;
     @Autowired
@@ -339,7 +342,16 @@ public class articlesController {
     @PatchMapping(value = "/{id}/pinned", produces = "application/json", consumes = "application/json")
     public ResponseEntity<Map<String, Object>> updateArticlePinned(
             @PathVariable long id,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody Map<String, Object> body,
+            HttpServletRequest request) {
+        results deny = adminAuthHelper.requireAdmin(request);
+        if (deny != null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", deny.getCode());
+            response.put("msg", deny.getMsg());
+            response.put("data", deny.getData());
+            return ResponseEntity.status(deny.getCode()).body(response);
+        }
         boolean pinned = false;
         if (body != null) {
             Object p = body.get("pinned");
@@ -358,16 +370,21 @@ public class articlesController {
     }
 
     @PutMapping(value = "", produces = "application/json", consumes = "application/json")
-    public ResponseEntity<Map<String, Object>> updateArticle(@RequestBody articles article) {
-        results result = articlesService.updateArticle(article);
+    public ResponseEntity<Map<String, Object>> updateArticle(@RequestBody articles article, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        boolean isAdmin = adminAuthHelper.isAdmin(request);
+        results result = articlesService.updateArticleForUser(article, userId, isAdmin);
         Map<String, Object> response = new HashMap<>();
         response.put("code", result.getCode());
         response.put("msg", result.getMsg());
         response.put("data", result.getData());
-        
-        // 根据操作结果返回不同的HTTP状态码
+
         if (result.getCode() == 200) {
             return ResponseEntity.ok(response);
+        } else if (result.getCode() == 401) {
+            return ResponseEntity.status(401).body(response);
+        } else if (result.getCode() == 403) {
+            return ResponseEntity.status(403).body(response);
         } else {
             return ResponseEntity.badRequest().body(response);
         }

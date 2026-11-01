@@ -25,7 +25,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin(origins = "*")
 public class AiChatProxyController {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

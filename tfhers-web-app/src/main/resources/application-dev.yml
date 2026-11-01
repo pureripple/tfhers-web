@@ -1,0 +1,4 @@
+# Local / IDE: --spring.profiles.active=dev
+tfhers:
+  cors:
+    allowed-origins: "${CORS_ALLOWED_ORIGINS:*}"

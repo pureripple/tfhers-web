@@ -153,6 +153,34 @@ public class articlesServiceimpl implements articlesService {
     }
     
     @Override
+    public results updateArticleForUser(articles article, Long userId, boolean isAdmin) {
+        if (userId == null) {
+            return results.error(401, "请先登录");
+        }
+        if (article == null || article.getId() <= 0) {
+            return results.error("文章ID无效");
+        }
+        try {
+            articles existing = articlesMapper.selectArticleById(article.getId());
+            if (existing == null) {
+                return results.error("文章不存在或已被删除");
+            }
+            boolean isAuthor = existing.getAuthorId() != null && existing.getAuthorId().equals(userId);
+            boolean isAdminAuthor = existing.getAuthorAdminId() != null && existing.getAuthorAdminId().equals(userId);
+            if (!isAuthor && !isAdminAuthor && !isAdmin) {
+                return results.error(403, "只能修改自己发布的资讯");
+            }
+            // 非管理员不得借 PUT 改置顶
+            if (!isAdmin) {
+                article.setIsPinned(existing.getIsPinned());
+            }
+            return updateArticle(article);
+        } catch (Exception e) {
+            return results.error("更新文章失败: " + e.getMessage());
+        }
+    }
+
+    @Override
     public results updateArticle(articles article) {
         try {
             if (article.getId() > 0 && article.getCoverUrl() != null) {

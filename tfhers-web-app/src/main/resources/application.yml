@@ -14,6 +14,9 @@ server:
 tfhers:
   management:
     base-url: ${TFHERS_MANAGEMENT_BASE_URL:http://localhost:8081}
+  cors:
+    # Same key as management; prod set CORS_ALLOWED_ORIGINS (no *)
+    allowed-origins: "${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080,http://localhost:8081}"
 
 mybatis:
   configuration:

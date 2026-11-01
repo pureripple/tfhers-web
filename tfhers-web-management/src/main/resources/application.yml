@@ -3,8 +3,8 @@ spring:
     name: tfhers-web-management
   servlet:
     multipart:
-      max-file-size: 2048MB
-      max-request-size: 2048MB
+      max-file-size: 100MB
+      max-request-size: 100MB
   datasource:
     url: ${TFHERS_DB_URL:jdbc:mysql://localhost:3306/tfhers}
     username: ${TFHERS_DB_USERNAME:root}
@@ -27,7 +27,7 @@ spring:
       static-locations: classpath:/static/
       add-mappings: true
 
-# MyBatis配置
+# MyBatis閰嶇疆
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.example.pojo
@@ -35,19 +35,17 @@ mybatis:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
-# 服务器配置
-server:
+# 鏈嶅姟鍣ㄩ厤缃?server:
   port: 8081
   tomcat:
     connection-timeout: 600000
     max-swallow-size: -1
 
-# JWT配置（JWT_SECRET 必须通过环境变量提供，勿提交明文）
-jwt:
+# JWT閰嶇疆锛圝WT_SECRET 蹇呴』閫氳繃鐜鍙橀噺鎻愪緵锛屽嬁鎻愪氦鏄庢枃锛?jwt:
   secret: ${JWT_SECRET}
   expiration: 604800000  # 7 days in milliseconds
 
-# 阿里云OSS配置
+# 闃块噷浜慜SS閰嶇疆
 aliyun:
   oss:
     endpoint: ${ALIYUN_OSS_ENDPOINT:https://oss-cn-beijing.aliyuncs.com}
@@ -56,18 +54,17 @@ aliyun:
     bucket-name: ${ALIYUN_OSS_BUCKET:tfhers}
     domain: ${ALIYUN_OSS_DOMAIN:https://tfhers.oss-cn-beijing.aliyuncs.com}
   green:
-    # 内容安全（Green）文本审核：TextModeration
-    # 建议使用 RAM 子账号 + 最小权限（yundun-greenweb:TextModeration）
-    access-key-id: ${ALIYUN_GREEN_ACCESS_KEY_ID}
+    # 鍐呭瀹夊叏锛圙reen锛夋枃鏈鏍革細TextModeration
+    # 寤鸿浣跨敤 RAM 瀛愯处鍙?+ 鏈€灏忔潈闄愶紙yundun-greenweb:TextModeration锛?    access-key-id: ${ALIYUN_GREEN_ACCESS_KEY_ID}
     access-key-secret: ${ALIYUN_GREEN_ACCESS_KEY_SECRET}
     region-id: ${ALIYUN_GREEN_REGION_ID:cn-beijing}
     endpoint: ${ALIYUN_GREEN_ENDPOINT:green.cn-beijing.aliyuncs.com}
-    # 注意：TextModeration 的 Service 枚举通常为 comment_detection
+    # 娉ㄦ剰锛歍extModeration 鐨?Service 鏋氫妇閫氬父涓?comment_detection
     service: ${ALIYUN_GREEN_SERVICE:comment_detection}
-    # 审核服务不可用时是否放行：true=放行；false=拒绝
+    # 瀹℃牳鏈嶅姟涓嶅彲鐢ㄦ椂鏄惁鏀捐锛歵rue=鏀捐锛沠alse=鎷掔粷
     fail-open: ${ALIYUN_GREEN_FAIL_OPEN:false}
 
-# langchain4j配置（API Key 走环境变量）
+# langchain4j閰嶇疆锛圓PI Key 璧扮幆澧冨彉閲忥級
 langchain4j:
   openai:
     chat-model:
@@ -80,18 +77,20 @@ langchain4j:
       api-key: ${LANGCHAIN4J_API_KEY}
       model-name: qwen-plus
 
+# Steam 鎺ュ彛閰嶇疆
 # Steam 接口配置
+# return-url / realm 本地默认 localhost:8081。生产必须设置 STEAM_RETURN_URL、STEAM_REALM，
+# 否则 OpenID return_to 仍指向本机，Steam 跳回后浏览器 connection refused。
 steam:
   api-key: ${STEAM_API_KEY}
   app-id: 574980
   return-url: ${STEAM_RETURN_URL:http://localhost:8081/api/user/steam/callback}
   realm: ${STEAM_REALM:http://localhost:8081}
 
-  # Steam 总时长缓存
-  playtime:
+  # Steam 鎬绘椂闀跨紦瀛?  playtime:
     cache-ttl-minutes: 60
 
-  # 后台定时同步
+  # 鍚庡彴瀹氭椂鍚屾
   playtime-sync:
     enabled: true
     fixed-delay-ms: 1800000
@@ -116,16 +115,24 @@ cleanup:
     retention-days: 14
     cron: "0 0 5 * * ?"
 
-# 房间大厅在线检测
-rooms:
+# 鎴块棿澶у巺鍦ㄧ嚎妫€娴?rooms:
   presence:
     enabled: true
     timeout-seconds: 45
     sweep-interval-ms: 15000
 
-# 赛事：报名截止自动关报名（不自动生成对阵）
-tournaments:
+# 璧涗簨锛氭姤鍚嶆埅姝㈣嚜鍔ㄥ叧鎶ュ悕锛堜笉鑷姩鐢熸垚瀵归樀锛?tournaments:
   registration-auto-close:
     enabled: true
     fixed-delay-ms: 60000
     initial-delay-ms: 8000
+
+# CORS: comma-separated Origins. Prod must set CORS_ALLOWED_ORIGINS (no *).
+# Dev profile may use *. Default below is local-friendly when no profile/env set.
+tfhers:
+  # 前端站点根。Steam 绑定成功后的 Location 为 {base}/settings。
+  # 本地默认 Vite；生产必须设置 FRONTEND_BASE_URL（例如 http://8.155.136.50），否则浏览器会被送回本机。
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  cors:
+    allowed-origins: "${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080,http://localhost:8081}"

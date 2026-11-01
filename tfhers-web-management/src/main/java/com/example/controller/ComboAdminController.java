@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/combos")
-@CrossOrigin(origins = "*")
 public class ComboAdminController {
 
     @Autowired

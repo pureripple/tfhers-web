@@ -9,6 +9,7 @@ import com.example.pojo.GameAchievementSchema;
 import com.example.service.UserService;
 import com.example.util.JwtUtil;
 import com.example.util.OssUtil;
+import com.example.util.SteamBindRedirect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/user")
-@CrossOrigin(origins = "*")
 public class UserController {
     private static final ObjectMapper JSON = new ObjectMapper();
 
@@ -62,6 +62,10 @@ public class UserController {
 
     @Value("${steam.realm}")
     private String steamRealm;
+
+    /** 前端站点根，对应 FRONTEND_BASE_URL / tfhers.frontend.base-url */
+    @Value("${tfhers.frontend.base-url:http://localhost:5173}")
+    private String frontendBaseUrl;
 
     @Value("${steam.playtime.cache-ttl-minutes:60}")
     private long playtimeCacheTtlMinutes;
@@ -491,9 +495,9 @@ public class UserController {
         Long userId = jwtUtil.getUserIdFromToken(token);
         results result = userService.bindSteam(userId, steamId);
         if (result.getCode() == 200) {
-            // 绑定成功后重定向回前端用户页“我的”
+            // 绑定成功后回到前端设置页。站点根由 FRONTEND_BASE_URL 决定，不再写死 localhost。
             return ResponseEntity.status(302)
-                    .header("Location", "http://localhost:8080/index.html#my")
+                    .header("Location", SteamBindRedirect.successLocation(frontendBaseUrl))
                     .build();
         } else {
             Map<String, Object> resp = new HashMap<>();
