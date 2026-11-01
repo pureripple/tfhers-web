@@ -46,7 +46,7 @@ public class AdminLoginController {
             }
             
             // 生成JWT Token
-            String token = jwtUtil.generateToken(adminUser.getId(), adminUser.getUsername());
+            String token = jwtUtil.generateAdminToken(adminUser.getId(), adminUser.getUsername());
 
             // 更新最后登录信息
             String clientIp = getClientIpAddress(request);
