@@ -22,6 +22,10 @@
           :class="{ 'is-active': step === 'actions' }"
           :hidden="step !== 'actions'"
         >
+          <button type="button" class="auth-entry-back" @click="goBrowse">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            先逛逛
+          </button>
           <h1 id="authEntryTitle" class="auth-entry-card-title">用 tfhers 账号登录</h1>
           <div class="auth-entry-card-actions">
             <button type="button" class="auth-entry-btn auth-entry-btn--primary" @click="step = 'register'">
@@ -39,6 +43,10 @@
           :class="{ 'is-active': step === 'login' }"
           :hidden="step !== 'login'"
         >
+          <button type="button" class="auth-entry-back" @click="goBrowse">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            先逛逛
+          </button>
           <h2 class="auth-entry-card-title auth-entry-card-title--form">登录</h2>
           <form class="auth-entry-form" @submit.prevent="onLogin">
             <div class="form-group">
@@ -93,6 +101,10 @@
           :class="{ 'is-active': step === 'register' }"
           :hidden="step !== 'register'"
         >
+          <button type="button" class="auth-entry-back" @click="goBrowse">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            先逛逛
+          </button>
           <h2 class="auth-entry-card-title auth-entry-card-title--form">注册账号</h2>
           <form class="auth-entry-form" enctype="multipart/form-data" @submit.prevent="onRegister">
             <div class="form-group">
@@ -201,6 +213,11 @@ watch(
   },
   { immediate: true },
 )
+
+function goBrowse() {
+  // Public news — avoid bouncing if redirect pointed at requiresAuth
+  router.replace({ name: 'news' })
+}
 
 async function onLogin() {
   error.value = ''

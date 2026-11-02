@@ -112,9 +112,9 @@ body::after {
         linear-gradient(180deg, rgba(8, 8, 11, 0.88) 0%, rgba(8, 8, 11, 0) 100%);
 }
 
-/* Decorative full-page bg only on login/auth entry; logged-in app uses solid --bg-primary */
-html.tfhers-authed body::before,
-html.tfhers-authed body::after {
+/* Decorative full-page bg ONLY on login gate (tfhers-show-auth-entry); app shell uses solid --bg-primary */
+html:not(.tfhers-show-auth-entry) body::before,
+html:not(.tfhers-show-auth-entry) body::after {
     display: none;
 }
 
@@ -125,7 +125,9 @@ html.tfhers-authed body::after {
     initial-value: 220px;
 }
 /* ========== Logged-in left sidebar (pixiv-like structure, dark theme) ========== */
-html.tfhers-authed {
+/* App chrome vars: logged-in OR anonymous browse (not login gate) */
+html.tfhers-authed,
+html:not(.tfhers-authed):not(.tfhers-show-auth-entry) {
     --nav-height: var(--app-topbar-height);
     --sidebar-width: var(--sidebar-width-expanded);
     /* Match management: snap --sidebar-width; .main-content / .app-topbar / .app-sidebar
@@ -259,7 +261,9 @@ html.tfhers-authed.sidebar-collapsed .app-topbar {
     display: none;
 }
 
-html.tfhers-authed .app-top-actions {
+/* 已登录，或匿名浏览（非登录门）时显示顶栏操作：投稿 / 头像或登录 */
+html.tfhers-authed .app-top-actions,
+html:not(.tfhers-authed):not(.tfhers-show-auth-entry) .app-top-actions {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -275,7 +279,8 @@ html.tfhers-authed .app-top-actions {
     box-shadow: none;
 }
 
-html.tfhers-authed .app-top-actions[hidden] {
+html.tfhers-authed .app-top-actions[hidden],
+html:not(.tfhers-authed):not(.tfhers-show-auth-entry) .app-top-actions[hidden] {
     display: none !important;
 }
 
