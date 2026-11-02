@@ -15,6 +15,7 @@ export interface RoomDetailPayload {
     nickname?: string
     username?: string
     avatarUrl?: string
+    role?: string
     isHost?: boolean
     [key: string]: unknown
   }>
@@ -46,7 +47,7 @@ export function createRoom(payload: { title: string; maxPlayers?: number; passwo
 }
 
 export function joinRoom(id: number, password = '') {
-  return post<unknown>(`/api/rooms/${id}/join`, { password }, { auth: 'user' })
+  return post<Room>(`/api/rooms/${id}/join`, { password }, { auth: 'user' })
 }
 
 export function leaveRoom(id: number) {

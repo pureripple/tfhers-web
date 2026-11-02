@@ -123,7 +123,7 @@ cleanup:
 rooms:
   presence:
     enabled: true
-    timeout-seconds: 45
+    timeout-seconds: ${ROOMS_PRESENCE_TIMEOUT_SECONDS:300}
     sweep-interval-ms: 15000
 
 # 璧涗簨锛氭姤鍚嶆埅姝㈣嚜鍔ㄥ叧鎶ュ悕锛堜笉鑷姩鐢熸垚瀵归樀锛?

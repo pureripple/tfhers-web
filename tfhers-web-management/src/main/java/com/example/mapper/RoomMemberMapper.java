@@ -23,6 +23,9 @@ public interface RoomMemberMapper {
 
     int touchLastSeen(@Param("roomId") Long roomId, @Param("userId") Long userId);
 
+    /** 批量续命：用户在 OPEN/FULL 房中的成员 last_seen_at */
+    int touchLastSeenByUser(@Param("userId") Long userId);
+
     /** 用户在开放房间中的成员记录（至多一条业务约束） */
     RoomMember findOpenMembershipByUser(@Param("userId") Long userId);
 

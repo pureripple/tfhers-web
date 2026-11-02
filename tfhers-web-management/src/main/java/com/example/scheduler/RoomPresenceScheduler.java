@@ -22,7 +22,7 @@ public class RoomPresenceScheduler {
     @Value("${rooms.presence.enabled:true}")
     private boolean enabled;
 
-    @Value("${rooms.presence.timeout-seconds:45}")
+    @Value("${rooms.presence.timeout-seconds:300}")
     private int timeoutSeconds;
 
     @Scheduled(fixedDelayString = "${rooms.presence.sweep-interval-ms:15000}")

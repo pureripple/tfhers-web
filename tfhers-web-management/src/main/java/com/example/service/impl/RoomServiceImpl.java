@@ -42,6 +42,10 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public results listRooms(Long userId) {
+        // 列表轮询续命：登录用户在 OPEN/FULL 房中的成员批量 touch（一次 UPDATE）
+        if (userId != null) {
+            roomMemberMapper.touchLastSeenByUser(userId);
+        }
         List<Room> list = roomMapper.listOpenOrFull();
         List<Room> ordered = new ArrayList<>(list.size());
         Room own = null;

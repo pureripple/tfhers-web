@@ -73,7 +73,7 @@
                     <div v-for="(m, i) in members" :key="m.userId || i" class="room-member-chip">
                       <img v-if="m.avatarUrl" :src="String(m.avatarUrl)" alt="" />
                       <button type="button" class="room-member-name player-name-link" :class="adminNameClass(m)" @click="goPlayerProfile(router, m.userId, m)">{{m.nickname || m.username || ('用户' + m.userId)}}</button>
-                      <span v-if="m.isHost" class="room-member-role">房主</span>
+                      <span v-if="m.isHost || m.role === 'host'" class="room-member-role">房主</span>
                     </div>
                     <p v-if="!members.length" class="room-empty" style="padding:8px">暂无房间</p>
                   </div>
@@ -419,12 +419,38 @@ async function onJoin() {
   }
   acting.value = true
   try {
-    await joinRoom(selectedId.value, password)
+    const room = await joinRoom(selectedId.value, password)
+    // Optimistic writeback so UI flips to in-room before refreshDetail returns.
+    const prev = detail.value
+    const prevMembers = Array.isArray(prev?.members) ? [...prev!.members!] : []
+    const uid = Number((auth.user as { id?: number; userId?: number } | null)?.id
+      ?? (auth.user as { id?: number; userId?: number } | null)?.userId
+      ?? 0)
+    if (uid && !prevMembers.some((m) => Number(m.userId) === uid)) {
+      prevMembers.push({
+        userId: uid,
+        nickname: auth.user?.nickname,
+        username: auth.user?.username,
+        avatarUrl: auth.user?.avatarUrl,
+        role: 'member',
+        isHost: false,
+      })
+    }
+    detail.value = {
+      ...(prev || {}),
+      room: {
+        ...(prev?.room || {}),
+        ...room,
+        joinedByMe: true,
+      },
+      members: prevMembers,
+    }
     flash('已加入房间')
     enteredRoomId.value = selectedId.value
     await load()
     await refreshDetail(selectedId.value)
   } catch (e) {
+    // Wrong password / reject: do not enter in-room UI state.
     flash(e instanceof ApiError ? e.message : '加入失败')
   } finally {
     acting.value = false
