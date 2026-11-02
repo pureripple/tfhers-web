@@ -215,7 +215,9 @@ html.tfhers-authed .sidebar-float-toggle i {
     display: none;
 }
 
-html.tfhers-authed .app-topbar {
+/* 已登录，或匿名浏览（非登录门）时显示顶栏：投稿/登录入口 */
+html.tfhers-authed .app-topbar,
+html:not(.tfhers-authed):not(.tfhers-show-auth-entry) .app-topbar {
     display: flex;
     position: fixed;
     top: 0;
@@ -4702,21 +4704,27 @@ button:focus:not(:focus-visible) {
 }
 
 
-/* ========== 未登录入口页（pixiv 风格） ========== */
-html:not(.tfhers-authed) .app-sidebar,
-html:not(.tfhers-authed) .mobile-topbar,
-html:not(.tfhers-authed) .app-topbar,
-html:not(.tfhers-authed) .sidebar-float-toggle,
-html:not(.tfhers-authed) .sidebar-float-cluster,
-html:not(.tfhers-authed) .sidebar-backdrop,
-html:not(.tfhers-authed) .main-content,
-html:not(.tfhers-authed) #roomsLoginGate,
-html:not(.tfhers-authed) #aiChatLoginGate {
+/* ========== 登录入口：仅 requiresAuth 跳转 /login 时全屏门；匿名可读页可看 main-content ========== */
+/* 默认：未登录也可浏览侧栏与内容；AuthEntry 隐藏 */
+html:not(.tfhers-authed) #authEntryOverlay {
     display: none !important;
 }
 
-html:not(.tfhers-authed) #authEntryOverlay {
-    display: flex;
+/* 仅在登录页（html.tfhers-show-auth-entry）展示 AuthEntry，并隐藏业务壳 */
+html:not(.tfhers-authed).tfhers-show-auth-entry .app-sidebar,
+html:not(.tfhers-authed).tfhers-show-auth-entry .mobile-topbar,
+html:not(.tfhers-authed).tfhers-show-auth-entry .app-topbar,
+html:not(.tfhers-authed).tfhers-show-auth-entry .sidebar-float-toggle,
+html:not(.tfhers-authed).tfhers-show-auth-entry .sidebar-float-cluster,
+html:not(.tfhers-authed).tfhers-show-auth-entry .sidebar-backdrop,
+html:not(.tfhers-authed).tfhers-show-auth-entry .main-content,
+html:not(.tfhers-authed).tfhers-show-auth-entry #roomsLoginGate,
+html:not(.tfhers-authed).tfhers-show-auth-entry #aiChatLoginGate {
+    display: none !important;
+}
+
+html:not(.tfhers-authed).tfhers-show-auth-entry #authEntryOverlay {
+    display: flex !important;
 }
 
 html.tfhers-authed #authEntryOverlay {

@@ -30,7 +30,7 @@
       <span class="sidebar-brand">tfhers</span>
       <div class="mobile-topbar-spacer"></div>
     </div>
-    <header class="app-topbar" :hidden="!userAuth.isLoggedIn">
+    <header class="app-topbar">
       <div class="app-topbar-inner"><div class="app-top-actions">
         <div class="top-post-wrap">
           <button type="button" class="top-post-btn" aria-haspopup="true" :aria-expanded="postMenuOpen ? 'true' : 'false'" @click.stop="togglePostMenu">
@@ -41,6 +41,7 @@
             <button type="button" class="top-post-item" data-post="combo" @click="openCreateCombo">连段</button>
           </div>
         </div>
+        <template v-if="userAuth.isLoggedIn">
         <button type="button" class="top-icon-btn" :title="dmLabel" :aria-label="dmLabel" @click="stubNoBackend(dmLabel)"><i class="fas fa-envelope"></i></button>
         <button type="button" class="top-icon-btn" :title="notifyLabel" :aria-label="notifyLabel" @click="stubNoBackend(notifyLabel)"><i class="fas fa-bell"></i></button>
         <div class="top-avatar-wrap">
@@ -59,6 +60,15 @@
             <div class="tap-footer"><button type="button" class="tap-action-btn tap-logout-btn" role="menuitem" @click="onLogout"><i class="fas fa-sign-out-alt"></i><span>退出登录</span></button></div>
           </div>
         </div>
+        </template>
+        <button
+          v-else
+          type="button"
+          class="top-icon-btn top-login-btn"
+          title="登录"
+          aria-label="登录"
+          @click="goLogin()"
+        ><i class="fas fa-sign-in-alt"></i><span class="top-post-label">登录</span></button>
       </div></div>
     </header>
     <main class="main-content">
@@ -159,7 +169,15 @@ async function refreshMyRating() {
   }
 }
 function isActive(item: (typeof nav)[number]) { return item.match.includes(String(route.name || '')) }
-function applyHtmlClasses() { const rootEl = document.documentElement; rootEl.classList.toggle('tfhers-authed', userAuth.isLoggedIn); rootEl.classList.toggle('sidebar-collapsed', collapsed.value); rootEl.classList.toggle('sidebar-open', sidebarOpenMobile.value); document.title = "tfhers-\"Them's Fightin' Herds\"玩家们的社区" }
+function applyHtmlClasses() {
+  const rootEl = document.documentElement
+  rootEl.classList.toggle('tfhers-authed', userAuth.isLoggedIn)
+  // 仅登录页展示 AuthEntry 全屏门；匿名可读页保留 main-content
+  rootEl.classList.toggle('tfhers-show-auth-entry', !userAuth.isLoggedIn && route.name === 'login')
+  rootEl.classList.toggle('sidebar-collapsed', collapsed.value)
+  rootEl.classList.toggle('sidebar-open', sidebarOpenMobile.value)
+  document.title = "tfhers-\"Them's Fightin' Herds\"玩家们的社区"
+}
 function persistCollapsed() { try { localStorage.setItem(SIDEBAR_KEY, collapsed.value ? '1' : '0') } catch { /* ignore */ } }
 function toggleSidebar() { if (window.matchMedia('(max-width: 768px)').matches) { sidebarOpenMobile.value = !sidebarOpenMobile.value } else { collapsed.value = !collapsed.value; persistCollapsed() } applyHtmlClasses() }
 function openMobile() { sidebarOpenMobile.value = true; applyHtmlClasses() }
@@ -184,8 +202,28 @@ function goPage(name: 'profile' | 'data' | 'manuscripts' | 'settings') {
   }
   try { window.scrollTo({ top: 0, behavior: 'smooth' }) } catch { window.scrollTo(0, 0) }
 }
-function openCreateArticle() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) { window.alert('请先登录后再发布'); return }; createArticleOpen.value = true }
-function openCreateCombo() { postMenuOpen.value = false; if (!userAuth.isLoggedIn) { window.alert('请先登录后再投稿'); return }; createComboOpen.value = true }
+function goLogin(redirect?: string) {
+  postMenuOpen.value = false
+  accountOpen.value = false
+  const target = redirect || route.fullPath || '/'
+  router.push({ name: 'login', query: { redirect: target } })
+}
+function openCreateArticle() {
+  postMenuOpen.value = false
+  if (!userAuth.isLoggedIn) {
+    goLogin(route.fullPath || '/')
+    return
+  }
+  createArticleOpen.value = true
+}
+function openCreateCombo() {
+  postMenuOpen.value = false
+  if (!userAuth.isLoggedIn) {
+    goLogin(route.fullPath || '/')
+    return
+  }
+  createComboOpen.value = true
+}
 function openFeedback() { accountOpen.value = false; if (!userAuth.isLoggedIn) return; feedbackOpen.value = true }
 function onArticleCreated() {
   try { window.dispatchEvent(new CustomEvent('tfhers:articles-changed')) } catch { /* ignore */ }
@@ -214,15 +252,26 @@ watch(
     if (ok) refreshMyRating()
   },
 )
+function onUserSessionCleared() {
+  userAuth.hydrate()
+  applyHtmlClasses()
+}
 onMounted(() => {
   userAuth.hydrate()
   applyHtmlClasses()
   document.addEventListener('click', onDocClick)
   document.addEventListener('keydown', onKey)
+  window.addEventListener('tfhers:user-session-cleared', onUserSessionCleared)
   refreshFeedbackBadge()
   if (userAuth.isLoggedIn) refreshMyRating()
 })
-onUnmounted(() => { document.documentElement.classList.remove('tfhers-authed', 'sidebar-collapsed', 'sidebar-open'); document.removeEventListener('click', onDocClick); document.removeEventListener('keydown', onKey) })
+onUnmounted(() => {
+  document.documentElement.classList.remove('tfhers-authed', 'tfhers-show-auth-entry', 'sidebar-collapsed', 'sidebar-open')
+  document.removeEventListener('click', onDocClick)
+  document.removeEventListener('keydown', onKey)
+  window.removeEventListener('tfhers:user-session-cleared', onUserSessionCleared)
+})
+watch(() => route.name, () => { applyHtmlClasses() })
 watch(() => userAuth.isLoggedIn, () => { applyHtmlClasses(); if (!userAuth.isLoggedIn) { accountOpen.value = false; postMenuOpen.value = false; feedbackUnread.value = 0 } else { refreshFeedbackBadge() } })
 watch([collapsed, sidebarOpenMobile], applyHtmlClasses)
 </script>

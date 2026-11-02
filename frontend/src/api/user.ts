@@ -241,11 +241,11 @@ export async function uploadComboFile(file: File): Promise<string> {
 }
 
 export function fetchPublicProfile(userId: number | string) {
-  return get<UserProfile>(`/api/user/${userId}/public`, { auth: 'user' })
+  return get<UserProfile>(`/api/user/${userId}/public`, { auth: 'optional' })
 }
 
 export function fetchCombosByUser(userId: number | string) {
-  return get<ComboItem[]>(`/api/combos/by-user/${userId}`, { auth: 'user' })
+  return get<ComboItem[]>(`/api/combos/by-user/${userId}`, { auth: 'optional' })
 }
 
 async function uploadUserImage(

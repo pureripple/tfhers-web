@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import UserLayout from '@/layouts/UserLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
-import { useAdminAuthStore } from '@/stores/auth'
+import { useAdminAuthStore, useUserAuthStore } from '@/stores/auth'
 
 declare module 'vue-router' {
   interface RouteMeta {
     requiresAdmin?: boolean
+    requiresAuth?: boolean
     guestOnly?: boolean
   }
 }
@@ -24,16 +25,16 @@ const router = createRouter({
       component: UserLayout,
       children: [
         { path: '', name: 'news', component: () => import('@/views/user/NewsView.vue') },
-        { path: 'lobby', name: 'lobby', component: () => import('@/views/user/LobbyView.vue') },
+        { path: 'lobby', name: 'lobby', component: () => import('@/views/user/LobbyView.vue'), meta: { requiresAuth: true } },
         { path: 'rankings', name: 'rankings', component: () => import('@/views/user/RankingsView.vue') },
         { path: 'tournaments', name: 'tournaments', component: () => import('@/views/user/TournamentsView.vue') },
         { path: 'characters', name: 'characters', component: () => import('@/views/user/CharactersView.vue') },
-        { path: 'ai-chat', name: 'ai-chat', component: () => import('@/views/user/AiChatView.vue') },
-        { path: 'profile', name: 'profile', component: () => import('@/views/user/ProfileView.vue') },
+        { path: 'ai-chat', name: 'ai-chat', component: () => import('@/views/user/AiChatView.vue'), meta: { requiresAuth: true } },
+        { path: 'profile', name: 'profile', component: () => import('@/views/user/ProfileView.vue'), meta: { requiresAuth: true } },
         { path: 'profile/:userId', name: 'profile-user', component: () => import('@/views/user/ProfileView.vue') },
-        { path: 'data', name: 'data', component: () => import('@/views/user/DataView.vue') },
-        { path: 'manuscripts', name: 'manuscripts', component: () => import('@/views/user/ManuscriptsView.vue') },
-        { path: 'settings', name: 'settings', component: () => import('@/views/user/SettingsView.vue') },
+        { path: 'data', name: 'data', component: () => import('@/views/user/DataView.vue'), meta: { requiresAuth: true } },
+        { path: 'manuscripts', name: 'manuscripts', component: () => import('@/views/user/ManuscriptsView.vue'), meta: { requiresAuth: true } },
+        { path: 'settings', name: 'settings', component: () => import('@/views/user/SettingsView.vue'), meta: { requiresAuth: true } },
         {
           path: 'login',
           name: 'login',
@@ -72,6 +73,7 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const adminAuth = useAdminAuthStore()
+  const userAuth = useUserAuthStore()
 
   if (to.matched.some((r) => r.meta.requiresAdmin) && !adminAuth.isLoggedIn) {
     return {
@@ -81,7 +83,20 @@ router.beforeEach((to) => {
   }
 
   if (to.name === 'admin-login' && adminAuth.isLoggedIn) {
-    return { path: '/admin' }
+    const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : '/admin'
+    return redirect || '/admin'
+  }
+
+  if (to.matched.some((r) => r.meta.requiresAuth) && !userAuth.isLoggedIn) {
+    return {
+      name: 'login',
+      query: { redirect: to.fullPath },
+    }
+  }
+
+  if (to.name === 'login' && to.meta.guestOnly && userAuth.isLoggedIn) {
+    const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : '/'
+    return redirect || '/'
   }
 
   return true

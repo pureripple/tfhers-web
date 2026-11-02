@@ -1,7 +1,7 @@
 import type { ApiResult } from './types'
 import { ApiError } from './types'
 
-export type AuthMode = 'user' | 'admin' | 'none'
+export type AuthMode = 'user' | 'admin' | 'none' | 'optional'
 
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
   auth?: AuthMode
@@ -28,9 +28,79 @@ function readAdminToken(): string | null {
 
 /** Resolve JWT for Authorization header; shared by non-JSON / alternate-envelope clients (e.g. AI). */
 export function resolveAuthHeader(auth: AuthMode = 'none'): string | null {
-  if (auth === 'user') return readUserToken()
+  if (auth === 'user' || auth === 'optional') return readUserToken()
   if (auth === 'admin') return readAdminToken()
   return null
+}
+
+let handling401 = false
+
+function isAuthEndpoint(path: string): boolean {
+  const p = path.split('?')[0]
+  return (
+    p.endsWith('/api/user/login') ||
+    p.endsWith('/api/user/register') ||
+    p.endsWith('/api/admin/login')
+  )
+}
+
+function clearUserSession() {
+  try {
+    localStorage.removeItem(USER_KEY)
+  } catch {
+    /* ignore */
+  }
+  try {
+    window.dispatchEvent(new CustomEvent('tfhers:user-session-cleared'))
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearAdminSession() {
+  try {
+    localStorage.removeItem(ADMIN_TOKEN_KEY)
+  } catch {
+    /* ignore */
+  }
+  try {
+    window.dispatchEvent(new CustomEvent('tfhers:admin-session-cleared'))
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Global 401: clear session, tip, redirect to login (keep redirect). Skip login APIs / loops. */
+function handleUnauthorized(path: string, auth: AuthMode) {
+  if (auth !== 'user' && auth !== 'admin') return
+  if (isAuthEndpoint(path)) return
+  if (handling401) return
+  handling401 = true
+  try {
+    const here = typeof window !== 'undefined' ? window.location.pathname + window.location.search + window.location.hash : '/'
+    if (auth === 'admin') {
+      clearAdminSession()
+      if (!here.startsWith('/admin/login')) {
+        window.alert('登录已过期')
+        const q = encodeURIComponent(here.startsWith('/admin') ? here : '/admin')
+        window.location.assign('/admin/login?redirect=' + q)
+      }
+      return
+    }
+    // user (and default for authenticated calls)
+    clearUserSession()
+    if (!here.startsWith('/login') && !here.startsWith('/admin')) {
+      window.alert('登录已过期')
+      const q = encodeURIComponent(here || '/')
+      window.location.assign('/login?redirect=' + q)
+    } else if (here.startsWith('/login')) {
+      // already on login; just clear
+    }
+  } finally {
+    window.setTimeout(() => {
+      handling401 = false
+    }, 1500)
+  }
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -72,6 +142,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       (errLabel && errLabel.toLowerCase() !== 'bad request' ? errLabel : '') ||
       errLabel ||
       ('HTTP ' + code)
+    if (code === 401) {
+      handleUnauthorized(path, auth)
+    }
     throw new ApiError(code, msg)
   }
   return payload.data

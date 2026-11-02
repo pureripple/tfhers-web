@@ -2,7 +2,7 @@ import { del, get, post } from './http'
 import type { Tournament } from './types'
 
 export function fetchTournaments() {
-  return get<Tournament[]>('/api/tournaments', { auth: 'user' })
+  return get<Tournament[]>('/api/tournaments', { auth: 'optional' })
 }
 
 export function fetchTournament(id: number | string) {
@@ -11,11 +11,11 @@ export function fetchTournament(id: number | string) {
     registrations?: unknown[]
     bracket?: unknown
     [key: string]: unknown
-  }>(`/api/tournaments/${id}`, { auth: 'user' })
+  }>(`/api/tournaments/${id}`, { auth: 'optional' })
 }
 
 export function fetchTournamentBracket(id: number | string) {
-  return get<unknown>(`/api/tournaments/${id}/bracket`, { auth: 'user' })
+  return get<unknown>(`/api/tournaments/${id}/bracket`, { auth: 'optional' })
 }
 
 export function registerTournament(id: number | string) {

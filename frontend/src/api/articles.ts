@@ -1,9 +1,9 @@
 import { get, post, del } from './http'
 import { ApiError, type Article } from './types'
 
-/** Prefer user Bearer when logged in (optional for public list/detail). */
+/** Public list: optional Bearer (liked extras if logged in); 401 must not force logout. */
 export function fetchArticles() {
-  return get<Article[]>('/api/articles/all', { auth: 'user' })
+  return get<Article[]>('/api/articles/all', { auth: 'optional' })
 }
 
 export type ArticleDetailPayload = Article & {
@@ -15,7 +15,7 @@ export type ArticleDetailPayload = Article & {
 export async function fetchArticle(id: number | string): Promise<ArticleDetailPayload> {
   const data = await get<
     Article | { article?: Article; likeCount?: number; like_count?: number; liked?: boolean }
-  >(`/api/articles/${id}`, { auth: 'user' })
+  >(`/api/articles/${id}`, { auth: 'optional' })
   if (data && typeof data === 'object' && 'article' in data && (data as { article?: Article }).article) {
     const wrap = data as {
       article: Article
@@ -72,7 +72,7 @@ export function likeArticle(id: number | string) {
 }
 
 export function fetchArticleComments(id: number | string) {
-  return get<unknown[]>(`/api/articles/${id}/comments`, { auth: 'user' })
+  return get<unknown[]>(`/api/articles/${id}/comments`, { auth: 'optional' })
 }
 
 export function postArticleComment(

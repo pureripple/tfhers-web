@@ -364,7 +364,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { fetchArticle, fetchArticles, fetchArticleComments, likeArticle, postArticleComment, reportArticle, reportComment, uploadArticleContentImage } from '@/api/articles'
 import { useUserAuthStore } from '@/stores/auth'
 import { ApiError, type Article } from '@/api/types'
@@ -374,8 +374,16 @@ import { goPlayerProfile } from '@/utils/playerProfile'
 import { formatArticleContentHtml, formatCommentContentHtml } from '@/utils/contentHtml'
 
 const router = useRouter()
+const route = useRoute()
 
 const auth = useUserAuthStore()
+
+function ensureLogin(): boolean {
+  if (auth.isLoggedIn) return true
+  router.push({ name: 'login', query: { redirect: route.fullPath || '/' } })
+  return false
+}
+
 const items = ref<Article[]>([])
 const loading = ref(false)
 const error = ref('')
@@ -452,10 +460,7 @@ function onCommentImage(ev: Event) {
   commentImageName.value = file.name
 }
 async function onReportComment(c: Record<string, unknown>) {
-  if (!auth.isLoggedIn) {
-    window.alert('请先登录')
-    return
-  }
+  if (!ensureLogin()) return
   const id = Number(c.id)
   if (!Number.isFinite(id)) return
   const reason = window.prompt('请输入举报原因（可选）') || ''
@@ -547,7 +552,7 @@ async function loadComments(id: number) {
 
 async function onLike() {
   if (!detail.value) return
-  if (!auth.isLoggedIn) { window.alert('请先登录'); return }
+  if (!ensureLogin()) return
   acting.value = true
   try {
     await likeArticle(detail.value.id)
@@ -564,7 +569,7 @@ async function onLike() {
 
 async function onReport() {
   if (!detail.value) return
-  if (!auth.isLoggedIn) { window.alert('请先登录'); return }
+  if (!ensureLogin()) return
   const reason = window.prompt('请输入举报理由', '') || ''
   acting.value = true
   try {
@@ -579,10 +584,7 @@ async function onReport() {
 
 async function onComment() {
   if (!detail.value?.id) return
-  if (!auth.isLoggedIn) {
-    window.alert('请先登录')
-    return
-  }
+  if (!ensureLogin()) return
   if (!commentText.value && !commentImageFile.value) return
   acting.value = true
   try {

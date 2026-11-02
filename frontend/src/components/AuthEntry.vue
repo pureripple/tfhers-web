@@ -233,7 +233,8 @@ async function onRegister() {
       email: regEmail.value || undefined,
     })
     if (route.name === 'login') {
-      await router.replace('/')
+      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+      await router.replace(redirect || '/')
     }
   } catch (e) {
     error.value = e instanceof ApiError ? e.message : '注册失败，请稍后重试'
