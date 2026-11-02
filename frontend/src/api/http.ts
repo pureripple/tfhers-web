@@ -1,5 +1,6 @@
 import type { ApiResult } from './types'
 import { ApiError } from './types'
+import { pathRequiresUserAuth } from '@/utils/splash'
 
 export type AuthMode = 'user' | 'admin' | 'none' | 'optional'
 
@@ -70,31 +71,34 @@ function clearAdminSession() {
   }
 }
 
-/** Global 401: clear session, tip, redirect to login (keep redirect). Skip login APIs / loops. */
+/** Global 401: always clear session. Force login redirect only on requiresAuth routes (or admin). Public pages keep browsing after bad token. */
 function handleUnauthorized(path: string, auth: AuthMode) {
   if (auth !== 'user' && auth !== 'admin') return
   if (isAuthEndpoint(path)) return
   if (handling401) return
   handling401 = true
   try {
+    const herePath = typeof window !== 'undefined' ? window.location.pathname : '/'
     const here = typeof window !== 'undefined' ? window.location.pathname + window.location.search + window.location.hash : '/'
     if (auth === 'admin') {
       clearAdminSession()
-      if (!here.startsWith('/admin/login')) {
+      if (!herePath.startsWith('/admin/login')) {
         window.alert('登录已过期')
         const q = encodeURIComponent(here.startsWith('/admin') ? here : '/admin')
         window.location.assign('/admin/login?redirect=' + q)
       }
       return
     }
-    // user (and default for authenticated calls)
+    // user: clear bad token always
     clearUserSession()
-    if (!here.startsWith('/login') && !here.startsWith('/admin')) {
+    if (herePath.startsWith('/login') || herePath.startsWith('/admin') || herePath.startsWith('/splash')) {
+      return
+    }
+    // Only kick to login when the current page itself requires auth
+    if (pathRequiresUserAuth(herePath)) {
       window.alert('登录已过期')
       const q = encodeURIComponent(here || '/')
       window.location.assign('/login?redirect=' + q)
-    } else if (here.startsWith('/login')) {
-      // already on login; just clear
     }
   } finally {
     window.setTimeout(() => {

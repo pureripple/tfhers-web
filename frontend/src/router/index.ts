@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import UserLayout from '@/layouts/UserLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import { useAdminAuthStore, useUserAuthStore } from '@/stores/auth'
+import { hasSeenSplash } from '@/utils/splash'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -20,6 +21,12 @@ const router = createRouter({
     return false
   },
   routes: [
+    {
+      path: '/splash',
+      name: 'splash',
+      component: () => import('@/views/user/SplashView.vue'),
+      meta: { guestOnly: true },
+    },
     {
       path: '/',
       component: UserLayout,
@@ -85,6 +92,27 @@ router.beforeEach((to) => {
   if (to.name === 'admin-login' && adminAuth.isLoggedIn) {
     const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : '/admin'
     return redirect || '/admin'
+  }
+
+  // Logged-in users never see splash
+  if (to.name === 'splash' && userAuth.isLoggedIn) {
+    const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : '/'
+    return redirect || '/'
+  }
+
+  // Guest first entry → splash (skip admin / login / splash itself; once per tab)
+  const isAdminArea = to.path.startsWith('/admin')
+  if (
+    !userAuth.isLoggedIn &&
+    !isAdminArea &&
+    to.name !== 'splash' &&
+    to.name !== 'login' &&
+    !hasSeenSplash()
+  ) {
+    return {
+      name: 'splash',
+      query: { redirect: to.fullPath },
+    }
   }
 
   if (to.matched.some((r) => r.meta.requiresAuth) && !userAuth.isLoggedIn) {
