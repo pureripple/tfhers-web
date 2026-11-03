@@ -835,33 +835,39 @@ function animateSnapTo(targetY: number) {
   snapRaf = window.requestAnimationFrame(step)
 }
 
-function onWheelSnap(e: WheelEvent) {
-  if (!fxReady.value) return
-  if (e.ctrlKey) return // 保留浏览器缩放手势
-  // more 固定一屏、无页内滚动，滚轮一律交给段吸附
-
-  const dy = e.deltaY
-  if (Math.abs(dy) < SNAP_DELTA_MIN) return
+/** 处理一次滚轮意图。返回 true 表示已被吸附动画接管（调用方应 preventDefault）。 */
+function snapByWheel(dy: number): boolean {
+  if (!fxReady.value) return false
+  if (Math.abs(dy) < SNAP_DELTA_MIN) return false
 
   // 动画中或冷却中：吞掉连触，避免连跳
-  if (snapAnimating || performance.now() < snapCooldownUntil) {
-    e.preventDefault()
-    return
-  }
+  if (snapAnimating || performance.now() < snapCooldownUntil) return true
 
   const scroller = resolveSnapScroller()
   const anchors = sectionAnchorYs(scroller)
-  if (anchors.length < 2) return
+  if (anchors.length < 2) return false
 
   const idx = currentSectionIndex(anchors, scroller.getY())
   const nextIdx = dy > 0 ? Math.min(anchors.length - 1, idx + 1) : Math.max(0, idx - 1)
-  if (nextIdx === idx) {
-    // 已在端点：不拦截，避免卡死
-    return
-  }
+  // 已在端点：不接管，交给原生滚动（否则会卡死）
+  if (nextIdx === idx) return false
 
-  e.preventDefault()
   animateSnapTo(anchors[nextIdx])
+  return true
+}
+
+function onWheelSnap(e: WheelEvent) {
+  if (!fxReady.value) return
+  if (e.ctrlKey) return // 保留浏览器缩放手势
+
+  if (snapByWheel(e.deltaY)) e.preventDefault()
+}
+
+/** 第二页在 iframe 里，滚轮事件到不了父窗口，由子页 postMessage 转发过来 */
+function onChildWheelMessage(ev: MessageEvent) {
+  const data = ev.data as { type?: string; deltaY?: unknown } | null
+  if (!data || data.type !== 'tfhers:wheel') return
+  snapByWheel(Number(data.deltaY) || 0)
 }
 
 function goLogin() {
@@ -894,6 +900,8 @@ onMounted(() => {
   window.addEventListener('resize', onScroll, { passive: true })
   // wheel 需 preventDefault，不能 passive
   window.addEventListener('wheel', onWheelSnap, { passive: false, capture: true })
+  // 第二页 iframe 内滚轮回传
+  window.addEventListener('message', onChildWheelMessage)
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -943,6 +951,7 @@ onUnmounted(() => {
   }
   window.removeEventListener('resize', onScroll)
   window.removeEventListener('wheel', onWheelSnap, true)
+  window.removeEventListener('message', onChildWheelMessage)
   cancelSnapAnim()
   stopFloatSim()
   if (floatRo) {

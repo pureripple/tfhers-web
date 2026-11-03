@@ -5403,7 +5403,14 @@ html.tfhers-authed #authEntryOverlay {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    background: transparent;
+    /* 与未登录首页同一张背景：AttractBG 合成图 + 轻度压暗保证卡片可读 */
+    background-color: #08040c;
+    background-image:
+        linear-gradient(180deg, rgba(6, 2, 10, .58) 0%, rgba(6, 2, 10, .22) 42%, rgba(6, 2, 10, .68) 100%),
+        url('/images/AttractBG.webp');
+    background-repeat: no-repeat, no-repeat;
+    background-position: center center, center center;
+    background-size: cover, cover;
     pointer-events: auto;
 }
 

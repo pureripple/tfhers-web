@@ -256,6 +256,15 @@
     if (!rafId) rafId = requestAnimationFrame(tick);
   });
 
+  /* 本页没有可滚动内容，滚轮会被 iframe 吞掉导致父页面无法上滑 →
+     把滚轮转给父窗口，由它做段吸附 */
+  window.addEventListener('wheel', e => {
+    if (e.ctrlKey) return;
+    try {
+      window.parent.postMessage({ type: 'tfhers:wheel', deltaY: e.deltaY }, location.origin);
+    } catch (_) { /* 跨域或父窗口不可用时忽略 */ }
+  }, { passive: true });
+
   function tick() {
     pointer.x += (pointer.tx - pointer.x) * 0.065;
     pointer.y += (pointer.ty - pointer.y) * 0.065;
