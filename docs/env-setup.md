@@ -23,7 +23,7 @@
 
 ## 生产 Steam 绑定（tfhers.cn）
 
-写入 `/etc/tfhers/tfhers.env`（或等价的 systemd `EnvironmentFile`）：
+写入 `/opt/tfhers/backend/backend.env`（systemd `EnvironmentFile`，线上实际路径）：
 
 ```
 STEAM_RETURN_URL=http://tfhers.cn/api/user/steam/callback
@@ -69,7 +69,20 @@ Nginx 把 `http://tfhers.cn/api/` 反代到 management `:8081`，所以上面的
 
 ## Linux 生产（systemd EnvironmentFile）
 
-见同目录说明中的「Linux CentOS Stream 9」步骤，或父代理给出的操作清单：把密钥写在 `/etc/tfhers/tfhers.env`（权限 600），在 service 里 `EnvironmentFile=-/etc/tfhers/tfhers.env`。
+**线上实际位置是 `/opt/tfhers/backend/backend.env`**（不是 `/etc/tfhers/tfhers.env`，后者在这台服务器上并不存在）。
+systemd unit 用 `EnvironmentFile=/opt/tfhers/backend/backend.env` 注入。改完必须 `systemctl restart tfhers-management` 才生效。
+
+```bash
+# 确认真正生效的注入方式（EnvironmentFile 还是内联 Environment）
+systemctl cat tfhers-management | grep -iE 'Environment|ExecStart'
+
+# 权限必须是 600，且只有 root 可读
+chmod 600 /opt/tfhers/backend/backend.env
+ls -l /opt/tfhers/backend/backend.env
+```
+
+> 这个文件在**服务器上**，不在仓库里（`.gitignore` 已忽略）。轮换任何 AccessKey / 密码后，
+> 除了改这里，还要重启服务；否则进程内存里仍是旧值，上传等功能会报 `InvalidAccessKeyId`。
 
 ## CORS 白名单（P0）
 

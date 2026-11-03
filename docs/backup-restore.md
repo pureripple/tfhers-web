@@ -13,7 +13,7 @@
 本仓库默认库名 `tfhers`、用户 `root`，但生产可能通过环境变量改过。先看真实值：
 
 ```bash
-grep -E '^TFHERS_DB_(URL|USERNAME|PASSWORD)=' /etc/tfhers/tfhers.env
+grep -E '^TFHERS_DB_(URL|USERNAME|PASSWORD)=' /opt/tfhers/backend/backend.env
 ```
 
 > 这一行会打印数据库密码。**不要**把输出贴到聊天/issue 里。
