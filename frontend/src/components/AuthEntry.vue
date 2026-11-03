@@ -28,10 +28,10 @@
           </button>
           <h1 id="authEntryTitle" class="auth-entry-card-title">用 tfhers 账号登录</h1>
           <div class="auth-entry-card-actions">
-            <button type="button" class="auth-entry-btn auth-entry-btn--primary" @click="step = 'register'">
+            <button type="button" class="auth-entry-btn auth-entry-btn--primary" @click="goRegisterPage">
               注册账号
             </button>
-            <button type="button" class="auth-entry-btn auth-entry-btn--secondary" @click="step = 'login'">
+            <button type="button" class="auth-entry-btn auth-entry-btn--secondary" @click="goLoginPage">
               登录
             </button>
           </div>
@@ -91,7 +91,7 @@
           </form>
           <p class="auth-entry-switch">
             还没有账号？
-            <a href="#" @click.prevent="step = 'register'">立即注册</a>
+            <a href="#" @click.prevent="goRegisterPage">立即注册</a>
           </p>
         </div>
 
@@ -164,7 +164,7 @@
           </form>
           <p class="auth-entry-switch">
             已有账号？
-            <a href="#" @click.prevent="step = 'login'">立即登录</a>
+            <a href="#" @click.prevent="goLoginPage">立即登录</a>
           </p>
         </div>
       </div>
@@ -209,14 +209,30 @@ const loading = ref(false)
 watch(
   () => route.name,
   (name) => {
-    if (name === 'login') step.value = 'login'
+    error.value = ''
+    if (name === 'register') step.value = 'register'
+    else if (name === 'login') step.value = 'login'
   },
   { immediate: true },
 )
 
+function redirectQuery(): Record<string, string> {
+  const r = route.query.redirect
+  return typeof r === 'string' && r ? { redirect: r } : {}
+}
+
+function goLoginPage() {
+  router.push({ name: 'login', query: redirectQuery() })
+}
+
+function goRegisterPage() {
+  router.push({ name: 'register', query: redirectQuery() })
+}
+
 function goBrowse() {
-  // Public news — avoid bouncing if redirect pointed at requiresAuth
-  router.replace({ name: 'news' })
+  // 「先逛逛」回到未登录访客首页（/ 由 HomeGateView 渲染 GuestHomeView）。
+  // 显式不带 redirect，避免把刚才的 requiresAuth 目标再带回来弹回去。
+  router.replace({ name: 'home' }).catch(() => {})
 }
 
 async function onLogin() {
@@ -225,7 +241,7 @@ async function onLogin() {
   try {
     await userAuth.login(loginUsername.value, loginPassword.value)
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
-    if (route.name === 'login') {
+    if (route.name === 'login' || route.name === 'register') {
       await router.replace(redirect || '/')
     }
   } catch (e) {
@@ -249,7 +265,7 @@ async function onRegister() {
       password: regPassword.value,
       email: regEmail.value || undefined,
     })
-    if (route.name === 'login') {
+    if (route.name === 'login' || route.name === 'register') {
       const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
       await router.replace(redirect || '/')
     }

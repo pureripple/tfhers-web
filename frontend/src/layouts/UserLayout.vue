@@ -103,7 +103,7 @@ const accountLabel = '账户'
 const menuLabel = '账户菜单'
 
 const nav = [
-  { to: '/', label: '资讯', icon: 'fas fa-newspaper', match: ['news'] },
+  { to: '/news', label: '资讯', icon: 'fas fa-newspaper', match: ['news', 'home'] },
   { to: '/characters', label: '教程', icon: 'fas fa-book-open', match: ['characters'] },
   { to: '/tournaments', label: '赛事', icon: 'fas fa-trophy', match: ['tournaments'] },
   { to: '/lobby', label: '大厅', icon: 'fas fa-door-open', match: ['lobby'] },
@@ -173,7 +173,12 @@ function applyHtmlClasses() {
   const rootEl = document.documentElement
   rootEl.classList.toggle('tfhers-authed', userAuth.isLoggedIn)
   // 仅登录页展示 AuthEntry 全屏门；匿名可读页保留 main-content
-  rootEl.classList.toggle('tfhers-show-auth-entry', !userAuth.isLoggedIn && route.name === 'login')
+  rootEl.classList.toggle('tfhers-show-auth-entry', !userAuth.isLoggedIn && (route.name === 'login' || route.name === 'register'))
+  // 未登录根路径访客首页：隐藏业务壳，保留 main 放 GuestHome
+  rootEl.classList.toggle(
+    'tfhers-guest-home',
+    !userAuth.isLoggedIn && route.name === 'home',
+  )
   rootEl.classList.toggle('sidebar-collapsed', collapsed.value)
   rootEl.classList.toggle('sidebar-open', sidebarOpenMobile.value)
   document.title = "tfhers-\"Them's Fightin' Herds\"玩家们的社区"
@@ -239,7 +244,24 @@ function onComboCreated() {
 
 function onFeedbackUnread(n: number) { feedbackUnread.value = n }
 async function refreshFeedbackBadge() { if (!userAuth.isLoggedIn) { feedbackUnread.value = 0; return } try { const data = await fetchFeedbackUnreadCount(); feedbackUnread.value = Number(data?.count) || 0 } catch { feedbackUnread.value = 0 } }
-function onLogout() { accountOpen.value = false; postMenuOpen.value = false; createArticleOpen.value = false; createComboOpen.value = false; feedbackOpen.value = false; userAuth.logout(); applyHtmlClasses() }
+async function onLogout() {
+  accountOpen.value = false
+  postMenuOpen.value = false
+  createArticleOpen.value = false
+  createComboOpen.value = false
+  feedbackOpen.value = false
+  userAuth.logout()
+  applyHtmlClasses()
+  // 退出登录后回到未登录访客首页（/ → HomeGateView → GuestHomeView）
+  if (route.name !== 'home') {
+    try {
+      await router.replace({ name: 'home' })
+    } catch {
+      /* 跳转失败不影响已完成的登出 */
+    }
+  }
+  try { window.scrollTo(0, 0) } catch { /* ignore */ }
+}
 function onDocClick(e: MouseEvent) { const t = e.target as HTMLElement | null; if (!t?.closest('.top-avatar-wrap')) accountOpen.value = false; if (!t?.closest('.top-post-wrap')) postMenuOpen.value = false }
 function onKey(e: KeyboardEvent) { if (e.key === 'Escape') { postMenuOpen.value = false; accountOpen.value = false; feedbackOpen.value = false; createArticleOpen.value = false; createComboOpen.value = false } }
 
@@ -266,7 +288,7 @@ onMounted(() => {
   if (userAuth.isLoggedIn) refreshMyRating()
 })
 onUnmounted(() => {
-  document.documentElement.classList.remove('tfhers-authed', 'tfhers-show-auth-entry', 'sidebar-collapsed', 'sidebar-open')
+  document.documentElement.classList.remove('tfhers-authed', 'tfhers-show-auth-entry', 'tfhers-guest-home', 'sidebar-collapsed', 'sidebar-open')
   document.removeEventListener('click', onDocClick)
   document.removeEventListener('keydown', onKey)
   window.removeEventListener('tfhers:user-session-cleared', onUserSessionCleared)
