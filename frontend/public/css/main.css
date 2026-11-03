@@ -1,4 +1,4 @@
-/* 蹄斗族群助手 - 暗色主题主样式文件 */
+﻿/* 蹄斗族群助手 - 暗色主题主样式文件 */
 
 /* 重置和基础样式 */
 * {
@@ -4793,8 +4793,7 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     z-index: 40;
     display: flex;
     align-items: center;
-    /* 访客首页只保留右上角登录按钮，其余内容交给背景图本身 */
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 14px 22px;
     box-sizing: border-box;
     background-color: rgba(0, 0, 0, 0);
@@ -5069,8 +5068,7 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     position: relative;
     z-index: 1;
     flex: 0 0 auto;
-    /* 中间内容已移除，用 auto 上边距把它压到屏幕底部 */
-    margin: auto 0 0;
+    margin: 0;
     padding: 0 0 22px;
     text-align: center;
     font-size: 0.78rem;

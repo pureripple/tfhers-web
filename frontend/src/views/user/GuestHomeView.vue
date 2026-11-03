@@ -4,6 +4,10 @@
       class="guest-home-top"
       :style="{ backgroundColor: `rgba(0, 0, 0, ${topBarAlpha})` }"
     >
+      <RouterLink :to="{ name: 'home' }" class="guest-home-brand" aria-label="TFHers 首页">
+        <img src="/images/logo.png" alt="" class="guest-home-logo" width="40" height="40" />
+        <span class="guest-home-brand-text">TFHers</span>
+      </RouterLink>
       <button type="button" class="guest-home-login" @click="goLogin">登录</button>
     </header>
             <!-- corridor: 4 walls around hero; lines converge to panel; denser as you walk back -->
@@ -26,6 +30,10 @@
       <section class="guest-home-panel guest-home-panel--hero" aria-label="首页">
         <div class="guest-home-panel-fx" :style="heroFxStyle">
           <div class="guest-home-hero-bg" aria-hidden="true" />
+          <div class="guest-home-center">
+            <h1 class="guest-home-title">TFHers</h1>
+            <p class="guest-home-tagline">Them&apos;s Fightin&apos; Herds 玩家们的社区</p>
+          </div>
           <p class="guest-home-scroll-hint" aria-hidden="true">向下滚动</p>
         </div>
       </section>
