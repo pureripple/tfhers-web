@@ -933,18 +933,20 @@ onMounted(() => {
     requestAnimationFrame(() => {
       fxReady.value = true
       updateScrollFx()
-      // 背景 WebGL 后期：reduced-motion 或不支持时不创建，回落到 CSS 背景图
-      // ?fx=1 强制开启（方便本机验收，忽略系统的"减少动画"设置），?fx=0 强制关闭
+      // 背景 WebGL 后期。?fx=1 强制开启（含自动流动），?fx=0 完全关闭。
+      // 系统开启"减少动画"时不整体禁用，而是只保留鼠标驱动的透镜、关掉自动流动。
       const fxParam = new URLSearchParams(window.location.search).get('fx')
       const fxForced = fxParam === '1' || fxParam === 'on'
       const fxDisabled = fxParam === '0' || fxParam === 'off'
       const reduced = prefersFloatReduce()
-      if (!fxDisabled && (fxForced || !reduced) && heroFxEl.value && !heroFluid) {
-        heroFluid = createHeroFluid(heroFxEl.value, '/images/AttractBG.webp')
+      if (!fxDisabled && heroFxEl.value && !heroFluid) {
+        heroFluid = createHeroFluid(heroFxEl.value, '/images/AttractBG.webp', {
+          ambient: fxForced || !reduced,
+        })
         if (heroFluid) heroFluid.setScroll(rail1Progress.value)
-        console.info('[heroFluid] active', { forced: fxForced, reducedMotion: reduced })
+        console.info('[heroFluid] active', { forced: fxForced, ambient: fxForced || !reduced, reducedMotion: reduced })
       } else {
-        console.info('[heroFluid] skipped', { fxDisabled, reducedMotion: reduced, hasCanvas: !!heroFxEl.value })
+        console.info('[heroFluid] skipped', { fxDisabled, hasCanvas: !!heroFxEl.value })
       }
       startFloatSim()
       if (floatArenaEl.value && typeof ResizeObserver !== 'undefined') {

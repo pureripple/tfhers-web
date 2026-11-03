@@ -130,8 +130,18 @@ function compile(gl: WebGLRenderingContext, type: number, src: string): WebGLSha
   return sh
 }
 
-/** 创建背景后期。返回 null 表示不支持或失败，调用方应回落到 CSS 背景。 */
-export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): HeroFluidHandle | null {
+/** 创建背景后期。返回 null 表示不支持或失败，调用方应回落到 CSS 背景。
+ *
+ * opts.ambient = false 时关闭「自动流动」（uAmount 归零、时间冻结），
+ * 只保留用户主动移动鼠标触发的透镜 —— 用于 prefers-reduced-motion 场景：
+ * 尊重"不要自动播放动效"，但保留由用户操作驱动的反馈。
+ */
+export function createHeroFluid(
+  canvas: HTMLCanvasElement,
+  imageUrl: string,
+  opts?: { ambient?: boolean },
+): HeroFluidHandle | null {
+  const ambient = opts?.ambient !== false
   // alpha: true —— 未绘制时画布透明，失败不会盖成黑块
   const gl = canvas.getContext('webgl', {
     alpha: true,
@@ -236,11 +246,11 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
     gl.useProgram(prog)
     gl.bindTexture(gl.TEXTURE_2D, tex)
     gl.uniform1i(U.uTex, 0)
-    gl.uniform1f(U.uTime, (now - start) / 1000)
+    gl.uniform1f(U.uTime, ambient ? (now - start) / 1000 : 0)
     gl.uniform1f(U.uScroll, scroll)
     gl.uniform2f(U.uMouse, mx, my)
     gl.uniform1f(U.uPointer, pointer)
-    gl.uniform1f(U.uAmount, 0.010)
+    gl.uniform1f(U.uAmount, ambient ? 0.010 : 0)
     gl.uniform1f(U.uLens, 0.22)
     gl.uniform1f(U.uDots, 0.20)
     gl.drawArrays(gl.TRIANGLES, 0, 3)
