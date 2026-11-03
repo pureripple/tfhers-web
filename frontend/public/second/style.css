@@ -59,7 +59,8 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  /* -4.5vh：整体上移，让下方两块六边形台面露出来（与 app.js 的 SCREEN_Y_RATIO 一致） */
+  transform: translate(-50%, calc(-50% - 4.5vh));
   transform-style: preserve-3d;
   will-change: transform;
 }
@@ -130,7 +131,8 @@ body {
 .stage {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  /* 高于 .dock(7)：台面发光不被 dock 的暗层压暗 */
+  z-index: 8;
   pointer-events: none;
   transform-style: preserve-3d;
 }
@@ -167,6 +169,72 @@ body {
 .stage .portrait-glow { opacity: .3; transition: opacity .6s ease; }
 .stage .stage-pool { opacity: .45; transition: opacity .6s ease, filter .6s ease; }
 
+/* 六边形台面：外层负责沿轮廓的光晕，内层用 clip-path 画出那块台面 */
+.stage-hex {
+  position: absolute;
+  /* 对齐背景里左侧那块七边形台面（背景已上移 4.5vh） */
+  left: 6.2vw;
+  bottom: 4vh;
+  width: 19vw;
+  height: 11.5vh;
+  transform: translateX(-50%);
+  /* 排在立绘之下，角色才像“站在发光的台上” */
+  z-index: 1;
+  opacity: 0;
+  transition: opacity .55s ease;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 95%, white))
+    drop-shadow(0 0 40px color-mix(in srgb, var(--accent) 65%, transparent));
+}
+
+.stage-hex > i {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0%, 92% 26%, 100% 62%, 78% 100%, 22% 100%, 0% 62%, 8% 26%);
+  /* 中心偏白热、边缘收进强调色：像光而不是色块 */
+  background:
+    radial-gradient(72% 92% at 50% 32%,
+      #fff4dc 0%,
+      color-mix(in srgb, var(--accent) 88%, transparent) 46%,
+      color-mix(in srgb, var(--accent) 42%, transparent) 100%);
+  opacity: .38;
+  filter: blur(7px) saturate(1.2);
+}
+
+/* 从台面向斜上方散开的光，把角色从下往上照亮（无硬边锥形） */
+.stage-beam {
+  position: absolute;
+  z-index: 3;
+  left: -10vw;
+  bottom: -2vh;
+  width: 62vw;
+  height: 88vh;
+  background:
+    radial-gradient(40% 58% at 27% 88%,
+      color-mix(in srgb, var(--accent) 72%, transparent) 0%,
+      color-mix(in srgb, var(--accent) 30%, transparent) 44%,
+      transparent 72%);
+  filter: blur(26px);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity .55s ease;
+  pointer-events: none;
+}
+
+.stage.is-picked .stage-hex { opacity: 1; animation: hexPulse 3.4s ease-in-out infinite; }
+.stage.is-picked .stage-beam { opacity: .45; animation: beamPulse 4.2s ease-in-out infinite; }
+
+@keyframes hexPulse {
+  0%, 100% { opacity: .78; }
+  50% { opacity: 1; }
+}
+
+@keyframes beamPulse {
+  0%, 100% { opacity: .38; }
+  50% { opacity: .58; }
+}
+
 .stage.is-picked .portrait-glow {
   opacity: 1;
   background: radial-gradient(closest-side,
@@ -193,6 +261,7 @@ body {
 
 .portrait {
   position: absolute;
+  z-index: 2;
   left: 6.2vw;
   bottom: calc(var(--dock-h) - 1.4vh);
   margin: 0;

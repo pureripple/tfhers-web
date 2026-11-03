@@ -244,6 +244,11 @@
   let rafId = 0;
   let idle = 0;
 
+  /* 弧形屏整体上移，让下方两块六边形台面露出到 dock 之上
+     （与 style.css 里 .cylinder 的初始 translateY 保持一致） */
+  const SCREEN_Y_RATIO = -0.045;
+  const screenY = () => SCREEN_Y_RATIO * window.innerHeight;
+
   window.addEventListener('pointermove', e => {
     pointer.tx = e.clientX / window.innerWidth;
     pointer.ty = e.clientY / window.innerHeight;
@@ -258,9 +263,9 @@
     const dx = (pointer.x - 0.5) * 2;   // -1 … 1
     const dy = (pointer.y - 0.5) * 2;
 
-    // 背景弧屏：绕中心做极小角度旋转，像镜头在移
+    // 背景弧屏：绕中心做极小角度旋转，像镜头在移（整体再上移 screenY）
     cylinder.style.transform =
-      `translate(-50%, -50%) translate3d(${(-dx * 12).toFixed(2)}px, ${(-dy * 8).toFixed(2)}px, 0)` +
+      `translate(-50%, -50%) translate3d(${(-dx * 12).toFixed(2)}px, ${(screenY() - dy * 8).toFixed(2)}px, 0)` +
       ` rotateY(${(-dx * 2.4).toFixed(3)}deg) rotateX(${(dy * 1.6).toFixed(3)}deg)`;
 
     // 立绘更靠近镜头，位移更大
@@ -304,6 +309,7 @@
 
     requestAnimationFrame(() => {
       // 空状态：不预选任何角色，左侧不显示立绘
+      nameEl.classList.add('is-empty');
       clearStage();
       root.style.setProperty('--accent', CHARACTERS[0].accent);
 

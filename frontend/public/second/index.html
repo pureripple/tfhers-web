@@ -26,12 +26,18 @@
     <div class="stage-pool" id="stagePool"></div>
     <div class="portrait-glow" id="portraitGlow"></div>
 
+    <!-- 六边形台面发光（对齐背景里左侧那块台）：外层做轮廓光晕，内层是台面本身 -->
+    <div class="stage-hex" aria-hidden="true"><i></i></div>
+
     <figure class="portrait" id="portraitA">
       <div class="portrait-float"><div class="portrait-inner"><img alt=""></div></div>
     </figure>
     <figure class="portrait" id="portraitB">
       <div class="portrait-float"><div class="portrait-inner"><img alt=""></div></div>
     </figure>
+
+    <!-- 从台面斜向上打的光束，罩在角色身上（叠在立绘之上做“被照亮”） -->
+    <div class="stage-beam" aria-hidden="true"></div>
   </div>
 
   <!-- 左上角信息 -->
