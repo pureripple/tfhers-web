@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>选择角色 · CHARACTER SELECT</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="is-loading">
+
+<div class="scene" id="scene">
+
+  <!-- 弧形大屏：由 JS 切成若干竖条，沿圆柱面排列 -->
+  <div class="screen" aria-hidden="true">
+    <div class="cylinder" id="cylinder"></div>
+  </div>
+
+  <!-- 氛围层 -->
+  <div class="atmosphere" aria-hidden="true">
+    <div class="glow-follow" id="glowFollow"></div>
+    <div class="vignette"></div>
+  </div>
+
+  <!-- 左侧舞台：角色立绘 -->
+  <div class="stage" id="stage" aria-hidden="true">
+    <div class="stage-pool" id="stagePool"></div>
+    <div class="portrait-glow" id="portraitGlow"></div>
+
+    <figure class="portrait" id="portraitA">
+      <div class="portrait-float"><div class="portrait-inner"><img alt=""></div></div>
+    </figure>
+    <figure class="portrait" id="portraitB">
+      <div class="portrait-float"><div class="portrait-inner"><img alt=""></div></div>
+    </figure>
+  </div>
+
+  <!-- 左上角信息 -->
+  <header class="hud">
+    <p class="hud-kicker"><span class="hud-diamond"></span>Character Select</p>
+    <h1 class="hud-name" id="charName">Arizona</h1>
+    <p class="hud-meta">
+      <span class="hud-tag">玩家 1</span>
+      <span class="hud-state" id="charState">已确认</span>
+    </p>
+  </header>
+
+  <!-- 底部选人框 -->
+  <section class="dock">
+    <p class="dock-hint">移动鼠标预览 · 点击确认</p>
+    <div class="tiles" id="tiles" role="listbox" aria-label="角色列表"></div>
+  </section>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="loader" id="loader"><span>Loading</span></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

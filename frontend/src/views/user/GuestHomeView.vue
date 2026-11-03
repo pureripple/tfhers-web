@@ -2,6 +2,7 @@
   <div ref="rootEl" class="guest-home" role="main" :class="{ 'guest-home--fx-ready': fxReady }">
     <header
       class="guest-home-top"
+      :class="{ 'guest-home-top--hidden': secondPageActive }"
       :style="{ backgroundColor: `rgba(0, 0, 0, ${topBarAlpha})` }"
     >
       <RouterLink :to="{ name: 'home' }" class="guest-home-brand" aria-label="TFHers 首页">
@@ -58,53 +59,15 @@
     </div>
 
     <div ref="rail2El" class="guest-home-rail guest-home-rail--more">
-      <section class="guest-home-panel guest-home-panel--more" aria-label="关于与预览">
+      <section class="guest-home-panel guest-home-panel--more" aria-label="角色选择">
         <div class="guest-home-panel-fx guest-home-panel-fx--more" :style="moreFxStyle">
-          <div class="guest-home-roster">
-            <div
-              ref="floatArenaEl"
-              class="guest-home-float-arena"
-              role="list"
-              aria-label="角色漂浮展示"
-              @mouseleave="clearFloatHover"
-            >
-              <button
-                v-for="(item, i) in gallery"
-                :key="item.src"
-                :ref="(el) => setFloatOrbRef(i, el)"
-                type="button"
-                class="guest-home-float-orb"
-                :class="{ 'is-active': floatHoverIndex === i }"
-                role="listitem"
-                :aria-pressed="floatHoverIndex === i"
-                :aria-label="`${item.alt}：${item.blurb}`"
-                @mouseenter="setFloatHover(i)"
-                @focusin="setFloatHover(i)"
-              >
-                <img
-                  :src="item.src"
-                  :alt="item.alt"
-                  width="160"
-                  height="160"
-                  loading="eager"
-                  decoding="async"
-                  draggable="false"
-                />
-                <span class="guest-home-float-name">{{ item.alt }}</span>
-                <div class="guest-home-float-info" aria-hidden="true">
-                  <strong>{{ item.alt }}</strong>
-                  <p>{{ item.blurb }}</p>
-                </div>
-              </button>
-            </div>
-            <p class="guest-home-roster-hint">漂浮碰撞 · 悬停查看角色信息</p>
-          </div>
-          <footer class="guest-home-footer">
-            <h2 class="guest-home-about-title">关于 TFHers</h2>
-            <p class="guest-home-about-body">
-              TFHers 是蹄斗族群玩家们自己的社区，汇集资讯、教程、赛事与玩家交流。文案占位，后续可再改。
-            </p>
-          </footer>
+          <!-- 第二页：独立制作的「弧形选人」页，用 iframe 隔离它自己的 CSS/JS -->
+          <iframe
+            class="guest-home-second"
+            src="/second/index.html"
+            title="角色选择"
+            loading="lazy"
+          ></iframe>
         </div>
       </section>
     </div>
@@ -181,6 +144,9 @@ function prefersFloatReduce() {
 
 /** 背景后期句柄（WebGL 不可用时为 null，页面回落到 CSS 背景图） */
 let heroFluid: HeroFluidHandle | null = null
+
+/** 首屏快走完时把站点顶栏淡出，避免压住第二页（选人页有自己的 HUD） */
+const secondPageActive = computed(() => rail1Progress.value > 0.82)
 
 /** 肉眼可见慢漂速度（px/s）；reduce 只减速，绝不冻成 0 */
 function floatSpeedRange() {

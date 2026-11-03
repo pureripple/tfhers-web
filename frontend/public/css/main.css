@@ -4805,6 +4805,13 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     pointer-events: auto;
 }
 
+/* 第二页（选人页）有自己的 HUD，站点顶栏淡出 */
+.guest-home-top--hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease;
+}
+
 .guest-home-brand {
     display: inline-flex;
     align-items: center;
@@ -4904,10 +4911,10 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
 .guest-home-panel-fx--more {
     position: relative;
     background: #000;
-    /* 第二页固定一屏：arena 用满可视区 */
+    /* 第二页固定一屏：iframe 铺满 */
     height: 100%;
     max-height: 100%;
-    padding: 56px 0 0;
+    padding: 0;
     overflow: hidden !important;
     overscroll-behavior: none;
     display: flex;
@@ -4916,6 +4923,17 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     align-items: stretch;
     box-sizing: border-box;
     -webkit-overflow-scrolling: auto;
+}
+
+/* 第二页：独立的「弧形选人」页，用 iframe 隔离样式与脚本 */
+.guest-home-second {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #000;
 }
 
 
@@ -4969,6 +4987,9 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     z-index: 3;
     /* hero 300vh + phase2 起点：顶贴最外环（≈视口底）→ -100vh */
     margin-top: -100vh;
+    /* 第二页是终点页：只占一屏，滚到底就停住，不再被"走远"缩放 */
+    height: 100vh;
+    min-height: 100vh;
 }
 
 .guest-home-panel--more {
