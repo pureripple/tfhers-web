@@ -70,13 +70,25 @@ if [ -n "$EXTRA" ]; then
 fi
 
 # ---- 校验 2：关键表非空 + 行数对照 ----
+# 行数不必相等（备份是某个时间点的快照，比现在旧时行数本来就少）；
+# 但"生产有数据、恢复后变成空表"一定是问题，这才判失败。
 EMPTY=""
+DIFF=""
 for t in users articles rooms tournaments room_messages user_feedback; do
   s="$(mysql_cmd -N -B -e "SELECT COUNT(*) FROM \`$SOURCE_DB\`.\`$t\`" 2>/dev/null || echo '-')"
   d="$(mysql_cmd -N -B -e "SELECT COUNT(*) FROM \`$DRILL_DB\`.\`$t\`" 2>/dev/null || echo '-')"
   printf '  %-18s 生产=%-8s 演练=%-8s\n' "$t" "$s" "$d"
-  if [ "$d" = "0" ]; then EMPTY="$EMPTY $t"; fi
+  if [ "$s" = "-" ] || [ "$d" = "-" ]; then continue; fi
+  if [ "$d" = "0" ] && [ "$s" != "0" ]; then
+    EMPTY="$EMPTY $t"
+  elif [ "$s" != "$d" ]; then
+    DIFF="$DIFF $t(生产$s/演练$d)"
+  fi
 done
+
+if [ -n "$DIFF" ]; then
+  log "提示：以下表行数不同（备份早于现在时属正常，仅供参考）：$DIFF"
+fi
 
 # ---- 结论 ----
 FAIL=0
@@ -84,9 +96,9 @@ FAIL=0
 [ -z "$EMPTY" ]   || FAIL=1
 
 if [ "$FAIL" -eq 0 ]; then
-  log "PASS：这份备份可以恢复（表集合一致、关键表有数据）"
+  log "PASS：这份备份可以恢复（表集合一致、关键表没有丢失数据）"
 else
-  log "FAIL：缺失表=【${MISSING:-无}】 空表=【${EMPTY:-无}】"
+  log "FAIL：缺失表=【${MISSING:-无}】 生产有数据但恢复为空=【${EMPTY:-无}】"
 fi
 log "演练库 $DRILL_DB 即将删除（trap 自动清理）"
 exit "$FAIL"
