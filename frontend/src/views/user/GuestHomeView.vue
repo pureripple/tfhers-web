@@ -30,6 +30,7 @@
       <section class="guest-home-panel guest-home-panel--hero" aria-label="首页">
         <div class="guest-home-panel-fx" :style="heroFxStyle">
           <div class="guest-home-hero-bg" aria-hidden="true" />
+          <canvas ref="heroFxEl" class="guest-home-hero-fx" aria-hidden="true" />
           <div class="guest-home-center">
             <h1 class="guest-home-title">
               <!-- 马克笔手写风 wordmark：白字 + 黑描边，居中偏上，小字跟下面 -->
@@ -112,7 +113,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+
 import { useRoute, useRouter } from 'vue-router'
+
+import { createHeroFluid, type HeroFluidHandle } from '@/utils/heroFluid'
 
 const route = useRoute()
 const router = useRouter()
@@ -174,6 +178,9 @@ function prefersFloatReduce() {
     return false
   }
 }
+
+/** 背景后期句柄（WebGL 不可用时为 null，页面回落到 CSS 背景图） */
+let heroFluid: HeroFluidHandle | null = null
 
 /** 肉眼可见慢漂速度（px/s）；reduce 只减速，绝不冻成 0 */
 function floatSpeedRange() {
@@ -424,6 +431,7 @@ function stopFloatSim() {
 
 const rootEl = ref<HTMLElement | null>(null)
 const rail1El = ref<HTMLElement | null>(null)
+const heroFxEl = ref<HTMLCanvasElement | null>(null)
 const rail2El = ref<HTMLElement | null>(null)
 const spaceLayerEl = ref<HTMLElement | null>(null)
 const ringPathEl = ref<SVGPathElement | null>(null)
@@ -611,6 +619,8 @@ function updateScrollFx() {
   const p2 = measureRailProgress(rail2El.value)
   rail1Progress.value = p1
   rail2Progress.value = p2
+  // 背景后期跟着首屏进度走（越滚扭曲越明显）
+  heroFluid?.setScroll(p1)
   // 顶栏：轨1走远后保持偏黑，轨2再加深
   topBarAlpha.value = clamp(Math.max(p1, p2) * 1.15, 0, 1)
   // 每帧更新 lift（含 sticky 松绑后的 panel.top），防止 p 饱和后走廊停住
@@ -923,6 +933,11 @@ onMounted(() => {
     requestAnimationFrame(() => {
       fxReady.value = true
       updateScrollFx()
+      // 背景 WebGL 后期：reduced-motion 或不支持时不创建，回落到 CSS 背景图
+      if (!prefersFloatReduce() && heroFxEl.value && !heroFluid) {
+        heroFluid = createHeroFluid(heroFxEl.value, '/images/AttractBG.webp')
+        if (heroFluid) heroFluid.setScroll(rail1Progress.value)
+      }
       startFloatSim()
       if (floatArenaEl.value && typeof ResizeObserver !== 'undefined') {
         let lastW = 0
@@ -943,6 +958,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (heroFluid) {
+    heroFluid.dispose()
+    heroFluid = null
+  }
   for (const t of scrollTargets) {
     t.removeEventListener('scroll', onScroll, true)
   }
