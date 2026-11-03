@@ -33,7 +33,18 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then mark_all; exit 0; fi
           BEFORE="${{ github.event.before }}"
           if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then mark_all; exit 0; fi
-          FILES=$(git diff --name-only "$BEFORE" "${{ github.sha }}" || true)
+          # fetch-depth: 2 only guarantees HEAD + its parent. A push carrying 2+ commits needs
+          # BEFORE as well; without it git diff fails, `|| true` hides the error and every flag
+          # stays false -> the job runs green having deployed nothing. Resolve it or fall back.
+          if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "$BEFORE" || true
+          fi
+          if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            echo "::warning::cannot resolve base commit $BEFORE - falling back to full rebuild"
+            mark_all
+            exit 0
+          fi
+          FILES=$(git diff --name-only "$BEFORE" "${{ github.sha }}")
           echo "$FILES"
           echo "java=false" >> "$GITHUB_OUTPUT"
           echo "admin_static=false" >> "$GITHUB_OUTPUT"
