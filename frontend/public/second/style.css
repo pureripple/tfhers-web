@@ -163,6 +163,34 @@ body {
   will-change: transform;
 }
 
+/* 该侧已选取角色 → 舞台发光 */
+.stage .portrait-glow { opacity: .3; transition: opacity .6s ease; }
+.stage .stage-pool { opacity: .45; transition: opacity .6s ease, filter .6s ease; }
+
+.stage.is-picked .portrait-glow {
+  opacity: 1;
+  background: radial-gradient(closest-side,
+      color-mix(in srgb, var(--accent) 82%, transparent) 0%, transparent 76%);
+  animation: stageGlow 3.4s ease-in-out infinite;
+}
+
+.stage.is-picked .stage-pool {
+  opacity: 1;
+  filter: blur(10px) brightness(1.4);
+}
+
+/* 选取后给立绘一圈强调色轮廓光 */
+.stage.is-picked .portrait {
+  filter: drop-shadow(0 22px 34px rgba(0, 0, 0, .55))
+          drop-shadow(0 4px 12px rgba(0, 0, 0, .45))
+          drop-shadow(0 0 32px color-mix(in srgb, var(--accent) 62%, transparent));
+}
+
+@keyframes stageGlow {
+  0%, 100% { opacity: .8; }
+  50% { opacity: 1; }
+}
+
 .portrait {
   position: absolute;
   left: 6.2vw;
@@ -266,6 +294,8 @@ body.is-ready .hud { opacity: 1; transform: none; }
 }
 
 .hud-name.swap { animation: nameIn .55s var(--ease-out); }
+/* 空状态：整行占位隐藏（保留占位高度，避免下面的行跳动） */
+.hud-name.is-empty { opacity: 0; }
 
 @keyframes nameIn {
   from { opacity: 0; transform: translateY(16px); filter: blur(7px); }

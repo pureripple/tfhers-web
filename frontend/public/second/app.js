@@ -102,11 +102,23 @@
 
   let front = 0;               // 当前可见的立绘图层
   let shownId = null;
-  let selected = CHARACTERS[0];
+  let selected = null;         // 空状态起步：不点选就没有“已确认”的角色
   let previewing = null;       // 悬停预览中的角色
 
+  /** 清空舞台：没有选取、也没有悬停时，左侧不显示任何立绘 */
+  function clearStage() {
+    if (shownId === null) return;
+    shownId = null;
+    layers.forEach(l => l.classList.remove('is-active'));
+    nameEl.textContent = '—';
+    nameEl.classList.add('is-empty');
+    stateEl.textContent = '未选择';
+    stateEl.classList.remove('is-preview');
+  }
+
   function paint(char) {
-    if (!char || char.id === shownId) { updateMeta(char); return; }
+    if (!char) { clearStage(); return; }
+    if (char.id === shownId) { updateMeta(char); return; }
     shownId = char.id;
 
     const incoming = layers[1 - front];
@@ -127,6 +139,7 @@
     root.style.setProperty('--accent', char.accent);
 
     nameEl.textContent = char.name;
+    nameEl.classList.remove('is-empty');
     nameEl.classList.remove('swap');
     void nameEl.offsetWidth;
     nameEl.classList.add('swap');
@@ -135,8 +148,12 @@
   }
 
   function updateMeta(char) {
-    if (!char) return;
-    const isConfirmed = char.id === selected.id;
+    if (!char) {
+      stateEl.textContent = '未选择';
+      stateEl.classList.remove('is-preview');
+      return;
+    }
+    const isConfirmed = !!selected && char.id === selected.id;
     stateEl.textContent = isConfirmed ? '已确认' : '预览中';
     stateEl.classList.toggle('is-preview', !isConfirmed);
   }
@@ -151,6 +168,8 @@
     });
     paint(char);
     updateMeta(char);
+    // 该侧舞台进入“已选取”状态（发光）
+    stage.classList.add('is-picked');
   }
 
   /* ---------------- 底部角色框 ---------------- */
@@ -192,8 +211,17 @@
 
     tilesEl.appendChild(frag);
 
-    // 鼠标移出选人条 → 回到已确认的角色
+    // 鼠标移出选人条 → 回到已选角色；没选过就隐藏大图
     tilesEl.addEventListener('pointerleave', () => {
+      if (!previewing) return;
+      previewing = null;
+      paint(selected);
+    });
+
+    // 键盘焦点离开选人条，同样回到已选角色 / 隐藏
+    tilesEl.addEventListener('focusout', e => {
+      const next = e.relatedTarget;
+      if (next instanceof Node && tilesEl.contains(next)) return;
       if (!previewing) return;
       previewing = null;
       paint(selected);
@@ -274,25 +302,16 @@
   preload().then(() => {
     buildScreen();
 
-    // 默认选中第一个角色
-    const first = layers[0];
-    first.querySelector('img').src = selected.src;
-    first.querySelector('img').alt = selected.name;
-
     requestAnimationFrame(() => {
-      first.classList.add('is-active');
-      shownId = selected.id;
-      root.style.setProperty('--accent', selected.accent);
-
-      const firstTile = tilesEl.querySelector('.tile');
-      firstTile.classList.add('is-selected');
-      firstTile.setAttribute('aria-selected', 'true');
+      // 空状态：不预选任何角色，左侧不显示立绘
+      clearStage();
+      root.style.setProperty('--accent', CHARACTERS[0].accent);
 
       document.body.classList.add('is-ready');
 
       if (!reducedMotion) rafId = requestAnimationFrame(tick);
 
-      /* ?char=velvet 可直接定位某个角色 */
+      /* ?char=velvet 可直接定位并选中某个角色 */
       const wanted = new URLSearchParams(location.search).get('char');
       const found = wanted && CHARACTERS.find(c => c.id === wanted.toLowerCase());
       if (found) select(found);
