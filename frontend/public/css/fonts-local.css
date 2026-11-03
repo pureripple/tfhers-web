@@ -30,3 +30,13 @@
     font-display: swap;
     src: url('../fonts/plus-jakarta-sans-latin-700-normal.woff2') format('woff2');
 }
+
+/* 访客首页的 TFHers 文字标（马克笔手写风）。SIL Open Font License 1.1，可商用自托管。
+   只有拉丁字形，中文会回退到系统字体。 */
+@font-face {
+    font-family: 'Permanent Marker';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/permanent-marker-latin-400-normal.woff2') format('woff2');
+}

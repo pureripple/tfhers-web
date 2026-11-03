@@ -4,25 +4,10 @@
       class="guest-home-top"
       :style="{ backgroundColor: `rgba(0, 0, 0, ${topBarAlpha})` }"
     >
-      <h1 class="guest-home-brand" aria-label="TFHers">
+      <RouterLink :to="{ name: 'home' }" class="guest-home-brand" aria-label="TFHers 首页">
         <img src="/images/logo.png" alt="" class="guest-home-logo" width="40" height="40" />
-        <svg class="guest-home-wordmark" viewBox="0 0 420 140" role="img" aria-hidden="true">
-          <text
-            x="210"
-            y="104"
-            text-anchor="middle"
-            font-family="'Plus Jakarta Sans', system-ui, 'Segoe UI', sans-serif"
-            font-size="104"
-            font-weight="800"
-            letter-spacing="-3"
-            fill="#ffffff"
-            stroke="#000000"
-            stroke-width="10"
-            stroke-linejoin="round"
-            paint-order="stroke"
-          >TFHers</text>
-        </svg>
-      </h1>
+        <span class="guest-home-brand-text">TFHers</span>
+      </RouterLink>
       <button type="button" class="guest-home-login" @click="goLogin">登录</button>
     </header>
             <!-- corridor: 4 walls around hero; lines converge to panel; denser as you walk back -->
@@ -46,6 +31,24 @@
         <div class="guest-home-panel-fx" :style="heroFxStyle">
           <div class="guest-home-hero-bg" aria-hidden="true" />
           <div class="guest-home-center">
+            <h1 class="guest-home-title">
+              <!-- 马克笔手写风 wordmark：白字 + 黑描边，居中偏上，小字跟下面 -->
+              <svg class="guest-home-wordmark" viewBox="0 0 700 190" role="img" aria-label="TFHers">
+                <text
+                  x="350"
+                  y="158"
+                  text-anchor="middle"
+                  font-family="'Permanent Marker', 'Plus Jakarta Sans', system-ui, sans-serif"
+                  font-size="150"
+                  letter-spacing="1"
+                  fill="#ffffff"
+                  stroke="#000000"
+                  stroke-width="12"
+                  stroke-linejoin="round"
+                  paint-order="stroke"
+                >TFHers</text>
+              </svg>
+            </h1>
             <p class="guest-home-tagline">Them&apos;s Fightin&apos; Herds 玩家们的社区</p>
           </div>
           <p class="guest-home-scroll-hint" aria-hidden="true">向下滚动</p>

@@ -5000,7 +5000,8 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 88px 20px 32px;
+    /* 底部留白把整组内容抬到画面中线偏上 */
+    padding: 88px 20px 18vh;
 }
 
 .guest-home-title {
@@ -5012,11 +5013,12 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     text-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
-/* 左上角的 TFHers 文字标：白色填充 + 黑色描边（内联 SVG，无底无私章） */
+/* 居中的 TFHers 文字标：白字 + 黑描边（内联 SVG，无底无私章） */
 .guest-home-wordmark {
     display: block;
-    height: 34px;
-    width: auto;
+    width: min(700px, 62vw);
+    height: auto;
+    margin: 0 auto;
     overflow: visible;
 }
 
