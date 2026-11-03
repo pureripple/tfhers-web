@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { fetchCharacters } from '@/api/characters'
 import { COMBO_VIDEO_MAX_BYTES, createCombo, uploadComboFile, uploadComboVideo } from '@/api/user'
 import { useUserAuthStore } from '@/stores/auth'
@@ -198,5 +198,4 @@ watch(
   },
 )
 
-onMounted(loadCharacters)
 </script>

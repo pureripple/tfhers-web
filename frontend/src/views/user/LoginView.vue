@@ -15,11 +15,15 @@
         {{ loading ? '登录中…' : '登录' }}
       </button>
     </form>
+    <p class="auth-entry-switch">
+      还没有账号？
+      <RouterLink :to="{ name: 'register', query: redirectQuery }">立即注册</RouterLink>
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ApiError } from '@/api/types'
 import { useUserAuthStore } from '@/stores/auth'
@@ -32,6 +36,10 @@ const username = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const redirectQuery = computed(() => {
+  const r = route.query.redirect
+  return typeof r === 'string' && r ? { redirect: r } : {}
+})
 
 async function onSubmit() {
   error.value = ''

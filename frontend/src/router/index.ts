@@ -24,7 +24,8 @@ const router = createRouter({
       path: '/',
       component: UserLayout,
       children: [
-        { path: '', name: 'news', component: () => import('@/views/user/NewsView.vue') },
+        { path: '', name: 'home', component: () => import('@/views/user/HomeGateView.vue') },
+        { path: 'news', name: 'news', component: () => import('@/views/user/NewsView.vue') },
         { path: 'lobby', name: 'lobby', component: () => import('@/views/user/LobbyView.vue'), meta: { requiresAuth: true } },
         { path: 'rankings', name: 'rankings', component: () => import('@/views/user/RankingsView.vue') },
         { path: 'tournaments', name: 'tournaments', component: () => import('@/views/user/TournamentsView.vue') },
@@ -39,6 +40,12 @@ const router = createRouter({
           path: 'login',
           name: 'login',
           component: () => import('@/views/user/LoginView.vue'),
+          meta: { guestOnly: true },
+        },
+        {
+          path: 'register',
+          name: 'register',
+          component: () => import('@/views/user/RegisterView.vue'),
           meta: { guestOnly: true },
         },
       ],
@@ -94,7 +101,7 @@ router.beforeEach((to) => {
     }
   }
 
-  if (to.name === 'login' && to.meta.guestOnly && userAuth.isLoggedIn) {
+  if ((to.name === 'login' || to.name === 'register') && to.meta.guestOnly && userAuth.isLoggedIn) {
     const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : '/'
     return redirect || '/'
   }
