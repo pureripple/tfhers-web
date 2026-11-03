@@ -9,8 +9,7 @@
   >
     <header class="auth-entry-top">
       <div class="auth-entry-brand">
-        <img src="/images/logo.png" alt="tfhers" class="auth-entry-logo" width="40" height="40" />
-        <span class="auth-entry-brand-text">tfhers</span>
+        <span class="auth-entry-brand-text">TFHERS</span>
       </div>
     </header>
 
@@ -26,7 +25,7 @@
             <i class="fas fa-arrow-left" aria-hidden="true"></i>
             先逛逛
           </button>
-          <h1 id="authEntryTitle" class="auth-entry-card-title">用 tfhers 账号登录</h1>
+          <h1 id="authEntryTitle" class="auth-entry-card-title">用 TFHERS 账号登录</h1>
           <div class="auth-entry-card-actions">
             <button type="button" class="auth-entry-btn auth-entry-btn--primary" @click="goRegisterPage">
               注册账号
@@ -172,8 +171,8 @@
 
     <footer class="auth-entry-footer">
       <div class="auth-entry-about" tabindex="0">
-        <span class="auth-entry-footer-link">关于 tfhers</span>
-        <div class="auth-entry-about-tip" role="tooltip">tfhers是蹄斗族群玩家们自己的社区</div>
+        <span class="auth-entry-footer-link">关于 TFHERS</span>
+        <div class="auth-entry-about-tip" role="tooltip">TFHERS 是蹄斗族群玩家们自己的社区</div>
       </div>
     </footer>
   </div>

@@ -5,7 +5,7 @@
         <button type="button" class="sidebar-toggle" aria-label="折叠侧栏" title="折叠/展开" @click="toggleSidebar">
           <i class="fas fa-bars"></i>
         </button>
-        <span class="sidebar-brand">tfhers管理端</span>
+        <span class="sidebar-brand">TFHERS管理端</span>
       </div>
       <nav class="sidebar-nav">
         <RouterLink
@@ -34,7 +34,7 @@
       <button type="button" class="sidebar-float-toggle" aria-label="展开侧栏" title="展开/折叠" @click="toggleSidebar">
         <i class="fas fa-bars"></i>
       </button>
-      <span class="sidebar-float-brand">tfhers管理端</span>
+      <span class="sidebar-float-brand">TFHERS管理端</span>
     </div>
 
     <header class="app-topbar">

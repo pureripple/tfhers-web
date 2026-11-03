@@ -5,9 +5,8 @@
       :class="{ 'guest-home-top--hidden': secondPageActive }"
       :style="{ backgroundColor: `rgba(0, 0, 0, ${topBarAlpha})` }"
     >
-      <RouterLink :to="{ name: 'home' }" class="guest-home-brand" aria-label="TFHers 首页">
-        <img src="/images/logo.png" alt="" class="guest-home-logo" width="40" height="40" />
-        <span class="guest-home-brand-text">TFHers</span>
+      <RouterLink :to="{ name: 'home' }" class="guest-home-brand" aria-label="TFHERS 首页">
+        <span class="guest-home-brand-text">TFHERS</span>
       </RouterLink>
       <button type="button" class="guest-home-login" @click="goLogin">登录</button>
     </header>
@@ -35,7 +34,7 @@
           <div class="guest-home-center">
             <h1 class="guest-home-title">
               <!-- 马克笔手写风 wordmark：白字 + 黑描边，居中偏上，小字跟下面 -->
-              <svg class="guest-home-wordmark" viewBox="0 0 700 190" role="img" aria-label="TFHers">
+              <svg class="guest-home-wordmark" viewBox="0 0 700 190" role="img" aria-label="TFHERS">
                 <text
                   x="350"
                   y="158"
@@ -48,7 +47,7 @@
                   stroke-width="12"
                   stroke-linejoin="round"
                   paint-order="stroke"
-                >TFHers</text>
+                >TFHERS</text>
               </svg>
             </h1>
             <p class="guest-home-tagline">Them&apos;s Fightin&apos; Herds 玩家们的社区</p>

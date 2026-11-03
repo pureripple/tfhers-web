@@ -4,7 +4,7 @@
     <aside class="app-sidebar" aria-label="main nav">
       <div class="sidebar-top">
         <button type="button" class="sidebar-toggle" aria-label="collapse sidebar" title="collapse/expand" @click="toggleSidebar"><i class="fas fa-bars"></i></button>
-        <span class="sidebar-brand">tfhers</span>
+        <span class="sidebar-brand">TFHERS</span>
       </div>
       <nav class="sidebar-nav">
         <RouterLink
@@ -23,11 +23,11 @@
     <div class="sidebar-backdrop" :hidden="!sidebarOpenMobile" :aria-hidden="sidebarOpenMobile ? 'false' : 'true'" @click="closeMobile"></div>
     <div class="sidebar-float-cluster">
       <button type="button" class="sidebar-float-toggle" aria-label="open sidebar" title="open sidebar" @click="toggleSidebar"><i class="fas fa-bars"></i></button>
-      <span class="sidebar-float-brand" aria-hidden="true">tfhers</span>
+      <span class="sidebar-float-brand" aria-hidden="true">TFHERS</span>
     </div>
     <div class="mobile-topbar">
       <button type="button" class="sidebar-toggle" aria-label="open nav" title="open nav" @click="openMobile"><i class="fas fa-bars"></i></button>
-      <span class="sidebar-brand">tfhers</span>
+      <span class="sidebar-brand">TFHERS</span>
       <div class="mobile-topbar-spacer"></div>
     </div>
     <header class="app-topbar">
@@ -181,7 +181,7 @@ function applyHtmlClasses() {
   )
   rootEl.classList.toggle('sidebar-collapsed', collapsed.value)
   rootEl.classList.toggle('sidebar-open', sidebarOpenMobile.value)
-  document.title = "tfhers-\"Them's Fightin' Herds\"玩家们的社区"
+  document.title = "TFHERS-\"Them's Fightin' Herds\"玩家们的社区"
 }
 function persistCollapsed() { try { localStorage.setItem(SIDEBAR_KEY, collapsed.value ? '1' : '0') } catch { /* ignore */ } }
 function toggleSidebar() { if (window.matchMedia('(max-width: 768px)').matches) { sidebarOpenMobile.value = !sidebarOpenMobile.value } else { collapsed.value = !collapsed.value; persistCollapsed() } applyHtmlClasses() }
