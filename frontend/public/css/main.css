@@ -4982,8 +4982,7 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     z-index: 0;
     pointer-events: none;
     background-color: #000;
-    /* 游戏标题画面整屏铺满 */
-    background-image: url('/images/TitleScreen-full.png');
+    background-image: url('/images/bg-app.png');
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;

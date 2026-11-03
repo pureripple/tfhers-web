@@ -33,6 +33,10 @@
           <div class="guest-home-center">
             <h1 class="guest-home-title">TFHers</h1>
             <p class="guest-home-tagline">Them&apos;s Fightin&apos; Herds 玩家们的社区</p>
+            <div class="guest-home-actions">
+              <button type="button" class="guest-home-btn guest-home-btn--primary" @click="goLogin">登录</button>
+              <RouterLink :to="{ name: 'news' }" class="guest-home-btn guest-home-btn--ghost">先逛逛 · 浏览资讯</RouterLink>
+            </div>
           </div>
           <p class="guest-home-scroll-hint" aria-hidden="true">向下滚动</p>
         </div>
