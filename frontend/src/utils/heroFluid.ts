@@ -1,13 +1,13 @@
 /**
  * 访客首页背景的轻量 WebGL 后期（不用 three.js）。
  *
- * 做法与 alche.studio 同一思路的简化版：一张全屏 quad，片元着色器里
- *   - 用 fbm 噪声生成流场，轻微扰动 UV（画面像隔着热气流动）
- *   - 边缘极轻的色散
- *   - 屏幕空间细网点（halftone）+ 暗角 + 颗粒
- * 参数 uScroll / uTime 由外部驱动。
+ * 效果分三层：
+ *   1. 全局流场 —— fbm 噪声缓慢推进，画面像隔着热气漂移
+ *   2. 光标透镜 —— 鼠标附近画面轻微放大，一眼能看出"这层是活的"
+ *   3. 质感 —— 边缘轻微色散、屏幕空间细网点、暗角、颗粒
  *
- * 失败时返回 null，页面回落到 CSS 背景图，不会出现空白。
+ * 参数由外部驱动：uScroll（首屏滚动进度）、uTime、光标位置。
+ * 失败时返回 null 且画布保持透明，页面回落到 CSS 背景图。
  */
 
 const VERT = `
@@ -26,12 +26,14 @@ varying vec2 vUv;
 
 uniform sampler2D uTex;
 uniform vec2  uRes;      // 画布像素尺寸
-uniform vec2  uCssRes;   // 画布 CSS 尺寸（网点按 CSS 像素算，避免高清屏网点过密）
+uniform vec2  uCssRes;   // 画布 CSS 尺寸
 uniform vec2  uImgRes;   // 图片像素尺寸
 uniform float uTime;
 uniform float uScroll;   // 0..1 首屏滚动进度
-uniform vec2  uMouse;    // -0.5..0.5
-uniform float uAmount;   // 扭曲强度
+uniform vec2  uMouse;    // 0..1，屏幕空间，y 向上
+uniform float uPointer;  // 0..1 光标是否已激活（触屏保持 0）
+uniform float uAmount;   // 流场强度
+uniform float uLens;     // 透镜强度
 uniform float uDots;     // 网点权重
 
 float hash(vec2 p) {
@@ -60,48 +62,51 @@ float fbm(vec2 p) {
 }
 
 void main() {
-  // cover 适配：保持比例铺满，超出部分裁掉
+  // cover 适配：保持比例铺满，超出裁掉
   vec2 s = uRes / uImgRes;
   float cover = max(s.x, s.y);
-  vec2 uv = (vUv - 0.5) * (s / cover) + 0.5;
+  vec2 uvScale = s / cover;
+  vec2 uv = (vUv - 0.5) * uvScale + 0.5;
 
-  // 流场扰动
-  float t = uTime * 0.055;
-  vec2 p = uv * 2.6;
+  // ---- 1. 全局流场 ----
+  float t = uTime * 0.14;
+  vec2 p = uv * 3.1;
   vec2 flow = vec2(
     fbm(p + vec2(0.0, t)),
     fbm(p + vec2(4.7, -t))
   ) - 0.5;
+  vec2 duv = uv + flow * (uAmount * (0.7 + 0.6 * uScroll));
 
-  float amt = uAmount * (0.55 + 0.45 * uScroll);
-  vec2 duv = uv + flow * amt + uMouse * 0.006;
+  // ---- 2. 光标透镜：位移与距离成正比 → 纯放大（不会出现环形漩涡）----
+  float aspect = uCssRes.x / max(uCssRes.y, 1.0);
+  vec2 rel = vUv - uMouse;
+  float rr = length(rel * vec2(aspect, 1.0));
+  float m = smoothstep(0.22, 0.02, rr) * uPointer;
+  vec2 screenOff = -rel * uLens * m;
+  // 屏幕位移换算回 uv 空间（cover 是等比变换，方向不变，只缩放幅度）
+  duv += screenOff * uvScale;
   duv = clamp(duv, 0.002, 0.998);
 
-  // 边缘轻微色散
-  float d = length(vUv - 0.5);
-  float ca = 0.0016 * d * (0.6 + uScroll);
+  // ---- 3. 采样 + 边缘色散 ----
+  float dc = length(vUv - 0.5);
+  float ca = 0.0015 * dc * (0.7 + uScroll);
   vec3 col;
   col.r = texture2D(uTex, duv + vec2(ca, 0.0)).r;
   col.g = texture2D(uTex, duv).g;
   col.b = texture2D(uTex, duv - vec2(ca, 0.0)).b;
 
-  // 屏幕空间细网点（按 CSS 像素，~7px 一格）
+  // ---- 4. 屏幕空间细网点（按 CSS 像素，约 8px 一格）----
   if (uDots > 0.001) {
-    vec2 cellUv = vUv * uCssRes / 7.0;
-    vec2 g = fract(cellUv) - 0.5;
+    vec2 g = fract(vUv * uCssRes / 8.0) - 0.5;
     float lum = dot(col, vec3(0.299, 0.587, 0.114));
-    float radius = sqrt(clamp(lum, 0.0, 1.0)) * 0.52;
-    float mask = smoothstep(radius, radius - 0.12, length(g));
-    vec3 dotted = col * (0.86 + 0.14 * mask);
-    col = mix(col, dotted, uDots);
+    float radius = sqrt(clamp(lum, 0.0, 1.0)) * 0.5;
+    float mask = smoothstep(radius, radius - 0.14, length(g));
+    col = mix(col, col * (0.88 + 0.12 * mask), uDots);
   }
 
-  // 暗角
-  float vig = smoothstep(1.25, 0.28, d);
-  col *= mix(0.80, 1.0, vig);
-
-  // 极轻颗粒，避免渐变出现色带
-  col += (hash(vUv * uRes + uTime) - 0.5) * 0.012;
+  // ---- 5. 暗角 + 颗粒 ----
+  col *= mix(0.78, 1.0, smoothstep(1.25, 0.25, dc));
+  col += (hash(vUv * uRes + uTime) - 0.5) * 0.014;
 
   gl_FragColor = vec4(col, 1.0);
 }
@@ -118,17 +123,18 @@ function compile(gl: WebGLRenderingContext, type: number, src: string): WebGLSha
   gl.shaderSource(sh, src)
   gl.compileShader(sh)
   if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-    console.warn('[heroFluid] shader 编译失败:', gl.getShaderInfoLog(sh))
+    console.warn('[heroFluid] shader compile failed:', gl.getShaderInfoLog(sh))
     gl.deleteShader(sh)
     return null
   }
   return sh
 }
 
-/** 创建背景后期。返回 null 表示不支持/失败，调用方应回落到 CSS 背景。 */
+/** 创建背景后期。返回 null 表示不支持或失败，调用方应回落到 CSS 背景。 */
 export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): HeroFluidHandle | null {
+  // alpha: true —— 未绘制时画布透明，失败不会盖成黑块
   const gl = canvas.getContext('webgl', {
-    alpha: false,
+    alpha: true,
     antialias: false,
     depth: false,
     stencil: false,
@@ -136,6 +142,9 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
     powerPreference: 'low-power',
   }) as WebGLRenderingContext | null
   if (!gl) return null
+
+  gl.clearColor(0, 0, 0, 0)
+  gl.clear(gl.COLOR_BUFFER_BIT)
 
   const vs = compile(gl, gl.VERTEX_SHADER, VERT)
   const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG)
@@ -147,12 +156,11 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
   gl.attachShader(prog, fs)
   gl.linkProgram(prog)
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-    console.warn('[heroFluid] program 链接失败:', gl.getProgramInfoLog(prog))
+    console.warn('[heroFluid] program link failed:', gl.getProgramInfoLog(prog))
     return null
   }
   gl.useProgram(prog)
 
-  // 全屏三角形
   const buf = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, buf)
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
@@ -168,7 +176,9 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
     uTime: gl.getUniformLocation(prog, 'uTime'),
     uScroll: gl.getUniformLocation(prog, 'uScroll'),
     uMouse: gl.getUniformLocation(prog, 'uMouse'),
+    uPointer: gl.getUniformLocation(prog, 'uPointer'),
     uAmount: gl.getUniformLocation(prog, 'uAmount'),
+    uLens: gl.getUniformLocation(prog, 'uLens'),
     uDots: gl.getUniformLocation(prog, 'uDots'),
   }
 
@@ -180,16 +190,16 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
 
-  let imgW = 1
-  let imgH = 1
   let ready = false
   let disposed = false
   let raf = 0
   let scroll = 0
-  let mx = 0
-  let my = 0
-  let tmx = 0
-  let tmy = 0
+  let mx = 0.5
+  let my = 0.5
+  let tmx = 0.5
+  let tmy = 0.5
+  let pointer = 0
+  let tPointer = 0
   const start = performance.now()
 
   const MAX_PIXELS = 2_200_000
@@ -217,12 +227,11 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
     if (disposed) return
     raf = requestAnimationFrame(draw)
     if (!ready || document.hidden) return
-
-    // 面板已经缩小到几乎看不见时省掉渲染
     if (scroll > 0.995) return
 
-    mx += (tmx - mx) * 0.06
-    my += (tmy - my) * 0.06
+    mx += (tmx - mx) * 0.12
+    my += (tmy - my) * 0.12
+    pointer += (tPointer - pointer) * 0.08
 
     gl.useProgram(prog)
     gl.bindTexture(gl.TEXTURE_2D, tex)
@@ -230,8 +239,10 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
     gl.uniform1f(U.uTime, (now - start) / 1000)
     gl.uniform1f(U.uScroll, scroll)
     gl.uniform2f(U.uMouse, mx, my)
-    gl.uniform1f(U.uAmount, 0.016)
-    gl.uniform1f(U.uDots, 0.18)
+    gl.uniform1f(U.uPointer, pointer)
+    gl.uniform1f(U.uAmount, 0.010)
+    gl.uniform1f(U.uLens, 0.22)
+    gl.uniform1f(U.uDots, 0.20)
     gl.drawArrays(gl.TRIANGLES, 0, 3)
   }
 
@@ -239,8 +250,9 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
   ro.observe(canvas)
 
   const onPointer = (e: PointerEvent) => {
-    tmx = e.clientX / window.innerWidth - 0.5
-    tmy = e.clientY / window.innerHeight - 0.5
+    tmx = e.clientX / Math.max(1, window.innerWidth)
+    tmy = 1 - e.clientY / Math.max(1, window.innerHeight)
+    tPointer = 1
   }
   window.addEventListener('pointermove', onPointer, { passive: true })
 
@@ -248,16 +260,16 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
   img.decoding = 'async'
   img.onload = () => {
     if (disposed) return
-    imgW = img.naturalWidth || 1
-    imgH = img.naturalHeight || 1
+    const iw = img.naturalWidth || 1
+    const ih = img.naturalHeight || 1
     gl.bindTexture(gl.TEXTURE_2D, tex)
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
-    gl.uniform2f(U.uImgRes, imgW, imgH)
+    gl.uniform2f(U.uImgRes, iw, ih)
     resize()
     ready = true
   }
   img.onerror = () => {
-    console.warn('[heroFluid] 背景图加载失败，回落到 CSS 背景')
+    console.warn('[heroFluid] background image failed to load; falling back to CSS background')
   }
   img.src = imageUrl
 
@@ -277,8 +289,7 @@ export function createHeroFluid(canvas: HTMLCanvasElement, imageUrl: string): He
       gl.deleteProgram(prog)
       gl.deleteShader(vs)
       gl.deleteShader(fs)
-      const lose = gl.getExtension('WEBGL_lose_context')
-      lose?.loseContext()
+      gl.getExtension('WEBGL_lose_context')?.loseContext()
     },
   }
 }
