@@ -934,9 +934,17 @@ onMounted(() => {
       fxReady.value = true
       updateScrollFx()
       // 背景 WebGL 后期：reduced-motion 或不支持时不创建，回落到 CSS 背景图
-      if (!prefersFloatReduce() && heroFxEl.value && !heroFluid) {
+      // ?fx=1 强制开启（方便本机验收，忽略系统的"减少动画"设置），?fx=0 强制关闭
+      const fxParam = new URLSearchParams(window.location.search).get('fx')
+      const fxForced = fxParam === '1' || fxParam === 'on'
+      const fxDisabled = fxParam === '0' || fxParam === 'off'
+      const reduced = prefersFloatReduce()
+      if (!fxDisabled && (fxForced || !reduced) && heroFxEl.value && !heroFluid) {
         heroFluid = createHeroFluid(heroFxEl.value, '/images/AttractBG.webp')
         if (heroFluid) heroFluid.setScroll(rail1Progress.value)
+        console.info('[heroFluid] active', { forced: fxForced, reducedMotion: reduced })
+      } else {
+        console.info('[heroFluid] skipped', { fxDisabled, reducedMotion: reduced, hasCanvas: !!heroFxEl.value })
       }
       startFloatSim()
       if (floatArenaEl.value && typeof ResizeObserver !== 'undefined') {
