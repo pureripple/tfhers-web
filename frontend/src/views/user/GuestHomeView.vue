@@ -23,7 +23,7 @@
       </div>
 
 <!--
-      sticky rails: phase1 scale to ~50%, phase2 lift up (no -100vh sync);
+      sticky rails: phase1 scale to ~25%, phase2 lift up (no -100vh sync);
       corridor lines on L/R/ceil/floor densify with p; transform only on .guest-home-panel-fx
     -->
     <div ref="rail1El" class="guest-home-rail guest-home-rail--hero">
@@ -424,8 +424,8 @@ const topBarAlpha = ref(0)
 const corridorLiftVh = ref(0)
 
 /** 走远：scale 1→0；translateZ 负向加深「退入景深」 */
-/** 阶段1：只缩放到此；阶段2：保持该缩放并整体上移（倒楼梯） */
-const SCALE_HOLD = 0.5
+/** 阶段1：只缩放到 SCALE_HOLD；阶段2：保持该缩放并整体上移（倒楼梯） */
+const SCALE_HOLD = 0.25
 const PHASE1_END = 0.5
 const PERSPECTIVE_PX = 1200
 const Z_END_PX = -900
@@ -521,7 +521,7 @@ function cssScaleForVisual(visual: number, z: number) {
 
 /**
  * 倒楼梯：
- * 阶段1 p∈[0,0.5]：只 scale 1→0.5 + Z 到 Z_HOLD
+ * 阶段1 p∈[0,0.5]：只 scale 1→SCALE_HOLD + Z 到 Z_HOLD
  * 阶段2：scale/Z 锁定；屏上 translateY 上移（写在 perspective 左侧，与走廊同速）
  */
 function walkAwayStyle(p: number, opts?: { incomingLift?: boolean }) {
@@ -549,7 +549,7 @@ function walkAwayStyle(p: number, opts?: { incomingLift?: boolean }) {
     }
   }
   const lift = phaseLiftVh(p)
-  // 可视比例锁 SCALE_HOLD；CSS scale 补偿 Z，保证屏上仍是 50%
+  // 可视比例锁 SCALE_HOLD；CSS scale 补偿 Z，保证屏上仍是 SCALE_HOLD
   const visual = SCALE_HOLD
   const z = Z_HOLD
   const cssScale = cssScaleForVisual(visual, z)
@@ -634,7 +634,7 @@ function buildCorridorPaths(p1: number, p2: number) {
     return { ringsD: '', raysD: '', opacityP: 0 }
   }
   const pPanel = p2 > 0.001 ? p2 : p1
-  // 内框用屏上可视比例，与面板外缘对齐（含 50% 锁定）
+  // 内框用屏上可视比例，与面板外缘对齐（含 SCALE_HOLD 锁定）
   const sPanel = Math.max(0.04, visualScaleForProgress(pPanel))
   const dist = panelDistFromScale(sPanel)
   // 同速：按可视比例累计 traveled；阶段2 visual 锁定则 phase 停，只靠图层上移
@@ -701,7 +701,7 @@ const spaceLayerStyle = computed(() =>
 /** 续页：随轨1被上推盖住；轨2 进度增大时同样走远。上滚可逆。 */
 const moreFxStyle = computed(() => {
   const p2 = rail2Progress.value
-  // 续页同样两阶段：先缩到~50% 再上移
+  // 续页同样两阶段：先缩到 SCALE_HOLD 再上移
   return walkAwayStyle(p2)
 })
 
