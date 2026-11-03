@@ -69,22 +69,22 @@ void main() {
   vec2 uv = (vUv - 0.5) * uvScale + 0.5;
 
   // ---- 1. 全局流场 ----
-  float t = uTime * 0.14;
+  float t = uTime * 0.20;
   vec2 p = uv * 3.1;
   vec2 flow = vec2(
     fbm(p + vec2(0.0, t)),
     fbm(p + vec2(4.7, -t))
   ) - 0.5;
-  vec2 duv = uv + flow * (uAmount * (0.7 + 0.6 * uScroll));
+  vec2 base = uv + flow * (uAmount * (0.7 + 0.6 * uScroll));
 
-  // ---- 2. 光标透镜：位移与距离成正比 → 纯放大（不会出现环形漩涡）----
+  // ---- 2. 光标透镜：按比例缩放（真放大镜）。m=0 处等于原图，边缘不撕裂 ----
   float aspect = uCssRes.x / max(uCssRes.y, 1.0);
-  vec2 rel = vUv - uMouse;
-  float rr = length(rel * vec2(aspect, 1.0));
-  float m = smoothstep(0.22, 0.02, rr) * uPointer;
-  vec2 screenOff = -rel * uLens * m;
-  // 屏幕位移换算回 uv 空间（cover 是等比变换，方向不变，只缩放幅度）
-  duv += screenOff * uvScale;
+  vec2 uvMouse = (uMouse - 0.5) * uvScale + 0.5;
+  float rr = length((vUv - uMouse) * vec2(aspect, 1.0));
+  float m = smoothstep(0.30, 0.05, rr) * uPointer;
+  vec2 relUv = base - uvMouse;
+  float zoom = 1.0 + uLens * m;
+  vec2 duv = uvMouse + relUv / zoom;
   duv = clamp(duv, 0.002, 0.998);
 
   // ---- 3. 采样 + 边缘色散 ----
@@ -250,8 +250,8 @@ export function createHeroFluid(
     gl.uniform1f(U.uScroll, scroll)
     gl.uniform2f(U.uMouse, mx, my)
     gl.uniform1f(U.uPointer, pointer)
-    gl.uniform1f(U.uAmount, ambient ? 0.010 : 0)
-    gl.uniform1f(U.uLens, 0.22)
+    gl.uniform1f(U.uAmount, ambient ? 0.018 : 0)
+    gl.uniform1f(U.uLens, 0.45)
     gl.uniform1f(U.uDots, 0.20)
     gl.drawArrays(gl.TRIANGLES, 0, 3)
   }
