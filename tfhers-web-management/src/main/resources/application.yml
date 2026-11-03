@@ -33,7 +33,9 @@ mybatis:
   type-aliases-package: com.example.pojo
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 不要用 StdOutImpl：它把每一条 SQL 直接打到 stdout，systemd journal 会无限增长，
+    # 写满系统盘后 MySQL 写入失败 = 全站 500。Slf4jImpl 走日志框架，默认 INFO 级不输出 SQL。
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
 # 鏈嶅姟鍣ㄩ厤缃?
 server:
@@ -142,3 +144,20 @@ tfhers:
     base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
   cors:
     allowed-origins: "${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:8080,http://localhost:8081}"
+
+# 日志：默认 INFO，**不打印每条 SQL**（MyBatis 的 SQL 日志是 DEBUG 级，被下面的 INFO 挡住）。
+# 需要临时排查 SQL 时不要改文件，用启动参数/环境变量临时打开：
+#   --logging.level.com.example.mapper=DEBUG
+# 落盘策略：只写 stdout，由 systemd journald 接管，用 SystemMaxUse 限制总量
+# （见 deploy/systemd/journald-size.conf），避免自己写文件把磁盘吃掉。
+logging:
+  level:
+    root: INFO
+    com.example: INFO
+    # 需要看 SQL 时把这个改成 DEBUG（或启动参数临时覆盖）
+    com.example.mapper: INFO
+    org.mybatis: WARN
+    org.springframework.jdbc: INFO
+    com.zaxxer.hikari: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} - %msg%n"

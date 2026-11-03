@@ -20,4 +20,5 @@ tfhers:
 
 mybatis:
   configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 与 management 保持一致：走日志框架，不要 StdOutImpl（否则每条 SQL 直打 stdout）
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
