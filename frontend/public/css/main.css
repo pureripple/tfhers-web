@@ -4982,7 +4982,8 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     z-index: 0;
     pointer-events: none;
     background-color: #000;
-    background-image: url('/images/bg-app.png');
+    /* 游戏标题画面整屏铺满（WebP q88，同分辨率，体积约为原 PNG 的 1/7） */
+    background-image: url('/images/TitleScreen-full.webp');
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
