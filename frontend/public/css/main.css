@@ -5010,6 +5010,14 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     text-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
+/* 手绘风的 TFHers wordmark（内联 SVG），宽度跟随视口 */
+.guest-home-wordmark {
+    display: block;
+    width: min(560px, 72vw);
+    height: auto;
+    margin: 0 auto 2px;
+}
+
 .guest-home-tagline {
     margin: 0 0 28px;
     max-width: 28rem;

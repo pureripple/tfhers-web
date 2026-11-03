@@ -31,7 +31,78 @@
         <div class="guest-home-panel-fx" :style="heroFxStyle">
           <div class="guest-home-hero-bg" aria-hidden="true" />
           <div class="guest-home-center">
-            <h1 class="guest-home-title">TFHers</h1>
+            <h1 class="guest-home-title">
+              <!-- 手绘马克笔风格 wordmark：墨线粗边 + 绯红底 + 白色字母深蓝描边 -->
+              <svg
+                class="guest-home-wordmark"
+                viewBox="0 0 560 250"
+                role="img"
+                aria-label="TFHers"
+              >
+                <defs>
+                  <filter id="tfh-ink" x="-12%" y="-16%" width="124%" height="132%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="4" seed="9" result="n" />
+                    <feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G" />
+                  </filter>
+                  <filter id="tfh-ink-fine" x="-8%" y="-10%" width="116%" height="120%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" seed="4" result="n" />
+                    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G" />
+                  </filter>
+                  <filter id="tfh-shadow" x="-20%" y="-20%" width="140%" height="150%">
+                    <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#000" flood-opacity="0.55" />
+                  </filter>
+                </defs>
+
+                <g filter="url(#tfh-shadow)" transform="rotate(-1.6 280 128)">
+                  <!-- 墨线外框 -->
+                  <path
+                    d="M38 58 L280 16 L522 58 L542 128 L518 200 L280 228 L42 200 L18 128 Z"
+                    fill="#0b0b12"
+                    filter="url(#tfh-ink)"
+                  />
+                  <!-- 绯红底 -->
+                  <path
+                    d="M60 76 L280 40 L500 76 L518 128 L496 180 L280 206 L64 180 L42 128 Z"
+                    fill="#c8102e"
+                    filter="url(#tfh-ink)"
+                  />
+                  <!-- 内圈细描边 -->
+                  <path
+                    d="M80 90 L280 60 L480 90 L494 128 L476 166 L280 190 L84 166 L66 128 Z"
+                    fill="none"
+                    stroke="#7d0b20"
+                    stroke-width="2.5"
+                    filter="url(#tfh-ink-fine)"
+                  />
+
+                  <!-- 顶部小星星 -->
+                  <g fill="#ffffff" opacity="0.95" filter="url(#tfh-ink-fine)">
+                    <path transform="translate(232 70)" d="M0 -7 L1.7 -2.3 L6.7 -2.2 L2.6 0.9 L4.1 5.7 L0 2.8 L-4.1 5.7 L-2.6 0.9 L-6.7 -2.2 L-1.7 -2.3 Z" />
+                    <path transform="translate(256 70)" d="M0 -7 L1.7 -2.3 L6.7 -2.2 L2.6 0.9 L4.1 5.7 L0 2.8 L-4.1 5.7 L-2.6 0.9 L-6.7 -2.2 L-1.7 -2.3 Z" />
+                    <path transform="translate(280 70)" d="M0 -7 L1.7 -2.3 L6.7 -2.2 L2.6 0.9 L4.1 5.7 L0 2.8 L-4.1 5.7 L-2.6 0.9 L-6.7 -2.2 L-1.7 -2.3 Z" />
+                    <path transform="translate(304 70)" d="M0 -7 L1.7 -2.3 L6.7 -2.2 L2.6 0.9 L4.1 5.7 L0 2.8 L-4.1 5.7 L-2.6 0.9 L-6.7 -2.2 L-1.7 -2.3 Z" />
+                    <path transform="translate(328 70)" d="M0 -7 L1.7 -2.3 L6.7 -2.2 L2.6 0.9 L4.1 5.7 L0 2.8 L-4.1 5.7 L-2.6 0.9 L-6.7 -2.2 L-1.7 -2.3 Z" />
+                  </g>
+
+                  <!-- 字母：白色填充 + 深蓝粗描边（paint-order 让描边在填充外侧） -->
+                  <text
+                    x="280"
+                    y="168"
+                    text-anchor="middle"
+                    filter="url(#tfh-ink-fine)"
+                    font-family="'Plus Jakarta Sans', system-ui, 'Segoe UI', sans-serif"
+                    font-size="100"
+                    font-weight="800"
+                    letter-spacing="-1"
+                    fill="#ffffff"
+                    stroke="#16233f"
+                    stroke-width="11"
+                    stroke-linejoin="round"
+                    paint-order="stroke"
+                  >TFHers</text>
+                </g>
+              </svg>
+            </h1>
             <p class="guest-home-tagline">Them&apos;s Fightin&apos; Herds 玩家们的社区</p>
           </div>
           <p class="guest-home-scroll-hint" aria-hidden="true">向下滚动</p>
