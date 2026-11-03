@@ -4809,6 +4809,8 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    /* 现在是个 h1，清掉默认外边距 */
+    margin: 0;
     text-decoration: none;
     color: inherit;
 }
@@ -5010,12 +5012,12 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     text-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
-/* 手绘风的 TFHers wordmark（内联 SVG），宽度跟随视口 */
+/* 左上角的 TFHers 文字标：白色填充 + 黑色描边（内联 SVG，无底无私章） */
 .guest-home-wordmark {
     display: block;
-    width: min(560px, 72vw);
-    height: auto;
-    margin: 0 auto 2px;
+    height: 34px;
+    width: auto;
+    overflow: visible;
 }
 
 .guest-home-tagline {
