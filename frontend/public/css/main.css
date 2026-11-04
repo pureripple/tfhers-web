@@ -5045,13 +5045,23 @@ html:not(.tfhers-authed).tfhers-guest-home body::after {
     text-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
-/* 居中的 TFHers 文字标：白字 + 黑描边（内联 SVG，无底无私章） */
+/* 居中的 TFHERS 文字标：白字 + 黑描边（内联 SVG，无底无私章） */
 .guest-home-wordmark {
     display: block;
     width: min(700px, 62vw);
     height: auto;
     margin: 0 auto;
     overflow: visible;
+}
+
+/* 临时版本：桌面 tfherslogo.png 做的立体字标（透明底 WebP） */
+.guest-home-wordmark-img {
+    display: block;
+    width: min(640px, 56vw);
+    height: auto;
+    margin: 0 auto;
+    filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.55));
+    user-select: none;
 }
 
 .guest-home-tagline {

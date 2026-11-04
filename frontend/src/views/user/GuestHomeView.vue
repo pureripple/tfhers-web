@@ -1,6 +1,7 @@
 <template>
   <div ref="rootEl" class="guest-home" role="main" :class="{ 'guest-home--fx-ready': fxReady }">
     <header
+      v-if="!embedded"
       class="guest-home-top"
       :class="{ 'guest-home-top--hidden': secondPageActive }"
       :style="{ backgroundColor: `rgba(0, 0, 0, ${topBarAlpha})` }"
@@ -33,7 +34,17 @@
           <canvas ref="heroFxEl" class="guest-home-hero-fx" aria-hidden="true" />
           <div class="guest-home-center">
             <h1 class="guest-home-title">
-              <!-- 马克笔手写风 wordmark：白字 + 黑描边，居中偏上，小字跟下面 -->
+              <!-- 临时：用桌面 tfherslogo.png 做的立体字标（效果不好就恢复下面注释掉的 SVG） -->
+              <img
+                class="guest-home-wordmark-img"
+                src="/images/tfhers-logo.webp"
+                alt="TFHERS"
+                width="1725"
+                height="759"
+                decoding="async"
+                draggable="false"
+              />
+              <!--
               <svg class="guest-home-wordmark" viewBox="0 0 700 190" role="img" aria-label="TFHERS">
                 <text
                   x="350"
@@ -49,6 +60,7 @@
                   paint-order="stroke"
                 >TFHERS</text>
               </svg>
+              -->
             </h1>
             <p class="guest-home-tagline">Them&apos;s Fightin&apos; Herds 玩家们的社区</p>
           </div>
@@ -82,6 +94,12 @@ import { createHeroFluid, type HeroFluidHandle } from '@/utils/heroFluid'
 
 const route = useRoute()
 const router = useRouter()
+
+/**
+ * embedded 模式：本页被放进影院屏幕里时置为 true。
+ * 此时不接管滚轮 / 触摸（交给外层切页），也不渲染自己的顶栏。
+ */
+const props = withDefaults(defineProps<{ embedded?: boolean }>(), { embedded: false })
 
 /** 站内静态立绘（与 CreateCombo / 角色页同套 CSel3）；不请求 /api/characters */
 const gallery = [
@@ -897,10 +915,13 @@ onMounted(() => {
     t.addEventListener('scroll', onScroll, { passive: true, capture: true } as AddEventListenerOptions)
   }
   window.addEventListener('resize', onScroll, { passive: true })
-  // wheel 需 preventDefault，不能 passive
-  window.addEventListener('wheel', onWheelSnap, { passive: false, capture: true })
-  // 第二页 iframe 内滚轮回传
-  window.addEventListener('message', onChildWheelMessage)
+  // embedded 模式下不接管滚轮，避免吃掉外层屏幕的切页事件
+  if (!props.embedded) {
+    // wheel 需 preventDefault，不能 passive
+    window.addEventListener('wheel', onWheelSnap, { passive: false, capture: true })
+    // 第二页 iframe 内滚轮回传
+    window.addEventListener('message', onChildWheelMessage)
+  }
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -912,14 +933,17 @@ onMounted(() => {
       const fxForced = fxParam === '1' || fxParam === 'on'
       const fxDisabled = fxParam === '0' || fxParam === 'off'
       const reduced = prefersFloatReduce()
-      if (!fxDisabled && heroFxEl.value && !heroFluid) {
+      // embedded（屏幕内嵌）时默认关掉 WebGL：那层特效在 1200px 宽的屏幕里几乎看不出，
+      // 却要整块画布持续渲染，把主线程吃到 12fps，换屏扫描会卡。
+      const fxOffInEmbedded = props.embedded && !fxForced
+      if (!fxDisabled && !fxOffInEmbedded && heroFxEl.value && !heroFluid) {
         heroFluid = createHeroFluid(heroFxEl.value, '/images/AttractBG.webp', {
           ambient: fxForced || !reduced,
         })
         if (heroFluid) heroFluid.setScroll(rail1Progress.value)
         console.info('[heroFluid] active', { forced: fxForced, ambient: fxForced || !reduced, reducedMotion: reduced })
       } else {
-        console.info('[heroFluid] skipped', { fxDisabled, hasCanvas: !!heroFxEl.value })
+        console.info('[heroFluid] skipped', { fxDisabled, embedded: props.embedded, hasCanvas: !!heroFxEl.value })
       }
       startFloatSim()
       if (floatArenaEl.value && typeof ResizeObserver !== 'undefined') {
@@ -949,8 +973,10 @@ onUnmounted(() => {
     t.removeEventListener('scroll', onScroll, true)
   }
   window.removeEventListener('resize', onScroll)
-  window.removeEventListener('wheel', onWheelSnap, true)
-  window.removeEventListener('message', onChildWheelMessage)
+  if (!props.embedded) {
+    window.removeEventListener('wheel', onWheelSnap, true)
+    window.removeEventListener('message', onChildWheelMessage)
+  }
   cancelSnapAnim()
   stopFloatSim()
   if (floatRo) {

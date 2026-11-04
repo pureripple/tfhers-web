@@ -35,6 +35,8 @@ uniform float uPointer;  // 0..1 光标是否已激活（触屏保持 0）
 uniform float uAmount;   // 流场强度
 uniform float uLens;     // 透镜强度
 uniform float uDots;     // 网点权重
+uniform float uSparks;   // 火星强度（0 = 关闭）
+uniform vec2  uCam;      // 镜头位移（uv 空间）
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -61,12 +63,55 @@ float fbm(vec2 p) {
   return v;
 }
 
+/** 飘火星：按格子分布，每格一颗，向上飘 + 左右摆动 + 闪烁。
+ *  returns (亮度, 暖色权重) */
+vec2 sparks(vec2 uv, float t, float amt) {
+  float acc = 0.0;
+  for (int layer = 0; layer < 2; layer++) {
+    float fl = float(layer);
+    // 两层不同尺度，避免看出网格
+    vec2 g = uv * vec2(16.0 + fl * 9.0, 8.0 + fl * 4.5);
+    g.y += t * (0.055 + fl * 0.035);          // 向上飘
+    g.x += sin(t * 0.35 + fl * 2.1) * 0.20;   // 整体轻微摆动
+
+    vec2 cell = floor(g);
+    vec2 f = fract(g);
+    float rnd = hash(cell + fl * 37.0);
+
+    // 每格只有一部分是火星
+    if (rnd > 0.24) continue;
+
+    vec2 center = vec2(0.30 + hash(cell + 11.0) * 0.40,
+                       0.25 + hash(cell + 23.0) * 0.50);
+    // 每颗自己的横向漂移
+    center.x += sin(t * (0.5 + rnd) + rnd * 6.28) * 0.06;
+
+    float d = length(f - center);
+    float size = mix(0.070, 0.028, hash(cell + 5.0));
+    float core = smoothstep(size, 0.0, d);
+
+    // 闪烁
+    float twinkle = 0.55 + 0.45 * sin(t * (1.4 + rnd * 2.2) + rnd * 6.28);
+
+    // 越靠上方越淡（像飘散）；也会在顶部淡出
+    float fade = smoothstep(0.0, 0.16, uv.y) * smoothstep(1.0, 0.72, uv.y);
+
+    acc += core * twinkle * fade;
+  }
+  return vec2(clamp(acc, 0.0, 1.6), amt);
+}
+
 void main() {
   // cover 适配：保持比例铺满，超出裁掉
   vec2 s = uRes / uImgRes;
   float cover = max(s.x, s.y);
   vec2 uvScale = s / cover;
-  vec2 uv = (vUv - 0.5) * uvScale + 0.5;
+
+  // 镜头余量：画面先放大 OVERSCAN 倍，剩下的空间才够平移。
+  // 必须满足 (OVERSCAN - 1) / 2 >= 最大平移量，否则平移时就会露出原图边界之外。
+  // 放大得越多，画面看起来就越"贴脸"，所以余量取到刚好够用即可。
+  const float OVERSCAN = 1.09;
+  vec2 uv = (vUv - 0.5) * uvScale / OVERSCAN + 0.5 + uCam;
 
   // ---- 1. 全局流场 ----
   float t = uTime * 0.20;
@@ -88,12 +133,15 @@ void main() {
   duv = clamp(duv, 0.002, 0.998);
 
   // ---- 3. 采样 + 边缘色散 ----
+  // 采样 UV 必须先夹到 [0,1]，否则平移/透镜/流场把 UV 推出边界后
+  // GL_CLAMP_TO_EDGE 会把边缘像素拉成条纹，看起来像"画面外面还有东西"
+  vec2 suv = clamp(duv, 0.0015, 0.9985);
   float dc = length(vUv - 0.5);
   float ca = 0.0015 * dc * (0.7 + uScroll);
   vec3 col;
-  col.r = texture2D(uTex, duv + vec2(ca, 0.0)).r;
-  col.g = texture2D(uTex, duv).g;
-  col.b = texture2D(uTex, duv - vec2(ca, 0.0)).b;
+  col.r = texture2D(uTex, clamp(suv + vec2(ca, 0.0), 0.0015, 0.9985)).r;
+  col.g = texture2D(uTex, suv).g;
+  col.b = texture2D(uTex, clamp(suv - vec2(ca, 0.0), 0.0015, 0.9985)).b;
 
   // ---- 4. 屏幕空间细网点（按 CSS 像素，约 8px 一格）----
   if (uDots > 0.001) {
@@ -107,6 +155,27 @@ void main() {
   // ---- 5. 暗角 + 颗粒 ----
   col *= mix(0.78, 1.0, smoothstep(1.25, 0.25, dc));
   col += (hash(vUv * uRes + uTime) - 0.5) * 0.014;
+
+  // ---- 6. 飘火星（叠在背景之上、字标之下——字标是 DOM，天然在上层）----
+  if (uSparks > 0.001) {
+    vec2 sp = sparks(uv, uTime, uSparks);
+    float b = sp.x * uSparks;
+    // 暖色：核心偏白黄，外侧橙红
+    vec3 warm = mix(vec3(1.0, 0.42, 0.12), vec3(1.0, 0.92, 0.72), clamp(b, 0.0, 1.0));
+    col += warm * b * 1.15;
+  }
+
+  // ---- 6. 超出原图的范围：镜像补边，而不是留黑/拉条纹 ----
+  // 透镜、流场、镜头平移都可能把 UV 推出 [0,1]，这里把它折回画面内
+  // （triangle wave），边缘会无缝延续，看不出"画面之外"
+  if (duv.x < 0.0 || duv.x > 1.0 || duv.y < 0.0 || duv.y > 1.0) {
+    vec3 mirrored;
+    vec2 muv = clamp(abs(fract(duv * 0.5) * 2.0 - 1.0), 0.0015, 0.9985);
+    mirrored.r = texture2D(uTex, muv).r;
+    mirrored.g = texture2D(uTex, muv).g;
+    mirrored.b = texture2D(uTex, muv).b;
+    col = mix(col, mirrored, 0.85);
+  }
 
   gl_FragColor = vec4(col, 1.0);
 }
@@ -190,6 +259,8 @@ export function createHeroFluid(
     uAmount: gl.getUniformLocation(prog, 'uAmount'),
     uLens: gl.getUniformLocation(prog, 'uLens'),
     uDots: gl.getUniformLocation(prog, 'uDots'),
+    uSparks: gl.getUniformLocation(prog, 'uSparks'),
+    uCam: gl.getUniformLocation(prog, 'uCam'),
   }
 
   const tex = gl.createTexture()
@@ -210,7 +281,17 @@ export function createHeroFluid(
   let tmy = 0.5
   let pointer = 0
   let tPointer = 0
+  /** 最近一次移动的时间：静止一段时间后镜头自动归位 */
+  let lastMoveAt = 0
+  /** 镜头位移（uv 空间），平滑跟随光标 */
+  let camX = 0
+  let camY = 0
   const start = performance.now()
+
+  /** 鼠标停下多久后开始回中（毫秒） */
+  const RECENTER_AFTER_MS = 1400
+  /** 每帧向中心靠拢的比例（越小越慢） */
+  const RECENTER_RATE = 0.022
 
   const MAX_PIXELS = 2_200_000
 
@@ -241,6 +322,26 @@ export function createHeroFluid(
 
     mx += (tmx - mx) * 0.12
     my += (tmy - my) * 0.12
+
+    // 鼠标静止一段时间后，目标点缓缓回到画面中心，像镜头自动回正
+    if (lastMoveAt && now - lastMoveAt > RECENTER_AFTER_MS) {
+      tmx += (0.5 - tmx) * RECENTER_RATE
+      tmy += (0.5 - tmy) * RECENTER_RATE
+      // 归位过程中逐渐淡出透镜，避免停在某个位置时一直鼓着一块
+      tPointer = 0
+    }
+
+    // 光标偏移驱动镜头缓慢移动。方向与鼠标一致（画面跟着鼠标走）。
+    // 最大值必须小于 shader 里的余量 (OVERSCAN - 1) / 2 = 0.045，这里留安全系数。
+    // 注意采样坐标减去偏移量，视觉上画面才会朝 offset 的方向平移。
+    const CAMERA_SHIFT = 0.035
+    // 采样坐标加上 +offset 时画面会往 -offset 方向移动，
+    // 取负号后画面就与鼠标同向：鼠标往右，画面往右。
+    const cx = -(0.5 - mx) * 2 * CAMERA_SHIFT
+    const cy = -(0.5 - my) * 2 * CAMERA_SHIFT
+    // 0.035 的跟随系数 = 很慢的镜头推移，鼠标停下后会继续滑行一小段
+    camX += (cx - camX) * 0.035
+    camY += (cy - camY) * 0.035
     pointer += (tPointer - pointer) * 0.08
 
     gl.useProgram(prog)
@@ -253,6 +354,8 @@ export function createHeroFluid(
     gl.uniform1f(U.uAmount, ambient ? 0.018 : 0)
     gl.uniform1f(U.uLens, 0.45)
     gl.uniform1f(U.uDots, 0.20)
+    gl.uniform1f(U.uSparks, ambient ? 1.0 : 0.0)
+    gl.uniform2f(U.uCam, camX, camY)
     gl.drawArrays(gl.TRIANGLES, 0, 3)
   }
 
@@ -263,6 +366,7 @@ export function createHeroFluid(
     tmx = e.clientX / Math.max(1, window.innerWidth)
     tmy = 1 - e.clientY / Math.max(1, window.innerHeight)
     tPointer = 1
+    lastMoveAt = performance.now()
   }
   window.addEventListener('pointermove', onPointer, { passive: true })
 

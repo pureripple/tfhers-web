@@ -158,6 +158,20 @@
     stateEl.classList.toggle('is-preview', !isConfirmed);
   }
 
+  /** 通知外层（影院外壳）：当前预览 / 选中的角色变了，
+   *  外壳据此在训练场两侧显示会遮挡屏幕的立绘 */
+  function notifyParent() {
+    try {
+      window.parent.postMessage({
+        type: 'tfhers:character',
+        id: (previewing || selected || {}).id || null,
+        name: (previewing || selected || {}).name || null,
+        accent: (previewing || selected || {}).accent || null,
+        confirmed: !!selected && (previewing || selected) === selected,
+      }, location.origin);
+    } catch (_) { /* ignore */ }
+  }
+
   function select(char) {
     selected = char;
     previewing = null;
@@ -170,6 +184,7 @@
     updateMeta(char);
     // 该侧舞台进入“已选取”状态（发光）
     stage.classList.add('is-picked');
+    notifyParent();
   }
 
   /* ---------------- 底部角色框 ---------------- */
@@ -202,8 +217,8 @@
 
       btn.append(art, label);
 
-      btn.addEventListener('pointerenter', () => { previewing = c; paint(c); });
-      btn.addEventListener('focus', () => { previewing = c; paint(c); });
+      btn.addEventListener('pointerenter', () => { previewing = c; paint(c); notifyParent(); });
+      btn.addEventListener('focus', () => { previewing = c; paint(c); notifyParent(); });
       btn.addEventListener('click', () => select(c));
 
       frag.appendChild(btn);
@@ -216,6 +231,7 @@
       if (!previewing) return;
       previewing = null;
       paint(selected);
+      notifyParent();
     });
 
     // 键盘焦点离开选人条，同样回到已选角色 / 隐藏
@@ -225,6 +241,7 @@
       if (!previewing) return;
       previewing = null;
       paint(selected);
+      notifyParent();
     });
 
     tilesEl.addEventListener('keydown', e => {
