@@ -933,17 +933,18 @@ onMounted(() => {
       const fxForced = fxParam === '1' || fxParam === 'on'
       const fxDisabled = fxParam === '0' || fxParam === 'off'
       const reduced = prefersFloatReduce()
-      // embedded（屏幕内嵌）时默认关掉 WebGL：那层特效在 1200px 宽的屏幕里几乎看不出，
-      // 却要整块画布持续渲染，把主线程吃到 12fps，换屏扫描会卡。
-      const fxOffInEmbedded = props.embedded && !fxForced
-      if (!fxDisabled && !fxOffInEmbedded && heroFxEl.value && !heroFluid) {
+      // 背景流动 / 火花 / 鼠标鱼眼：这是首页的标志性效果，屏幕内外都要保留。
+      // 性能开销靠降低渲染分辨率来抵（见 heroFluid 的 pixelRatio 选项），而不是关掉。
+      if (!fxDisabled && heroFxEl.value && !heroFluid) {
         heroFluid = createHeroFluid(heroFxEl.value, '/images/AttractBG.webp', {
           ambient: fxForced || !reduced,
+          // 内嵌在屏幕里时只渲染 0.75 倍分辨率：视觉几乎无损，填充率省一半
+          pixelRatio: props.embedded ? 0.75 : undefined,
         })
         if (heroFluid) heroFluid.setScroll(rail1Progress.value)
-        console.info('[heroFluid] active', { forced: fxForced, ambient: fxForced || !reduced, reducedMotion: reduced })
+        console.info('[heroFluid] active', { forced: fxForced, embedded: props.embedded, ambient: fxForced || !reduced, reducedMotion: reduced })
       } else {
-        console.info('[heroFluid] skipped', { fxDisabled, embedded: props.embedded, hasCanvas: !!heroFxEl.value })
+        console.info('[heroFluid] skipped', { fxDisabled, hasCanvas: !!heroFxEl.value })
       }
       startFloatSim()
       if (floatArenaEl.value && typeof ResizeObserver !== 'undefined') {

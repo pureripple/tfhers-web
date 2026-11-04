@@ -208,7 +208,7 @@ function compile(gl: WebGLRenderingContext, type: number, src: string): WebGLSha
 export function createHeroFluid(
   canvas: HTMLCanvasElement,
   imageUrl: string,
-  opts?: { ambient?: boolean },
+  opts?: { ambient?: boolean; pixelRatio?: number },
 ): HeroFluidHandle | null {
   const ambient = opts?.ambient !== false
   // alpha: true —— 未绘制时画布透明，失败不会盖成黑块
@@ -299,8 +299,10 @@ export function createHeroFluid(
     const cssW = Math.max(1, canvas.clientWidth)
     const cssH = Math.max(1, canvas.clientHeight)
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    let scale = dpr
-    if (cssW * cssH * dpr * dpr > MAX_PIXELS) {
+    // pixelRatio 是使用方给的额外缩放系数（<1 表示降分辨率换性能）。
+    // 内嵌在影院屏幕里时用 0.75：画面看不出差别，填充率省一半。
+    let scale = dpr * (opts?.pixelRatio ?? 1)
+    if (cssW * cssH * dpr * dpr * (opts?.pixelRatio ?? 1) * (opts?.pixelRatio ?? 1) > MAX_PIXELS) {
       scale = Math.sqrt(MAX_PIXELS / (cssW * cssH))
     }
     const w = Math.max(1, Math.round(cssW * scale))

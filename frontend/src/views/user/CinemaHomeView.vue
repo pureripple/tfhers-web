@@ -597,11 +597,6 @@ onUnmounted(() => {
   width: min(64%, 520px);
 }
 
-/* WebGL 层会按 1.09 倍 OVERSCAN 放大画面，内嵌时关掉这种裁切感 */
-.cine-page-raw :deep(.guest-home-hero-fx) {
-  opacity: 0.92;
-}
-
 .cine-iframe {
   display: block;
   width: 100%;
